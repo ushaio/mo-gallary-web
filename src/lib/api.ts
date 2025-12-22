@@ -104,12 +104,26 @@ export interface PhotoDto {
   title: string
   category: string
   url: string
-  thumbnail_url?: string
+  thumbnailUrl?: string
   width: number
   height: number
   size?: number
   isFeatured: boolean
   createdAt: string
+  // EXIF data
+  cameraMake?: string
+  cameraModel?: string
+  lens?: string
+  focalLength?: string
+  aperture?: string
+  shutterSpeed?: string
+  iso?: number
+  takenAt?: string
+  latitude?: number
+  longitude?: number
+  orientation?: number
+  software?: string
+  exifRaw?: string
 }
 
 export interface AdminSettingsDto {
@@ -123,6 +137,11 @@ export interface AdminSettingsDto {
   github_token?: string
   github_repo?: string
   github_path?: string
+}
+
+export interface PublicSettingsDto {
+  site_title: string
+  cdn_domain: string
 }
 
 export interface LoginRequest {
@@ -182,8 +201,39 @@ export async function deletePhoto(input: { token: string; id: string }): Promise
   await apiRequest(`/api/admin/photos/${encodeURIComponent(input.id)}`, { method: 'DELETE' }, input.token)
 }
 
+export async function updatePhoto(input: {
+  token: string
+  id: string
+  patch: { title?: string; isFeatured?: boolean }
+}): Promise<PhotoDto> {
+  return apiRequestData<PhotoDto>(
+    `/api/admin/photos/${encodeURIComponent(input.id)}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(input.patch),
+    },
+    input.token,
+  )
+}
+
 export async function getAdminSettings(token: string): Promise<AdminSettingsDto> {
   return apiRequestData<AdminSettingsDto>('/api/admin/settings', {}, token)
+}
+
+export async function getPublicSettings(): Promise<PublicSettingsDto> {
+  try {
+    const data = await apiRequestData<PublicSettingsDto>('/api/admin/settings/public')
+    return {
+      site_title: data.site_title || 'MO GALLERY',
+      cdn_domain: data.cdn_domain || '',
+    }
+  } catch {
+    // If API fails, return defaults
+    return {
+      site_title: 'MO GALLERY',
+      cdn_domain: '',
+    }
+  }
 }
 
 export async function updateAdminSettings(

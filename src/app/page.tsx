@@ -1,12 +1,15 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { getFeaturedPhotos, resolveAssetUrl, type PhotoDto } from '@/lib/api'
+import { useSettings } from '@/contexts/SettingsContext'
 
 export default function Home() {
+  const { settings } = useSettings()
+  const siteTitle = settings?.site_title || 'MO GALLERY'
+
   const fallbackFeatured: Array<Pick<PhotoDto, 'id' | 'title' | 'category' | 'url' | 'thumbnailUrl'>> = [
     {
       id: 'fallback-1',
@@ -49,37 +52,30 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center">
       {/* Hero Section */}
-      <section className="relative w-full h-[80vh] flex items-center justify-center overflow-hidden">
+      <section className="relative w-full h-[80vh] flex items-center justify-center overflow-hidden bg-muted">
         <div className="absolute inset-0 z-0">
           <img 
             src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=2000&q=80" 
             alt="Hero" 
-            className="w-full h-full object-cover brightness-50"
+            className="w-full h-full object-cover brightness-75 dark:brightness-50"
+            loading="eager"
+            fetchPriority="high"
           />
+          <div className="absolute inset-0 bg-black/30 dark:bg-black/50" />
         </div>
         
         <div className="relative z-10 text-center px-4">
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+          <h1 
             className="text-5xl md:text-7xl font-bold text-white tracking-tighter mb-6"
           >
             捕获瞬间的永恒
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+          </h1>
+          <p 
             className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-8"
           >
             在这里，每一张照片都是一个故事。探索自然、城市与人文交织的世界。
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
+          </p>
+          <div>
             <Link 
               href="/gallery" 
               className="inline-flex items-center px-8 py-3 bg-white text-black font-semibold rounded-full hover:bg-white/90 transition-colors group"
@@ -87,7 +83,7 @@ export default function Home() {
               浏览相册
               <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -111,12 +107,8 @@ export default function Home() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {featuredImages.map((image, index) => (
-            <motion.div
+            <div
               key={image.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
               className="group relative cursor-pointer"
             >
               <div className="aspect-[4/5] overflow-hidden rounded-lg bg-muted">
@@ -130,7 +122,7 @@ export default function Home() {
                 <h3 className="text-lg font-semibold">{image.title}</h3>
                 <p className="text-sm text-muted-foreground">{image.category}</p>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </section>
@@ -138,13 +130,13 @@ export default function Home() {
       {/* Call to action */}
       <section className="w-full bg-muted/30 py-24">
         <div className="max-w-3xl mx-auto text-center px-4">
-          <h2 className="text-3xl font-bold mb-6">关于 MO GALLERY</h2>
+          <h2 className="text-3xl font-bold mb-6">关于 {siteTitle}</h2>
           <p className="text-muted-foreground mb-10 leading-relaxed">
-            MO GALLERY 是一个致力于展示高质量摄影作品的平台。我们相信影像的力量，
+            {siteTitle} 是一个致力于展示高质量摄影作品的平台。我们相信影像的力量，
             它能够跨越语言与文化的障碍，触动人心。
           </p>
-          <Link 
-            href="/about" 
+          <Link
+            href="/about"
             className="text-sm font-semibold border-b-2 border-primary pb-1 hover:text-muted-foreground hover:border-muted-foreground transition-colors"
           >
             了解更多关于我的故事

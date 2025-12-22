@@ -2,20 +2,27 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { 
-  Calendar, 
-  Ruler, 
-  Star, 
-  X, 
-  LayoutGrid, 
-  StretchVertical, 
-  Clock, 
-  ZoomIn, 
+import {
+  Calendar,
+  Ruler,
+  Star,
+  X,
+  LayoutGrid,
+  StretchVertical,
+  Clock,
+  ZoomIn,
   ZoomOut,
   Filter,
   Maximize2,
   HardDrive,
-  Loader2
+  Loader2,
+  Camera,
+  Aperture,
+  Timer,
+  Gauge,
+  MapPin,
+  Monitor,
+  Code
 } from 'lucide-react'
 import { getCategories, getPhotos, resolveAssetUrl, type PhotoDto } from '@/lib/api'
 
@@ -41,6 +48,39 @@ export default function GalleryPage() {
   const [error, setError] = useState('')
 
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoDto | null>(null)
+  const [dominantColors, setDominantColors] = useState<string[]>([])
+
+  useEffect(() => {
+    if (selectedPhoto) {
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+      img.src = resolveAssetUrl(selectedPhoto.url);
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          if (!ctx) return;
+          canvas.width = 40; canvas.height = 40;
+          ctx.drawImage(img, 0, 0, 40, 40);
+          const imageData = ctx.getImageData(0, 0, 40, 40).data;
+          const colorCounts: Record<string, number> = {};
+          for (let i = 0; i < imageData.length; i += 16) {
+            const r = Math.round(imageData[i] / 10) * 10;
+            const g = Math.round(imageData[i+1] / 10) * 10;
+            const b = Math.round(imageData[i+2] / 10) * 10;
+            const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+            colorCounts[hex] = (colorCounts[hex] || 0) + 1;
+          }
+          const sorted = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(c => c[0]);
+          setDominantColors(sorted);
+        } catch (e) {
+          console.error('Palette extraction failed', e);
+        }
+      };
+    } else {
+      setDominantColors([]);
+    }
+  }, [selectedPhoto])
 
   useEffect(() => {
     let cancelled = false
@@ -300,62 +340,166 @@ export default function GalleryPage() {
               exit={{ opacity: 0 }}
               className="absolute inset-0 z-0 bg-cover bg-center scale-110"
               style={{ 
-                backgroundImage: `url(${resolveAssetUrl(selectedPhoto.thumbnail_url || selectedPhoto.url)})`,
+                backgroundImage: `url(${resolveAssetUrl(selectedPhoto.thumbnailUrl || selectedPhoto.url)})`,
                 filter: 'blur(60px) brightness(0.3)'
               }}
             />
             
             <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              className="relative z-10 bg-card/80 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden w-full max-w-7xl h-[90vh] shadow-2xl flex flex-col lg:flex-row"
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              className="relative z-10 bg-background/60 dark:bg-black/60 backdrop-blur-3xl border border-white/20 dark:border-white/10 rounded-[32px] overflow-hidden w-full max-w-6xl h-[85vh] shadow-2xl flex flex-col lg:flex-row"
             >
               <button
                 onClick={() => setSelectedPhoto(null)}
-                className="absolute top-4 right-4 z-20 p-2 rounded-full bg-background/50 hover:bg-background border shadow-sm transition-colors"
+                className="absolute top-6 right-6 z-30 p-2.5 rounded-full bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 backdrop-blur-md transition-all active:scale-95 group"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
 
-              <div className="w-full lg:w-[70%] h-full flex items-center justify-center p-4 relative">
+              {/* Image Display Area */}
+              <div className="w-full lg:w-[75%] h-full flex items-center justify-center p-6 sm:p-12 relative overflow-hidden bg-black/5 dark:bg-white/5">
                 <ProgressiveImage 
                   src={resolveAssetUrl(selectedPhoto.url)} 
-                  placeholderSrc={resolveAssetUrl(selectedPhoto.thumbnail_url || selectedPhoto.url)} 
+                  placeholderSrc={resolveAssetUrl(selectedPhoto.thumbnailUrl || selectedPhoto.url)} 
                   alt={selectedPhoto.title}
                 />
               </div>
 
-              <div className="w-full lg:w-[30%] h-full border-l border-white/10 p-8 overflow-y-auto bg-card/40">
-                <div className="space-y-8">
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{selectedPhoto.category}</span>
-                    <h2 className="text-2xl font-bold leading-tight">{selectedPhoto.title}</h2>
+              {/* Sidebar Info Area */}
+              <div className="w-full lg:w-[30%] h-full flex flex-col border-l border-white/10 overflow-y-auto bg-white/40 dark:bg-black/40">
+                <div className="p-8 flex-1 space-y-10">
+                  {/* Header */}
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      {selectedPhoto.category.split(',').map(cat => (
+                        <span key={cat} className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider border border-primary/20">
+                          {cat}
+                        </span>
+                      ))}
+                      {selectedPhoto.isFeatured && (
+                        <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider border border-amber-500/30">
+                          <Star className="w-3 h-3 fill-current" /> 精选作品
+                        </span>
+                      )}
+                    </div>
+                    <h2 className="text-4xl font-black tracking-tighter leading-tight text-foreground">{selectedPhoto.title}</h2>
                   </div>
 
-                  <div className="space-y-4 pt-6 border-t border-white/10">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground flex items-center gap-2"><Ruler className="w-3.5 h-3.5" /> 分辨率</span>
-                      <span className="font-mono">{selectedPhoto.width} × {selectedPhoto.height}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground flex items-center gap-2"><HardDrive className="w-3.5 h-3.5" /> 文件大小</span>
-                      <span className="font-mono">{formatFileSize(selectedPhoto.size)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground flex items-center gap-2"><Calendar className="w-3.5 h-3.5" /> 拍摄日期</span>
-                      <span>{new Date(selectedPhoto.createdAt).toLocaleDateString()}</span>
+                  {/* Color Palette */}
+                  <div className="space-y-3">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">色彩分析 / Palette</h3>
+                    <div className="flex gap-2">
+                      {dominantColors.length > 0 ? dominantColors.map((color, i) => (
+                        <div 
+                          key={i} 
+                          className="w-8 h-8 rounded-lg shadow-sm border border-white/10 transition-all hover:scale-110 cursor-help hover:z-10"
+                          style={{ backgroundColor: color }}
+                          title={color}
+                        />
+                      )) : (
+                        [...Array(5)].map((_, i) => (
+                          <div key={i} className="w-8 h-8 rounded-lg bg-muted animate-pulse" />
+                        ))
+                      )}
                     </div>
                   </div>
 
-                  <div className="pt-8 space-y-3">
-                    <button 
-                      onClick={() => window.open(resolveAssetUrl(selectedPhoto.url), '_blank')}
-                      className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium flex items-center justify-center gap-2"
-                    >
-                      <Maximize2 className="w-3.5 h-3.5" /> 查看原图
-                    </button>
+                  {/* Metadata Card */}
+                  <div className="space-y-1 p-1 rounded-[24px] bg-muted/30 border border-white/10 shadow-inner">
+                    <div className="p-4 space-y-4">
+                      <div className="flex items-center justify-between group">
+                        <div className="flex items-center gap-3 text-muted-foreground group-hover:text-foreground transition-colors">
+                          <Ruler className="w-4 h-4" />
+                          <span className="text-xs font-semibold">分辨率</span>
+                        </div>
+                        <span className="text-xs font-mono font-bold">{selectedPhoto.width} × {selectedPhoto.height}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between group">
+                        <div className="flex items-center gap-3 text-muted-foreground group-hover:text-foreground transition-colors">
+                          <HardDrive className="w-4 h-4" />
+                          <span className="text-xs font-semibold">大小</span>
+                        </div>
+                        <span className="text-xs font-mono font-bold">{formatFileSize(selectedPhoto.size)}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between group">
+                        <div className="flex items-center gap-3 text-muted-foreground group-hover:text-foreground transition-colors">
+                          <Calendar className="w-4 h-4" />
+                          <span className="text-xs font-semibold">拍摄时间</span>
+                        </div>
+                        <span className="text-xs font-bold">{new Date(selectedPhoto.takenAt || selectedPhoto.createdAt).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* EXIF Section */}
+                  {(selectedPhoto.cameraModel || selectedPhoto.aperture || selectedPhoto.iso) ? (
+                    <div className="space-y-6 pt-6 border-t border-white/10">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">拍摄参数 / EXIF</h3>
+                      
+                      <div className="grid grid-cols-1 gap-5">
+                        {(selectedPhoto.cameraMake || selectedPhoto.cameraModel) && (
+                          <div className="flex items-start gap-4 group">
+                            <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center text-primary border border-primary/10 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                              <Camera className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest mb-0.5">设备</p>
+                              <p className="text-sm font-bold truncate leading-tight">{selectedPhoto.cameraMake} {selectedPhoto.cameraModel}</p>
+                              {selectedPhoto.lens && <p className="text-[10px] text-muted-foreground truncate mt-0.5">{selectedPhoto.lens}</p>}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-4">
+                          {[
+                            { icon: Aperture, label: '光圈', value: selectedPhoto.aperture },
+                            { icon: Timer, label: '快门', value: selectedPhoto.shutterSpeed },
+                            { icon: Gauge, label: 'ISO', value: selectedPhoto.iso },
+                            { icon: ZoomIn, label: '焦距', value: selectedPhoto.focalLength },
+                          ].filter(i => i.value).map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors group">
+                              <item.icon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                              <div>
+                                <p className="text-[8px] text-muted-foreground uppercase font-bold">{item.label}</p>
+                                <p className="text-xs font-black">{item.value}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {selectedPhoto.latitude && selectedPhoto.longitude && (
+                          <div className="pt-2">
+                            <button 
+                              onClick={() => window.open(`https://www.google.com/maps?q=${selectedPhoto.latitude},${selectedPhoto.longitude}`, '_blank')}
+                              className="w-full py-3 bg-muted hover:bg-muted/80 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all border border-white/10 group"
+                            >
+                              <MapPin className="w-3.5 h-3.5 group-hover:animate-bounce" /> 定位拍摄地点
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="pt-6 border-t border-white/10 text-center py-10">
+                      <Code className="w-8 h-8 mx-auto mb-3 opacity-10" />
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">无拍摄元数据 / No Metadata</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions Footer */}
+                <div className="p-6 border-t border-white/10 bg-black/5 dark:bg-white/5">
+                  <button 
+                    onClick={() => window.open(resolveAssetUrl(selectedPhoto.url), '_blank')}
+                    className="w-full py-4 bg-foreground text-background dark:bg-white dark:text-black rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-black/10 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 group"
+                  >
+                    <Maximize2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                    查看原图
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -419,19 +563,28 @@ function PhotoCard({ photo, index, zoomLevel, onClick }: {
     >
       <div className={`relative overflow-hidden rounded-xl bg-muted/20 transition-all duration-300 group-hover:shadow-md ${zoomLevel <= 2 ? 'aspect-square' : 'aspect-[3/4]'}`}>
         <img
-          src={resolveAssetUrl(photo.thumbnail_url || photo.url)}
+          src={resolveAssetUrl(photo.thumbnailUrl || photo.url)}
           alt={photo.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
         />
         
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
-          <p className="text-white text-[10px] font-medium truncate">{photo.title}</p>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-4">
+          <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 space-y-2">
+            <div className="flex flex-wrap gap-1">
+              {photo.category.split(',').slice(0, 2).map(cat => (
+                <span key={cat} className="px-1.5 py-0.5 rounded-md bg-white/20 backdrop-blur-md text-[8px] font-black text-white uppercase tracking-widest">
+                  {cat}
+                </span>
+              ))}
+            </div>
+            <p className="text-white text-xs font-black truncate tracking-tight">{photo.title}</p>
+          </div>
         </div>
 
         {photo.isFeatured && (
-          <div className="absolute top-2 right-2 p-1 bg-white/10 backdrop-blur-md rounded-full text-yellow-400">
-            <Star className="w-3 h-3 fill-yellow-400" />
+          <div className="absolute top-3 left-3 p-1.5 bg-amber-500/90 backdrop-blur-md rounded-full text-white shadow-lg transform -rotate-12 group-hover:rotate-0 transition-transform">
+            <Star className="w-3 h-3 fill-current" />
           </div>
         )}
       </div>

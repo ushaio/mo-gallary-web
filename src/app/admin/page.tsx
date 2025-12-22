@@ -1,31 +1,41 @@
 'use client'
 
 import { useEffect, useMemo, useState, useRef } from 'react'
-import { 
-  Upload, 
-  Image as ImageIcon, 
-  Settings, 
-  LogOut, 
-  Plus, 
-  X, 
-  ChevronDown, 
-  Check, 
-  Globe, 
-  FolderTree, 
-  Cloud, 
+import {
+  Upload,
+  Image as ImageIcon,
+  Settings,
+  LogOut,
+  Plus,
+  X,
+  ChevronDown,
+  Check,
+  Globe,
+  FolderTree,
+  Cloud,
   MessageSquare,
   Search,
   Trash2,
   ExternalLink,
   Save,
   Menu,
-  MoreVertical,
-  LayoutGrid,
-  Filter
+  Ruler,
+  HardDrive,
+  Calendar,
+  Maximize2,
+  Star,
+  Camera,
+  Aperture,
+  Clock,
+  Gauge,
+  MapPin
 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSettings } from '@/contexts/SettingsContext'
 import { useRouter } from 'next/navigation'
+import ExifModal from '@/components/ExifModal'
 import {
   ApiUnauthorizedError,
   deletePhoto,
@@ -41,16 +51,53 @@ import {
 
 function AdminDashboard() {
   const { logout, token, user } = useAuth()
+  const { settings: globalSettings, refresh: refreshGlobalSettings } = useSettings()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('photos')
   const [settingsTab, setSettingsTab] = useState('site')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const siteTitle = globalSettings?.site_title || 'MO GALLERY'
 
   const [categories, setCategories] = useState<string[]>([])
   const [photos, setPhotos] = useState<PhotoDto[]>([])
   const [photosLoading, setPhotosLoading] = useState(false)
   const [photosError, setPhotosError] = useState('')
   const [photoSearch, setPhotoSearch] = useState('')
+  const [selectedPhoto, setSelectedPhoto] = useState<PhotoDto | null>(null)
+  const [dominantColors, setDominantColors] = useState<string[]>([])
+
+  useEffect(() => {
+    if (selectedPhoto) {
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+      img.src = resolveAssetUrl(selectedPhoto.url);
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          if (!ctx) return;
+          canvas.width = 40; canvas.height = 40;
+          ctx.drawImage(img, 0, 0, 40, 40);
+          const imageData = ctx.getImageData(0, 0, 40, 40).data;
+          const colorCounts: Record<string, number> = {};
+          for (let i = 0; i < imageData.length; i += 16) {
+            const r = Math.round(imageData[i] / 10) * 10;
+            const g = Math.round(imageData[i+1] / 10) * 10;
+            const b = Math.round(imageData[i+2] / 10) * 10;
+            const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+            colorCounts[hex] = (colorCounts[hex] || 0) + 1;
+          }
+          const sorted = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(c => c[0]);
+          setDominantColors(sorted);
+        } catch (e) {
+          console.error('Palette extraction failed', e);
+        }
+      };
+    } else {
+      setDominantColors([]);
+    }
+  }, [selectedPhoto])
 
   const [uploadFiles, setUploadFiles] = useState<File[]>([])
   const [isDragging, setIsDragging] = useState(false)
@@ -200,6 +247,24 @@ function AdminDashboard() {
     }
   }
 
+  const handleToggleFeatured = async (photo: PhotoDto) => {
+    if (!token) return
+    try {
+      await updatePhoto({
+        token,
+        id: photo.id,
+        patch: { isFeatured: !photo.isFeatured }
+      })
+      await refreshPhotos()
+    } catch (err) {
+      if (err instanceof ApiUnauthorizedError) {
+        handleUnauthorized()
+        return
+      }
+      setPhotosError(err instanceof Error ? err.message : '更新状态失败')
+    }
+  }
+
   const handleUpload = async () => {
     if (!token) return
     if (uploadFiles.length === 0) {
@@ -259,6 +324,8 @@ function AdminDashboard() {
     try {
       const updated = await updateAdminSettings(token, settings)
       setSettings(updated)
+      // Refresh global settings after saving
+      await refreshGlobalSettings()
     } catch (err) {
       if (err instanceof ApiUnauthorizedError) {
         handleUnauthorized()
@@ -267,6 +334,15 @@ function AdminDashboard() {
       setSettingsError(err instanceof Error ? err.message : '保存失败')
     } finally {
       setSettingsSaving(false)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(false)
+    const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'))
+    if (files.length > 0) {
+      setUploadFiles(prev => [...prev, ...files])
     }
   }
 
@@ -287,7 +363,7 @@ function AdminDashboard() {
           <div className="p-6 border-b">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-bold">M</div>
-              <h2 className="text-lg font-bold tracking-tight">MO GALLERY</h2>
+              <h2 className="text-lg font-bold tracking-tight">{siteTitle}</h2>
             </div>
           </div>
 
@@ -420,29 +496,61 @@ function AdminDashboard() {
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
                   {filteredPhotos.map((photo) => (
-                    <div key={photo.id} className="aspect-square rounded-2xl bg-background border p-1 group relative overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1">
-                      <img
-                        src={resolveAssetUrl(photo.thumbnail_url || photo.url, resolvedCdnDomain)}
-                        alt={photo.title}
-                        className="w-full h-full object-cover rounded-[14px]"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-x-2 bottom-2 bg-black/60 backdrop-blur-md p-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
-                        <p className="text-[10px] text-white font-bold truncate">{photo.title}</p>
-                        <p className="text-[8px] text-white/60 mb-2 truncate">{photo.category}</p>
-                        <button
-                          onClick={() => handleDelete(photo.id)}
-                          className="w-full py-1.5 bg-red-500/80 hover:bg-red-500 text-white rounded-lg text-[10px] font-bold transition-colors flex items-center justify-center space-x-1"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                          <span>彻底删除</span>
-                        </button>
+                    <div 
+                      key={photo.id} 
+                      className="group relative bg-background rounded-[24px] border border-border overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+                    >
+                      {/* Image Area */}
+                      <div 
+                        onClick={() => setSelectedPhoto(photo)}
+                        className="aspect-square overflow-hidden cursor-pointer bg-muted"
+                      >
+                        <img
+                          src={resolveAssetUrl(photo.thumbnailUrl || photo.url, resolvedCdnDomain)}
+                          alt={photo.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          loading="lazy"
+                        />
                       </div>
+
+                      {/* Info Area */}
+                      <div className="p-3 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="text-[10px] font-black truncate text-foreground">{photo.title}</h3>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleToggleFeatured(photo); }}
+                            className={`shrink-0 transition-colors ${photo.isFeatured ? 'text-amber-500 hover:text-amber-600' : 'text-muted-foreground/30 hover:text-amber-500'}`}
+                            title={photo.isFeatured ? '取消精选' : '设为精选'}
+                          >
+                            <Star className={`w-3.5 h-3.5 ${photo.isFeatured ? 'fill-current' : ''}`} />
+                          </button>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-1">
+                          {photo.category.split(',').map(cat => (
+                            <span key={cat} className="px-1.5 py-0.5 rounded-md bg-muted text-[8px] font-bold text-muted-foreground uppercase">
+                              {cat}
+                            </span>
+                          ))}
+                        </div>
+
+                        <div className="pt-2 flex items-center justify-between gap-2">
+                          <span className="text-[8px] font-mono text-muted-foreground">{photo.width}×{photo.height}</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDelete(photo.id); }}
+                            className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                            title="删除照片"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+
                       {photo.isFeatured && (
-                        <div className="absolute top-3 left-3 px-2 py-0.5 bg-yellow-400 text-yellow-950 text-[8px] font-black rounded-full shadow-sm uppercase tracking-tighter">
-                          精选
+                        <div className="absolute top-2 left-2 px-2 py-0.5 bg-amber-500 text-white text-[8px] font-black rounded-full shadow-lg uppercase tracking-tighter">
+                          精选作品
                         </div>
                       )}
                     </div>
@@ -915,8 +1023,186 @@ function AdminDashboard() {
           )}
         </div>
       </main>
+
+      {/* Modal - Admin Preview */}
+      <AnimatePresence>
+        {selectedPhoto && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-xl"
+              onClick={() => setSelectedPhoto(null)}
+            />
+            
+                        <motion.div
+                          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                          className="relative z-10 bg-background/80 dark:bg-black/80 backdrop-blur-3xl border border-white/20 dark:border-white/10 rounded-[32px] overflow-hidden w-full max-w-6xl h-[85vh] shadow-2xl flex flex-col lg:flex-row"
+                        >
+                          <button
+                            onClick={() => setSelectedPhoto(null)}
+                            className="absolute top-6 right-6 z-20 p-2.5 rounded-full bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 backdrop-blur-md transition-all active:scale-95"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+            
+                          <div className="w-full lg:w-[75%] h-full flex items-center justify-center p-6 sm:p-12 bg-black/5 dark:bg-white/5 relative">
+                            <img 
+                              src={resolveAssetUrl(selectedPhoto.url, resolvedCdnDomain)} 
+                              alt={selectedPhoto.title}
+                              className="max-w-full max-h-full object-contain shadow-2xl rounded-sm"
+                            />
+                          </div>
+            
+                          <div className="w-full lg:w-[25%] h-full flex flex-col border-l border-white/10 overflow-y-auto bg-white/20 dark:bg-black/20">
+                            <div className="p-8 flex-1 space-y-10">
+                              {/* Header */}
+                              <div className="space-y-4">
+                                <div className="flex flex-wrap gap-2">
+                                  {selectedPhoto.category.split(',').map(cat => (
+                                    <span key={cat} className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider border border-primary/20">
+                                      {cat}
+                                    </span>
+                                  ))}
+                                  {selectedPhoto.isFeatured && (
+                                    <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider border border-amber-500/20">
+                                      <Star className="w-2.5 h-2.5 fill-current" /> 精选
+                                    </span>
+                                  )}
+                                </div>
+                                <h2 className="text-3xl font-black tracking-tighter leading-tight text-foreground">{selectedPhoto.title}</h2>
+                              </div>
+            
+                                                {/* Color Palette */}
+                                                <div className="space-y-3">
+                                                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">色彩分析 / Palette</h3>
+                                                  <div className="flex gap-2">
+                                                    {dominantColors.length > 0 ? dominantColors.map((color, i) => (
+                                                      <div 
+                                                        key={i} 
+                                                        className="w-7 h-7 rounded-lg shadow-sm border border-white/10 transition-all hover:scale-110"
+                                                        style={{ backgroundColor: color }}
+                                                        title={color}
+                                                      />
+                                                    )) : (
+                                                      [...Array(5)].map((_, i) => (
+                                                        <div key={i} className="w-7 h-7 rounded-lg bg-muted animate-pulse" />
+                                                      ))
+                                                    )}
+                                                  </div>
+                                                </div>            
+                              {/* Metadata Card */}
+                              <div className="space-y-4 p-5 rounded-2xl bg-muted/30 border border-white/10 shadow-inner text-foreground">
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground pb-2 border-b border-white/5 mb-4">媒体详细信息</h3>
+                                
+                                <div className="flex items-center justify-between group">
+                                  <div className="flex items-center gap-3 text-muted-foreground group-hover:text-foreground">
+                                    <Ruler className="w-3.5 h-3.5" />
+                                    <span className="text-xs font-medium text-foreground/70">分辨率</span>
+                                  </div>
+                                  <span className="text-xs font-mono font-bold text-foreground">{selectedPhoto.width} × {selectedPhoto.height}</span>
+                                </div>
+            
+                                <div className="flex items-center justify-between group">
+                                  <div className="flex items-center gap-3 text-muted-foreground group-hover:text-foreground">
+                                    <HardDrive className="w-3.5 h-3.5" />
+                                    <span className="text-xs font-medium text-foreground/70">大小</span>
+                                  </div>
+                                  <span className="text-xs font-mono font-bold text-foreground">{formatFileSize(selectedPhoto.size)}</span>
+                                </div>
+            
+                                <div className="flex items-center justify-between group">
+                                  <div className="flex items-center gap-3 text-muted-foreground group-hover:text-foreground">
+                                    <Calendar className="w-3.5 h-3.5" />
+                                    <span className="text-xs font-medium text-foreground/70">创建于</span>
+                                  </div>
+                                  <span className="text-xs font-bold text-foreground">{new Date(selectedPhoto.createdAt).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+            
+                              {/* Admin EXIF Details */}
+                              {(selectedPhoto.cameraModel || selectedPhoto.aperture || selectedPhoto.iso) ? (
+                                <div className="space-y-4 p-5 rounded-2xl bg-muted/30 border border-white/10 shadow-inner text-foreground">
+                                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground pb-2 border-b border-white/5 mb-4">拍摄参数 (EXIF)</h3>
+                                  
+                                  <div className="grid grid-cols-1 gap-4">
+                                    {selectedPhoto.cameraModel && (
+                                      <div className="flex justify-between items-center text-xs">
+                                        <span className="text-muted-foreground flex items-center gap-2"><Camera className="w-3 h-3" /> 相机</span>
+                                        <span className="font-bold truncate max-w-[120px] text-foreground">{selectedPhoto.cameraModel}</span>
+                                      </div>
+                                    )}
+                                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                                      {selectedPhoto.aperture && (
+                                        <div className="flex flex-col gap-1">
+                                          <span className="text-[9px] text-muted-foreground uppercase font-bold">光圈</span>
+                                          <span className="text-xs font-black text-foreground">{selectedPhoto.aperture}</span>
+                                        </div>
+                                      )}
+                                      {selectedPhoto.shutterSpeed && (
+                                        <div className="flex flex-col gap-1">
+                                          <span className="text-[9px] text-muted-foreground uppercase font-bold">快门</span>
+                                          <span className="text-xs font-black text-foreground">{selectedPhoto.shutterSpeed}</span>
+                                        </div>
+                                      )}
+                                      {selectedPhoto.iso && (
+                                        <div className="flex flex-col gap-1">
+                                          <span className="text-[9px] text-muted-foreground uppercase font-bold">ISO</span>
+                                          <span className="text-xs font-black text-foreground">{selectedPhoto.iso}</span>
+                                        </div>
+                                      )}
+                                      {selectedPhoto.focalLength && (
+                                        <div className="flex flex-col gap-1">
+                                          <span className="text-[9px] text-muted-foreground uppercase font-bold">焦距</span>
+                                          <span className="text-xs font-black text-foreground">{selectedPhoto.focalLength}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    {selectedPhoto.latitude && selectedPhoto.longitude && (
+                                      <button 
+                                        onClick={() => window.open(`https://www.google.com/maps?q=${selectedPhoto.latitude},${selectedPhoto.longitude}`, '_blank')}
+                                        className="mt-2 w-full py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-[10px] font-black uppercase transition-all border border-primary/10 flex items-center justify-center gap-2"
+                                      >
+                                        <MapPin className="w-3 h-3" /> 查看地图位置
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="text-center py-6">
+                                  <Code className="w-6 h-6 mx-auto mb-2 opacity-10" />
+                                  <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-black">无 EXIF 元数据</p>
+                                </div>
+                              )}
+                            </div>
+                <div className="p-6 border-t border-white/10 bg-black/5 dark:bg-white/5">
+                  <button 
+                    onClick={() => window.open(resolveAssetUrl(selectedPhoto.url, resolvedCdnDomain), '_blank')}
+                    className="w-full py-4 bg-foreground text-background dark:bg-white dark:text-black rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-black/10 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                    查看原文件
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
+}
+
+function formatFileSize(bytes?: number): string {
+  if (!bytes) return '未知'
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
 function Loader2({ className }: { className?: string }) {
