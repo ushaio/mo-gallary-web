@@ -1,25 +1,30 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Cormorant_Garamond, Montserrat } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import Footer from "@/components/Footer";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const cormorant = Cormorant_Garamond({
+  variable: "--font-serif",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const montserrat = Montserrat({
+  variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "MO GALLERY | 个人摄影作品集",
-  description: "展示精美摄影作品，记录生活点滴",
+  title: "MO GALLERY | 视界",
+  description: "Capturing the unspoken moments of existence.",
 };
 
 export default function RootLayout({
@@ -35,7 +40,7 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var theme = localStorage.getItem('theme') || 'system';
+                  var theme = localStorage.getItem('theme') || 'dark';
                   var supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
                   if (theme === 'dark' || (theme === 'system' && supportDarkMode)) {
                     document.documentElement.classList.add('dark');
@@ -49,17 +54,19 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${cormorant.variable} ${montserrat.variable} antialiased bg-background text-foreground font-sans selection:bg-primary selection:text-primary-foreground`}
       >
         <ThemeProvider>
           <SettingsProvider>
-            <AuthProvider>
-              <Navbar />
-              <main className="pt-16 min-h-screen">
-                {children}
-              </main>
-              <Footer />
-            </AuthProvider>
+            <LanguageProvider>
+              <AuthProvider>
+                <Navbar />
+                <main className="min-h-screen pt-20">
+                  {children}
+                </main>
+                <Footer />
+              </AuthProvider>
+            </LanguageProvider>
           </SettingsProvider>
         </ThemeProvider>
       </body>

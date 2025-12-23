@@ -20,56 +20,77 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-serif), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #0a0a0a;
-  --card: #ffffff;
-  --card-foreground: #0a0a0a;
-  --popover: #ffffff;
-  --popover-foreground: #0a0a0a;
-  --primary: #171717;
-  --primary-foreground: #fafafa;
-  --secondary: #f5f5f5;
-  --secondary-foreground: #171717;
-  --muted: #f5f5f5;
-  --muted-foreground: #737373;
-  --accent: #f5f5f5;
-  --accent-foreground: #171717;
-  --destructive: #ef4444;
-  --destructive-foreground: #fafafa;
-  --border: #e5e5e5;
-  --input: #e5e5e5;
-  --ring: #0a0a0a;
-  --radius: 0.5rem;
+  /* Light Mode - "Gallery Wall" (Stark White & Sharp Black) */
+  --background: #F4F4F4; /* Light Greyish White */
+  --foreground: #0A0A0A; /* Deep Black */
+
+  --card: #FFFFFF;
+  --card-foreground: #0A0A0A;
+
+  --popover: #FFFFFF;
+  --popover-foreground: #0A0A0A;
+
+  --primary: #0A0A0A; /* Black primary actions */
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #E5E5E5;
+  --secondary-foreground: #0A0A0A;
+
+  --muted: #F0F0F0;
+  --muted-foreground: #666666;
+
+  --accent: #D4AF37; /* Gold Accent */
+  --accent-foreground: #FFFFFF;
+
+  --destructive: #990000;
+  --destructive-foreground: #FFFFFF;
+
+  --border: #D4D4D4;
+  --input: #FFFFFF;
+  --ring: #D4AF37;
+
+  --radius: 0rem; /* Sharp corners */
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #fafafa;
-  --card: #0a0a0a;
-  --card-foreground: #fafafa;
-  --popover: #0a0a0a;
-  --popover-foreground: #fafafa;
-  --primary: #fafafa;
-  --primary-foreground: #171717;
-  --secondary: #262626;
-  --secondary-foreground: #fafafa;
-  --muted: #262626;
-  --muted-foreground: #a3a3a3;
-  --accent: #262626;
-  --accent-foreground: #fafafa;
-  --destructive: #7f1d1d;
-  --destructive-foreground: #fafafa;
-  --border: #262626;
-  --input: #262626;
-  --ring: #d4d4d4;
+  /* Dark Mode - "Midnight Vernissage" (Deep Black & Gold) */
+  --background: #050505;
+  --foreground: #E0E0E0;
+
+  --card: #0F0F0F;
+  --card-foreground: #E0E0E0;
+
+  --popover: #0F0F0F;
+  --popover-foreground: #E0E0E0;
+
+  --primary: #D4AF37; /* Gold */
+  --primary-foreground: #000000;
+
+  --secondary: #1A1A1A;
+  --secondary-foreground: #D4AF37;
+
+  --muted: #141414;
+  --muted-foreground: #888888;
+
+  --accent: #1F1F1F;
+  --accent-foreground: #D4AF37;
+
+  --destructive: #CF6679;
+  --destructive-foreground: #000000;
+
+  --border: #222222;
+  --input: #141414;
+  --ring: #D4AF37;
 }
 
 @layer base {
@@ -77,6 +98,32 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif font-medium tracking-tight;
+  }
+
+  /* Custom Selection Color */
+  ::selection {
+    @apply bg-primary/30 text-primary-foreground;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Modern Gallery Utilities */
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+
+  .glass {
+    @apply bg-background/60 backdrop-blur-lg border-b border-border/50;
   }
 }

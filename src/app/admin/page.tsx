@@ -28,12 +28,14 @@ import {
   Aperture,
   Clock,
   Gauge,
-  MapPin
+  MapPin,
+  Code
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSettings } from '@/contexts/SettingsContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { useRouter } from 'next/navigation'
 import ExifModal from '@/components/ExifModal'
 import {
@@ -45,6 +47,7 @@ import {
   resolveAssetUrl,
   updateAdminSettings,
   uploadPhoto,
+  updatePhoto,
   type AdminSettingsDto,
   type PhotoDto,
 } from '@/lib/api'
@@ -52,6 +55,7 @@ import {
 function AdminDashboard() {
   const { logout, token, user } = useAuth()
   const { settings: globalSettings, refresh: refreshGlobalSettings } = useSettings()
+  const { t } = useLanguage()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('photos')
   const [settingsTab, setSettingsTab] = useState('site')
@@ -183,7 +187,7 @@ function AdminDashboard() {
         handleUnauthorized()
         return
       }
-      setPhotosError(err instanceof Error ? err.message : '加载照片失败')
+      setPhotosError(err instanceof Error ? err.message : t('common.error'))
     } finally {
       setPhotosLoading(false)
     }
@@ -202,7 +206,7 @@ function AdminDashboard() {
         handleUnauthorized()
         return
       }
-      setSettingsError(err instanceof Error ? err.message : '加载配置失败')
+      setSettingsError(err instanceof Error ? err.message : t('common.error'))
     } finally {
       setSettingsLoading(false)
     }
@@ -234,7 +238,7 @@ function AdminDashboard() {
 
   const handleDelete = async (photoId: string) => {
     if (!token) return
-    if (!window.confirm('确认删除这张照片吗？')) return
+    if (!window.confirm(t('common.confirm') + '?')) return
     try {
       await deletePhoto({ token, id: photoId })
       await refreshPhotos()
@@ -243,7 +247,7 @@ function AdminDashboard() {
         handleUnauthorized()
         return
       }
-      setPhotosError(err instanceof Error ? err.message : '删除失败')
+      setPhotosError(err instanceof Error ? err.message : t('common.error'))
     }
   }
 
@@ -261,22 +265,22 @@ function AdminDashboard() {
         handleUnauthorized()
         return
       }
-      setPhotosError(err instanceof Error ? err.message : '更新状态失败')
+      setPhotosError(err instanceof Error ? err.message : t('common.error'))
     }
   }
 
   const handleUpload = async () => {
     if (!token) return
     if (uploadFiles.length === 0) {
-      setUploadError('请选择图片文件')
+      setUploadError(t('admin.select_files'))
       return
     }
     if (uploadFiles.length === 1 && !uploadTitle.trim()) {
-      setUploadError('请填写标题')
+      setUploadError(t('admin.photo_title'))
       return
     }
     if (uploadCategories.length === 0) {
-      setUploadError('请选择至少一个分类')
+      setUploadError(t('admin.categories'))
       return
     }
 
@@ -310,7 +314,7 @@ function AdminDashboard() {
         handleUnauthorized()
         return
       }
-      setUploadError(err instanceof Error ? err.message : '部分图片上传失败')
+      setUploadError(err instanceof Error ? err.message : t('common.error'))
     } finally {
       setUploading(false)
       setUploadProgress({ current: 0, total: 0 })
@@ -331,7 +335,7 @@ function AdminDashboard() {
         handleUnauthorized()
         return
       }
-      setSettingsError(err instanceof Error ? err.message : '保存失败')
+      setSettingsError(err instanceof Error ? err.message : t('common.error'))
     } finally {
       setSettingsSaving(false)
     }
@@ -347,27 +351,27 @@ function AdminDashboard() {
   }
 
   const sidebarItems = [
-    { id: 'photos', label: '照片管理', icon: ImageIcon },
-    { id: 'upload', label: '上传照片', icon: Upload },
-    { id: 'settings', label: '系统配置', icon: Settings },
+    { id: 'photos', label: t('admin.library'), icon: ImageIcon },
+    { id: 'upload', label: t('admin.upload'), icon: Upload },
+    { id: 'settings', label: t('admin.config'), icon: Settings },
   ]
 
   return (
-    <div className="flex min-h-screen bg-muted/30">
+    <div className="flex min-h-screen bg-background text-foreground">
       {/* Sidebar - Modern Design */}
       <aside className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-background border-r transform transition-transform duration-300 md:translate-x-0
+        fixed inset-y-0 left-0 z-40 w-64 bg-background border-r border-border transform transition-transform duration-300 md:translate-x-0
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex flex-col h-full">
-          <div className="p-6 border-b">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-bold">M</div>
-              <h2 className="text-lg font-bold tracking-tight">{siteTitle}</h2>
-            </div>
+          <div className="p-8 border-b border-border">
+            <h2 className="font-serif text-2xl font-bold tracking-tight">{siteTitle}</h2>
+            <p className="font-sans text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+              {t('admin.console')}
+            </p>
           </div>
 
-          <nav className="flex-1 p-4 space-y-1">
+          <nav className="flex-1 p-6 space-y-2">
             {sidebarItems.map(item => (
               <button
                 key={item.id}
@@ -376,9 +380,9 @@ function AdminDashboard() {
                   setIsMobileMenuOpen(false)
                 }}
                 className={`
-                  w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all
+                  w-full flex items-center space-x-3 px-4 py-3 text-xs font-bold tracking-widest uppercase transition-all
                   ${activeTab === item.id 
-                    ? 'bg-primary text-primary-foreground shadow-md' 
+                    ? 'bg-primary text-primary-foreground' 
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'}
                 `}
               >
@@ -388,14 +392,14 @@ function AdminDashboard() {
             ))}
           </nav>
 
-          <div className="p-4 border-t bg-muted/10">
-            <div className="flex items-center space-x-3 mb-4 px-4">
-              <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] text-white font-bold">
-                {user?.username?.substring(0, 2).toUpperCase() || 'AD'}
+          <div className="p-6 border-t border-border">
+            <div className="flex items-center space-x-3 mb-6 px-2">
+              <div className="w-8 h-8 bg-primary flex items-center justify-center text-xs text-primary-foreground font-bold">
+                {user?.username?.substring(0, 1).toUpperCase() || 'A'}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold truncate">{user?.username || '管理员'}</p>
-                <p className="text-[10px] text-muted-foreground truncate">主管理员</p>
+                <p className="text-xs font-bold truncate uppercase tracking-wider">{user?.username || 'ADMIN'}</p>
+                <p className="text-[10px] text-muted-foreground truncate uppercase tracking-widest">{t('admin.super_user')}</p>
               </div>
             </div>
             <button
@@ -403,10 +407,10 @@ function AdminDashboard() {
                 logout()
                 router.push('/')
               }}
-              className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/5 transition-colors"
+              className="w-full flex items-center space-x-3 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-destructive hover:bg-destructive/10 transition-colors"
             >
               <LogOut className="w-4 h-4" />
-              <span>退出系统</span>
+              <span>{t('nav.logout')}</span>
             </button>
           </div>
         </div>
@@ -415,25 +419,20 @@ function AdminDashboard() {
       {/* Main Content */}
       <main className="flex-1 md:ml-64 flex flex-col min-h-screen">
         {/* Header */}
-        <header className="sticky top-0 z-30 flex items-center justify-between px-8 py-4 bg-background/80 backdrop-blur-md border-b">
+        <header className="sticky top-0 z-30 flex items-center justify-between px-8 py-4 bg-background/95 backdrop-blur-xl border-b border-border">
           <div className="flex items-center">
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 mr-4 rounded-lg md:hidden hover:bg-muted"
+              className="p-2 mr-4 md:hidden hover:bg-muted"
             >
               <Menu className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-xl font-bold tracking-tight">
-                {activeTab === 'photos' && '照片库管理'}
-                {activeTab === 'upload' && '批量照片上传'}
-                {activeTab === 'settings' && '系统全局配置'}
+              <h1 className="font-serif text-2xl font-light tracking-tight uppercase">
+                {activeTab === 'photos' && t('admin.library')}
+                {activeTab === 'upload' && t('admin.upload')}
+                {activeTab === 'settings' && t('admin.config')}
               </h1>
-              <div className="flex items-center text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">
-                <span>控制面板</span>
-                <ChevronDown className="w-2 h-2 mx-1" />
-                <span>{activeTab}</span>
-              </div>
             </div>
           </div>
 
@@ -443,19 +442,19 @@ function AdminDashboard() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="搜索标题或分类..."
+                  placeholder={t('common.search')}
                   value={photoSearch}
                   onChange={(e) => setPhotoSearch(e.target.value)}
-                  className="pl-10 pr-4 py-2 bg-muted/50 border-none rounded-full text-xs focus:ring-1 focus:ring-primary w-64 transition-all"
+                  className="pl-10 pr-4 py-2 bg-muted border-none text-xs font-mono focus:ring-1 focus:ring-primary w-64 transition-all placeholder:text-muted-foreground/50"
                 />
               </div>
             )}
             <button 
               onClick={() => router.push('/gallery')}
-              className="p-2 rounded-full hover:bg-muted text-muted-foreground transition-colors"
-              title="查看前台"
+              className="flex items-center gap-2 px-3 py-1.5 border border-border hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all text-xs font-bold uppercase tracking-widest"
             >
-              <ExternalLink className="w-4 h-4" />
+              <span>{t('admin.view_site')}</span>
+              <ExternalLink className="w-3 h-3" />
             </button>
           </div>
         </header>
@@ -463,102 +462,100 @@ function AdminDashboard() {
         {/* Content Area */}
         <div className="p-8 flex-1">
           {activeTab === 'photos' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4 text-xs">
-                  <span className="text-muted-foreground">显示 {filteredPhotos.length} / {photos.length} 张照片</span>
-                  <div className="h-4 w-px bg-border" />
-                  <div className="flex items-center space-x-1 text-primary cursor-pointer hover:underline" onClick={refreshPhotos}>
-                    <Globe className="w-3 h-3" />
-                    <span>刷新数据</span>
-                  </div>
+            <div className="space-y-8">
+              <div className="flex items-center justify-between border-b border-border pb-4">
+                <div className="flex items-center space-x-6 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  <span>{filteredPhotos.length} {t('admin.items')}</span>
+                  <button className="hover:text-primary transition-colors flex items-center gap-2" onClick={refreshPhotos}>
+                    <Globe className="w-3 h-3" /> {t('common.refresh')}
+                  </button>
                 </div>
                 <button 
                   onClick={() => setActiveTab('upload')}
-                  className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
+                  className="flex items-center px-4 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  新增照片
+                  {t('admin.add_new')}
                 </button>
               </div>
 
               {photosError && (
-                <div className="p-4 bg-destructive/5 border border-destructive/10 text-destructive rounded-2xl text-xs flex items-center space-x-2">
+                <div className="p-4 border border-destructive text-destructive text-xs tracking-widest uppercase flex items-center space-x-2">
                   <X className="w-4 h-4" />
                   <span>{photosError}</span>
                 </div>
               )}
 
               {photosLoading ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {[...Array(10)].map((_, i) => (
-                    <div key={i} className="aspect-square rounded-2xl bg-muted animate-pulse" />
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {[...Array(12)].map((_, i) => (
+                    <div key={i} className="aspect-[4/5] bg-muted animate-pulse" />
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4">
                   {filteredPhotos.map((photo) => (
                     <div 
                       key={photo.id} 
-                      className="group relative bg-background rounded-[24px] border border-border overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+                      className="group relative cursor-pointer bg-muted"
+                      onClick={() => setSelectedPhoto(photo)}
                     >
                       {/* Image Area */}
-                      <div 
-                        onClick={() => setSelectedPhoto(photo)}
-                        className="aspect-square overflow-hidden cursor-pointer bg-muted"
-                      >
+                      <div className="aspect-[4/5] overflow-hidden">
                         <img
                           src={resolveAssetUrl(photo.thumbnailUrl || photo.url, resolvedCdnDomain)}
                           alt={photo.title}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 grayscale group-hover:grayscale-0"
                           loading="lazy"
                         />
                       </div>
 
-                      {/* Info Area */}
-                      <div className="p-3 space-y-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <h3 className="text-[10px] font-black truncate text-foreground">{photo.title}</h3>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleToggleFeatured(photo); }}
-                            className={`shrink-0 transition-colors ${photo.isFeatured ? 'text-amber-500 hover:text-amber-600' : 'text-muted-foreground/30 hover:text-amber-500'}`}
-                            title={photo.isFeatured ? '取消精选' : '设为精选'}
-                          >
-                            <Star className={`w-3.5 h-3.5 ${photo.isFeatured ? 'fill-current' : ''}`} />
-                          </button>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-1">
-                          {photo.category.split(',').map(cat => (
-                            <span key={cat} className="px-1.5 py-0.5 rounded-md bg-muted text-[8px] font-bold text-muted-foreground uppercase">
-                              {cat}
-                            </span>
-                          ))}
-                        </div>
+                      {/* Overlay */}
+                      <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
-                        <div className="pt-2 flex items-center justify-between gap-2">
-                          <span className="text-[8px] font-mono text-muted-foreground">{photo.width}×{photo.height}</span>
+                      {/* Actions */}
+                      <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                         <button
+                            onClick={(e) => { e.stopPropagation(); handleToggleFeatured(photo); }}
+                            className={`p-2 bg-background/90 backdrop-blur-sm text-foreground hover:text-amber-500 transition-colors ${photo.isFeatured ? 'text-amber-500' : ''}`}
+                            title="Toggle Featured"
+                          >
+                            <Star className={`w-4 h-4 ${photo.isFeatured ? 'fill-current' : ''}`} />
+                          </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDelete(photo.id); }}
-                            className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
-                            title="删除照片"
+                            className="p-2 bg-background/90 backdrop-blur-sm text-foreground hover:text-destructive transition-colors"
+                            title="Delete Photo"
                           >
-                            <Trash2 className="w-3 h-3" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
+                      </div>
+
+                      {/* Info Overlay */}
+                       <div className="absolute bottom-0 left-0 w-full p-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 pointer-events-none">
+                        <div className="bg-background/90 p-2 backdrop-blur-sm">
+                          <h3 className="text-[10px] font-bold uppercase tracking-widest truncate text-foreground">{photo.title}</h3>
+                          <div className="flex gap-1 mt-1">
+                            {photo.category.split(',').slice(0, 1).map(cat => (
+                              <span key={cat} className="text-[8px] font-mono text-muted-foreground uppercase">
+                                {cat}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
 
                       {photo.isFeatured && (
-                        <div className="absolute top-2 left-2 px-2 py-0.5 bg-amber-500 text-white text-[8px] font-black rounded-full shadow-lg uppercase tracking-tighter">
-                          精选作品
+                        <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-amber-500 text-white text-[8px] font-black uppercase tracking-widest z-10">
+                          {t('admin.feat')}
                         </div>
                       )}
                     </div>
                   ))}
                   {filteredPhotos.length === 0 && (
-                    <div className="col-span-full py-24 flex flex-col items-center justify-center text-muted-foreground">
+                    <div className="col-span-full py-24 flex flex-col items-center justify-center text-muted-foreground border border-dashed border-border">
                       <ImageIcon className="w-12 h-12 mb-4 opacity-10" />
-                      <p className="text-xs">未发现符合条件的照片</p>
+                      <p className="text-xs font-bold uppercase tracking-widest">{t('admin.no_photos')}</p>
                     </div>
                   )}
                 </div>
@@ -567,38 +564,38 @@ function AdminDashboard() {
           )}
 
           {activeTab === 'upload' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              <div className="lg:col-span-4 space-y-6">
-                <div className="bg-background rounded-3xl border p-6 space-y-6 shadow-sm">
-                  <h3 className="text-sm font-bold flex items-center space-x-2">
-                    <Upload className="w-4 h-4 text-primary" />
-                    <span>上传参数</span>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+              <div className="lg:col-span-4 space-y-8">
+                <div className="border border-border p-8 space-y-8 bg-card/50">
+                  <h3 className="font-serif text-xl font-light uppercase tracking-tight flex items-center gap-2">
+                    <Upload className="w-5 h-5 text-primary" />
+                    {t('admin.upload_params')}
                   </h3>
 
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <div>
-                      <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">照片标题</label>
+                      <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">{t('admin.photo_title')}</label>
                       <input
                         type="text"
                         value={uploadTitle}
                         onChange={(e) => setUploadTitle(e.target.value)}
                         disabled={uploadFiles.length > 1}
-                        className="w-full p-2.5 bg-muted/30 border rounded-xl text-sm focus:ring-1 focus:ring-primary disabled:opacity-40 transition-all"
-                        placeholder={uploadFiles.length > 1 ? "多图上传将使用文件名" : "例如：落日余晖"}
+                        className="w-full p-3 bg-background border-b border-border focus:border-primary outline-none text-sm transition-colors rounded-none placeholder:text-muted-foreground/30"
+                        placeholder={uploadFiles.length > 1 ? t('admin.title_hint_multi') : t('admin.title_hint_single')}
                       />
                     </div>
 
                     <div ref={categoryContainerRef} className="relative">
-                      <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">关联分类</label>
+                      <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">{t('admin.categories')}</label>
                       <div 
-                        className="min-h-11 p-2 bg-muted/30 border rounded-xl flex flex-wrap gap-1.5 cursor-text items-center transition-all focus-within:ring-1 focus-within:ring-primary"
+                        className="min-h-12 p-2 bg-background border-b border-border flex flex-wrap gap-2 cursor-text items-center transition-colors focus-within:border-primary"
                         onClick={() => {
                           setIsCategoryDropdownOpen(true)
                           categoryContainerRef.current?.querySelector('input')?.focus()
                         }}
                       >
                         {uploadCategories.map(cat => (
-                          <span key={cat} className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-lg border border-primary/20">
+                          <span key={cat} className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
                             {cat}
                             <button onClick={(e) => { e.stopPropagation(); removeCategory(cat); }} className="hover:text-primary/70">
                               <X className="w-3 h-3" />
@@ -613,56 +610,56 @@ function AdminDashboard() {
                             if (e.key === 'Enter') { e.preventDefault(); if (categoryInput.trim()) addCategory(categoryInput); }
                             else if (e.key === 'Backspace' && !categoryInput && uploadCategories.length > 0) removeCategory(uploadCategories[uploadCategories.length - 1]);
                           }}
-                          className="flex-1 min-w-[80px] outline-none bg-transparent text-sm"
-                          placeholder={uploadCategories.length === 0 ? "搜索或创建..." : ""}
+                          className="flex-1 min-w-[80px] outline-none bg-transparent text-sm font-mono"
+                          placeholder={uploadCategories.length === 0 ? t('admin.search_create') : ""}
                         />
                       </div>
 
                       {isCategoryDropdownOpen && (
-                        <div className="absolute z-10 w-full mt-2 bg-background border rounded-2xl shadow-xl max-h-48 overflow-y-auto p-1 overflow-x-hidden">
+                        <div className="absolute z-10 w-full mt-1 bg-background border border-border shadow-2xl max-h-48 overflow-y-auto">
                           {filteredCategories.length > 0 ? (
                             filteredCategories.map(cat => (
                               <button
                                 key={cat}
                                 onClick={(e) => { e.stopPropagation(); addCategory(cat); }}
-                                className="w-full text-left px-3 py-2 text-xs hover:bg-muted rounded-xl flex items-center justify-between group"
+                                className="w-full text-left px-4 py-3 text-xs font-bold uppercase tracking-wider hover:bg-primary hover:text-primary-foreground flex items-center justify-between group transition-colors"
                               >
                                 <span>{cat}</span>
-                                <Check className="w-3 h-3 text-primary opacity-0 group-hover:opacity-100" />
+                                <Check className="w-3 h-3 opacity-0 group-hover:opacity-100" />
                               </button>
                             ))
                           ) : categoryInput.trim() ? (
-                            <button onClick={(e) => { e.stopPropagation(); addCategory(categoryInput); }} className="w-full text-left px-3 py-2 text-xs hover:bg-primary/5 rounded-xl">
-                              创建并选择 <span className="font-bold text-primary">&quot;{categoryInput}&quot;</span>
+                            <button onClick={(e) => { e.stopPropagation(); addCategory(categoryInput); }} className="w-full text-left px-4 py-3 text-xs hover:bg-muted">
+                              Create <span className="font-bold text-primary">&quot;{categoryInput}&quot;</span>
                             </button>
                           ) : (
-                            <div className="px-3 py-4 text-center text-xs text-muted-foreground">暂无更多可选</div>
+                            <div className="px-4 py-3 text-center text-[10px] uppercase text-muted-foreground">No matches</div>
                           )}
                         </div>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 pt-2">
+                    <div className="space-y-6">
                       <div>
-                        <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">上传源</label>
+                        <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">{t('admin.storage_provider')}</label>
                         <select
                           value={uploadSource}
                           onChange={(e) => setUploadSource(e.target.value)}
-                          className="w-full p-2.5 bg-muted/30 border rounded-xl text-sm focus:ring-1 focus:ring-primary outline-none"
+                          className="w-full p-3 bg-background border-b border-border focus:border-primary outline-none text-xs font-bold uppercase tracking-wider"
                         >
-                          <option value="local">本地存储 (Local)</option>
+                          <option value="local">Local Storage</option>
                           <option value="r2">Cloudflare R2</option>
                           <option value="github">GitHub</option>
                         </select>
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">路径前缀</label>
+                        <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">{t('admin.path_prefix')}</label>
                         <input
                           type="text"
                           value={uploadPath}
                           onChange={(e) => setUploadPath(e.target.value)}
-                          className="w-full p-2.5 bg-muted/30 border rounded-xl text-sm focus:ring-1 focus:ring-primary outline-none"
-                          placeholder="例如: 2025/vacation"
+                          className="w-full p-3 bg-background border-b border-border focus:border-primary outline-none text-sm font-mono transition-colors rounded-none placeholder:text-muted-foreground/30"
+                          placeholder="e.g., 2025/vacation"
                         />
                       </div>
                     </div>
@@ -672,21 +669,21 @@ function AdminDashboard() {
                     <button
                       onClick={handleUpload}
                       disabled={uploading || uploadFiles.length === 0}
-                      className="w-full py-3 bg-primary text-primary-foreground rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:hover:scale-100 transition-all flex items-center justify-center space-x-2"
+                      className="w-full py-4 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] hover:bg-primary hover:text-primary-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2"
                     >
                       {uploading ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>正在上传 ({uploadProgress.current}/{uploadProgress.total})</span>
+                          <span>{t('admin.uploading')} ({uploadProgress.current}/{uploadProgress.total})</span>
                         </>
                       ) : (
                         <>
                           <Save className="w-4 h-4" />
-                          <span>开始上传任务</span>
+                          <span>{t('admin.start_upload')}</span>
                         </>
                       )}
                     </button>
-                    {uploadError && <p className="mt-3 text-[10px] text-red-500 text-center font-medium">{uploadError}</p>}
+                    {uploadError && <p className="mt-4 text-[10px] text-destructive text-center font-bold uppercase tracking-widest">{uploadError}</p>}
                   </div>
                 </div>
               </div>
@@ -697,32 +694,31 @@ function AdminDashboard() {
                   onDragLeave={() => setIsDragging(false)}
                   onDrop={handleDrop}
                   className={`
-                    border-2 border-dashed rounded-[32px] transition-all min-h-[500px] flex flex-col relative
-                    ${isDragging ? 'border-primary bg-primary/5 scale-[0.99]' : 'border-muted-foreground/20 bg-muted/10'}
-                    ${uploadFiles.length > 0 ? 'bg-background' : ''}
+                    border border-dashed transition-all min-h-[600px] flex flex-col relative
+                    ${isDragging ? 'border-primary bg-primary/5' : 'border-border bg-muted/20'}
                   `}
                 >
                   {uploadFiles.length > 0 ? (
-                    <div className="flex-1 p-6 overflow-y-auto max-h-[600px] space-y-6">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    <div className="flex-1 p-8 overflow-y-auto max-h-[700px]">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
                         {uploadPreviews.map((preview, idx) => (
-                          <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border-4 border-background shadow-sm bg-muted group">
+                          <div key={idx} className="relative aspect-square border border-border bg-muted group">
                             <img src={preview.url} alt="preview" className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity" />
                             <button 
                               onClick={() => setUploadFiles(uploadFiles.filter((_, i) => i !== idx))}
-                              className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 scale-90 group-hover:scale-100"
+                              className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                             >
                               <X className="w-3 h-3" />
                             </button>
                             {uploading && uploadProgress.current > idx + 1 && (
-                              <div className="absolute inset-0 bg-green-500/40 backdrop-blur-[1px] flex items-center justify-center">
-                                <Check className="w-8 h-8 text-white drop-shadow-md" />
+                              <div className="absolute inset-0 bg-primary/20 backdrop-blur-[1px] flex items-center justify-center">
+                                <Check className="w-8 h-8 text-primary drop-shadow-md" />
                               </div>
                             )}
                             {uploading && uploadProgress.current === idx + 1 && (
-                              <div className="absolute inset-0 bg-primary/30 backdrop-blur-[1px] flex items-center justify-center">
-                                <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                              <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] flex items-center justify-center">
+                                <Loader2 className="w-8 h-8 animate-spin text-primary" />
                               </div>
                             )}
                           </div>
@@ -735,21 +731,21 @@ function AdminDashboard() {
                               input.onchange = (e) => setUploadFiles(prev => [...prev, ...Array.from((e.target as HTMLInputElement).files ?? [])]);
                               input.click();
                             }}
-                            className="aspect-square rounded-2xl border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center text-muted-foreground hover:text-primary hover:border-primary hover:bg-primary/5 transition-all group"
+                            className="aspect-square border border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:text-primary hover:border-primary hover:bg-primary/5 transition-all group"
                           >
-                            <Plus className="w-8 h-8 mb-2 group-hover:scale-110 transition-transform" />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">继续添加</span>
+                            <Plus className="w-6 h-6 mb-2" />
+                            <span className="text-[8px] font-bold uppercase tracking-widest">{t('admin.add_more')}</span>
                           </button>
                         )}
                       </div>
                     </div>
                   ) : (
                     <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
-                      <div className={`p-6 rounded-full bg-background shadow-xl mb-6 transition-transform duration-500 ${isDragging ? 'scale-125' : ''}`}>
-                        <Upload className={`w-12 h-12 transition-colors ${isDragging ? 'text-primary' : 'text-muted-foreground/40'}`} />
+                      <div className={`p-8 mb-6 transition-transform duration-500 ${isDragging ? 'scale-110' : ''}`}>
+                        <Upload className={`w-12 h-12 stroke-1 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
                       </div>
-                      <h4 className="text-lg font-bold mb-2">拖拽图片到这里</h4>
-                      <p className="text-sm text-muted-foreground max-w-xs">支持 JPG, PNG, WEBP 等格式，您可以一次性拖入多张照片。</p>
+                      <h4 className="font-serif text-2xl mb-2">{t('admin.drop_here')}</h4>
+                      <p className="text-xs text-muted-foreground uppercase tracking-widest mb-8">{t('admin.support_types')}</p>
                       <button 
                         onClick={() => {
                           const input = document.createElement('input');
@@ -757,22 +753,22 @@ function AdminDashboard() {
                           input.onchange = (e) => setUploadFiles(prev => [...prev, ...Array.from((e.target as HTMLInputElement).files ?? [])]);
                           input.click();
                         }}
-                        className="mt-8 px-6 py-2.5 bg-background border rounded-full text-xs font-bold hover:bg-muted transition-colors shadow-sm"
+                        className="px-8 py-3 bg-background border border-foreground text-foreground text-xs font-bold uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors"
                       >
-                        选择本地文件
+                        {t('admin.select_files')}
                       </button>
                     </div>
                   )}
                   {uploading && (
-                    <div className="p-6 bg-background/80 backdrop-blur-md border-t rounded-b-[32px]">
-                      <div className="flex justify-between text-xs font-bold mb-2">
+                    <div className="p-4 bg-background border-t border-border">
+                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-2">
                         <span className="flex items-center space-x-2">
                           <Loader2 className="w-3 h-3 animate-spin" />
-                          <span>正在执行上传队列...</span>
+                          <span>{t('admin.processing')}</span>
                         </span>
                         <span>{Math.round((uploadProgress.current / uploadProgress.total) * 100)}%</span>
                       </div>
-                      <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="w-full h-1 bg-muted overflow-hidden">
                         <motion.div 
                           className="h-full bg-primary" 
                           initial={{ width: 0 }}
@@ -787,123 +783,116 @@ function AdminDashboard() {
           )}
 
           {activeTab === 'settings' && (
-            <div className="max-w-6xl">
-              <div className="flex flex-col md:flex-row gap-8">
-                {/* Settings Sidebar - Pills */}
-                <aside className="w-full md:w-56 space-y-1">
-                  <div className="mb-4 px-4 py-2">
-                    <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">配置分类</h4>
+            <div className="max-w-[1920px]">
+              <div className="flex flex-col md:flex-row gap-12">
+                {/* Settings Sidebar - Plain Text */}
+                <aside className="w-full md:w-48 space-y-1">
+                  <div className="mb-6 pb-2 border-b border-border">
+                    <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{t('admin.config')}</h4>
                   </div>
                   {[
-                    { id: 'site', label: '网站设置', icon: Globe },
-                    { id: 'categories', label: '分类管理', icon: FolderTree },
-                    { id: 'storage', label: '上传源配置', icon: Cloud },
-                    { id: 'comments', label: '评论管理', icon: MessageSquare },
+                    { id: 'site', label: t('admin.general'), icon: Globe },
+                    { id: 'categories', label: t('admin.taxonomy'), icon: FolderTree },
+                    { id: 'storage', label: t('admin.engine'), icon: Cloud },
+                    { id: 'comments', label: t('admin.comments'), icon: MessageSquare },
                   ].map(tab => (
                     <button
                       key={tab.id}
                       onClick={() => setSettingsTab(tab.id)}
                       className={`
-                        w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all
-                        ${settingsTab === tab.id ? 'bg-primary/10 text-primary border-r-4 border-primary' : 'text-muted-foreground hover:bg-muted'}
+                        w-full flex items-center justify-between px-2 py-3 text-xs font-bold uppercase tracking-widest transition-all border-l-2
+                        ${settingsTab === tab.id ? 'border-primary text-primary pl-4' : 'border-transparent text-muted-foreground hover:text-foreground pl-2'}
                       `}
                     >
-                      <tab.icon className="w-4 h-4" />
                       <span>{tab.label}</span>
                     </button>
                   ))}
                 </aside>
 
                 {/* Settings Panel */}
-                <div className="flex-1 bg-background rounded-[32px] border p-8 shadow-sm min-h-[500px] flex flex-col">
+                <div className="flex-1 min-h-[500px] flex flex-col">
                   {settingsError && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-xs flex items-center space-x-2">
+                    <div className="mb-8 p-4 border border-destructive text-destructive text-xs tracking-widest uppercase flex items-center space-x-2">
                       <X className="w-4 h-4" />
                       <span>{settingsError}</span>
                     </div>
                   )}
 
                   {settingsLoading || !settings ? (
-                    <div className="flex-1 flex items-center justify-center text-muted-foreground text-xs italic">正在加载配置...</div>
+                    <div className="flex-1 flex items-center justify-center text-muted-foreground text-xs font-mono uppercase">{t('common.loading')}</div>
                   ) : (
-                    <div className="flex-1 space-y-8">
+                    <div className="flex-1 space-y-12">
                       {settingsTab === 'site' && (
-                        <div className="max-w-2xl space-y-6">
-                          <div className="pb-2 border-b">
-                            <h3 className="text-base font-bold">基础信息</h3>
-                            <p className="text-xs text-muted-foreground mt-1">设置您的站点名称及全局 CDN 优化。</p>
+                        <div className="max-w-2xl space-y-8">
+                          <div className="pb-4 border-b border-border">
+                            <h3 className="font-serif text-2xl">{t('admin.general')}</h3>
                           </div>
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-1 gap-4">
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">站点标题</label>
+                          <div className="space-y-6">
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t('admin.site_title')}</label>
                                 <input
                                   type="text"
                                   value={settings.site_title}
                                   onChange={(e) => setSettings({ ...settings, site_title: e.target.value })}
-                                  className="w-full p-3 bg-muted/30 border rounded-2xl text-sm focus:ring-2 focus:ring-primary transition-all outline-none"
-                                  placeholder="我的摄影集"
+                                  className="w-full p-4 bg-transparent border border-border focus:border-primary outline-none text-sm transition-colors rounded-none"
                                 />
                               </div>
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">CDN 边缘域名</label>
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t('admin.cdn_host')}</label>
                                 <input
                                   type="text"
                                   value={settings.cdn_domain}
                                   onChange={(e) => setSettings({ ...settings, cdn_domain: e.target.value })}
-                                  placeholder="https://cdn.your-gallery.com"
-                                  className="w-full p-3 bg-muted/30 border rounded-2xl text-sm focus:ring-2 focus:ring-primary transition-all outline-none"
+                                  placeholder="https://cdn.example.com"
+                                  className="w-full p-4 bg-transparent border border-border focus:border-primary outline-none text-sm transition-colors rounded-none"
                                 />
-                                <p className="text-[10px] text-muted-foreground px-1 italic">为空则默认使用 API 地址作为静态资源根目录。</p>
+                                <p className="text-[10px] text-muted-foreground font-mono">Leave empty to use API host.</p>
                               </div>
-                            </div>
                           </div>
                         </div>
                       )}
 
                       {settingsTab === 'categories' && (
-                        <div className="space-y-6">
-                          <div className="pb-2 border-b">
-                            <h3 className="text-base font-bold">全部分类</h3>
-                            <p className="text-xs text-muted-foreground mt-1">管理系统中的所有预设分类，删除分类不会删除相关照片。</p>
+                        <div className="space-y-8">
+                          <div className="pb-4 border-b border-border">
+                            <h3 className="font-serif text-2xl">{t('admin.taxonomy')}</h3>
                           </div>
-                          <div className="flex flex-wrap gap-2.5">
+                          <div className="flex flex-wrap gap-3">
                             {categories.map(cat => (
-                              <div key={cat} className="flex items-center space-x-2 px-3.5 py-1.5 bg-background border rounded-full text-xs font-medium shadow-sm hover:shadow-md transition-all group">
+                              <div key={cat} className="flex items-center space-x-2 px-4 py-2 bg-muted border border-border text-xs font-bold uppercase tracking-wider group">
                                 <span>{cat}</span>
                                 {cat !== '全部' && (
-                                  <button className="text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
+                                  <button className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all">
                                     <X className="w-3.5 h-3.5" />
                                   </button>
                                 )}
                               </div>
                             ))}
-                            <button className="flex items-center space-x-1 px-3.5 py-1.5 bg-primary/5 text-primary rounded-full text-xs font-bold hover:bg-primary/10 border border-primary/20">
+                            <button className="flex items-center space-x-2 px-4 py-2 border border-dashed border-border text-muted-foreground hover:text-primary hover:border-primary transition-all text-xs font-bold uppercase tracking-wider">
                               <Plus className="w-3.5 h-3.5" />
-                              <span>快速添加</span>
+                              <span>{t('admin.add_new')}</span>
                             </button>
                           </div>
                         </div>
                       )}
 
                       {settingsTab === 'storage' && (
-                        <div className="max-w-2xl space-y-6">
-                          <div className="pb-2 border-b">
-                            <h3 className="text-base font-bold">多源存储引擎</h3>
-                            <p className="text-xs text-muted-foreground mt-1">配置第三方存储引擎凭据，建议使用云存储以获得更好的访问速度。</p>
+                        <div className="max-w-3xl space-y-8">
+                          <div className="pb-4 border-b border-border">
+                            <h3 className="font-serif text-2xl">{t('admin.engine')}</h3>
                           </div>
                           
-                          <div className="space-y-6">
-                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">当前默认提供商</label>
-                              <div className="flex p-1 bg-muted/50 rounded-2xl w-fit">
+                          <div className="space-y-8">
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t('admin.active_provider')}</label>
+                              <div className="flex gap-4">
                                 {['local', 'r2', 'github'].map(p => (
                                   <button
                                     key={p}
                                     onClick={() => setSettings({ ...settings, storage_provider: p })}
                                     className={`
-                                      px-5 py-2 rounded-xl text-xs font-bold transition-all
-                                      ${settings.storage_provider === p ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}
+                                      px-6 py-3 text-xs font-bold uppercase tracking-widest border transition-all
+                                      ${settings.storage_provider === p ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground hover:border-foreground hover:text-foreground'}
                                     `}
                                   >
                                     {p.toUpperCase()}
@@ -913,78 +902,73 @@ function AdminDashboard() {
                             </div>
 
                             {settings.storage_provider === 'r2' && (
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6 bg-blue-50/30 border border-blue-100 rounded-[24px]">
-                                <div className="md:col-span-2 space-y-1.5">
-                                  <label className="text-[9px] font-black uppercase text-blue-600 px-1">R2 S3 Endpoint</label>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8 border border-border bg-muted/20">
+                                <div className="md:col-span-2 space-y-2">
+                                  <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Endpoint</label>
                                   <input
                                     type="text"
                                     value={settings.r2_endpoint ?? ''}
                                     onChange={(e) => setSettings({ ...settings, r2_endpoint: e.target.value })}
-                                    className="w-full p-2.5 bg-background border rounded-xl text-xs focus:ring-2 focus:ring-blue-400 outline-none"
-                                    placeholder="https://<id>.r2.cloudflarestorage.com"
+                                    className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                                   />
                                 </div>
-                                <div className="space-y-1.5">
-                                  <label className="text-[9px] font-black uppercase text-blue-600 px-1">Access Key</label>
+                                <div className="space-y-2">
+                                  <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Access Key ID</label>
                                   <input
                                     type="text"
                                     value={settings.r2_access_key_id ?? ''}
                                     onChange={(e) => setSettings({ ...settings, r2_access_key_id: e.target.value })}
-                                    className="w-full p-2.5 bg-background border rounded-xl text-xs focus:ring-2 focus:ring-blue-400 outline-none"
+                                    className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                                   />
                                 </div>
-                                <div className="space-y-1.5">
-                                  <label className="text-[9px] font-black uppercase text-blue-600 px-1">Secret Key</label>
+                                <div className="space-y-2">
+                                  <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Secret Access Key</label>
                                   <input
                                     type="password"
                                     value={settings.r2_secret_access_key ?? ''}
                                     onChange={(e) => setSettings({ ...settings, r2_secret_access_key: e.target.value })}
-                                    className="w-full p-2.5 bg-background border rounded-xl text-xs focus:ring-2 focus:ring-blue-400 outline-none"
-                                    placeholder="••••••••••••"
+                                    className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                                   />
                                 </div>
-                                <div className="md:col-span-2 space-y-1.5">
-                                  <label className="text-[9px] font-black uppercase text-blue-600 px-1">Bucket Name</label>
+                                <div className="md:col-span-2 space-y-2">
+                                  <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Bucket</label>
                                   <input
                                     type="text"
                                     value={settings.r2_bucket ?? ''}
                                     onChange={(e) => setSettings({ ...settings, r2_bucket: e.target.value })}
-                                    className="w-full p-2.5 bg-background border rounded-xl text-xs focus:ring-2 focus:ring-blue-400 outline-none"
+                                    className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                                   />
                                 </div>
                               </div>
                             )}
 
                             {settings.storage_provider === 'github' && (
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6 bg-slate-50 border border-slate-200 rounded-[24px]">
-                                <div className="md:col-span-2 space-y-1.5">
-                                  <label className="text-[9px] font-black uppercase text-slate-600 px-1">Personal Access Token</label>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8 border border-border bg-muted/20">
+                                <div className="md:col-span-2 space-y-2">
+                                  <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Personal Access Token</label>
                                   <input
                                     type="password"
                                     value={settings.github_token ?? ''}
                                     onChange={(e) => setSettings({ ...settings, github_token: e.target.value })}
-                                    className="w-full p-2.5 bg-background border rounded-xl text-xs focus:ring-2 focus:ring-slate-400 outline-none"
-                                    placeholder="ghp_••••••••••••"
+                                    className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                                   />
                                 </div>
-                                <div className="space-y-1.5">
-                                  <label className="text-[9px] font-black uppercase text-slate-600 px-1">Repository (owner/repo)</label>
+                                <div className="space-y-2">
+                                  <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Repo (owner/repo)</label>
                                   <input
                                     type="text"
                                     value={settings.github_repo ?? ''}
                                     onChange={(e) => setSettings({ ...settings, github_repo: e.target.value })}
-                                    className="w-full p-2.5 bg-background border rounded-xl text-xs focus:ring-2 focus:ring-slate-400 outline-none"
-                                    placeholder="username/storage"
+                                    className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                                   />
                                 </div>
-                                <div className="space-y-1.5">
-                                  <label className="text-[9px] font-black uppercase text-slate-600 px-1">Store Path</label>
+                                <div className="space-y-2">
+                                  <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Path</label>
                                   <input
                                     type="text"
                                     value={settings.github_path ?? ''}
                                     onChange={(e) => setSettings({ ...settings, github_path: e.target.value })}
-                                    className="w-full p-2.5 bg-background border rounded-xl text-xs focus:ring-2 focus:ring-slate-400 outline-none"
-                                    placeholder="images"
+                                    className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                                   />
                                 </div>
                               </div>
@@ -994,25 +978,23 @@ function AdminDashboard() {
                       )}
 
                       {settingsTab === 'comments' && (
-                        <div className="flex-1 flex flex-col items-center justify-center space-y-4">
-                          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-                            <MessageSquare className="w-8 h-8 text-muted-foreground opacity-20" />
-                          </div>
+                        <div className="flex-1 flex flex-col items-center justify-center space-y-4 py-24 border border-dashed border-border">
+                          <MessageSquare className="w-12 h-12 text-muted-foreground/30" />
                           <div className="text-center">
-                            <h4 className="text-sm font-bold">评论管理模块</h4>
-                            <p className="text-xs text-muted-foreground mt-1">此功能正在内部开发测试中，敬请期待。</p>
+                            <h4 className="text-sm font-bold uppercase tracking-widest">{t('admin.comments')}</h4>
+                            <p className="text-xs text-muted-foreground mt-2 font-mono">{t('admin.dev_progress')}</p>
                           </div>
                         </div>
                       )}
 
-                      <div className="pt-8 border-t flex justify-end">
+                      <div className="pt-8 border-t border-border flex justify-end">
                         <button
                           onClick={handleSaveSettings}
                           disabled={settingsSaving}
-                          className="px-8 py-3 bg-primary text-primary-foreground rounded-2xl text-sm font-bold shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 transition-all flex items-center space-x-2"
+                          className="px-8 py-4 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-all flex items-center space-x-2"
                         >
                           {settingsSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                          <span>保存全局配置</span>
+                          <span>{t('admin.save')}</span>
                         </button>
                       </div>
                     </div>
@@ -1027,164 +1009,134 @@ function AdminDashboard() {
       {/* Modal - Admin Preview */}
       <AnimatePresence>
         {selectedPhoto && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-xl"
-              onClick={() => setSelectedPhoto(null)}
-            />
-            
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-8 bg-background/95 backdrop-blur-sm">
                         <motion.div
-                          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                          className="relative z-10 bg-background/80 dark:bg-black/80 backdrop-blur-3xl border border-white/20 dark:border-white/10 rounded-[32px] overflow-hidden w-full max-w-6xl h-[85vh] shadow-2xl flex flex-col lg:flex-row"
+                          initial={{ opacity: 0, scale: 0.98 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.98 }}
+                          className="relative w-full h-full max-w-[1800px] bg-background border border-border flex flex-col lg:flex-row overflow-hidden shadow-2xl"
                         >
                           <button
                             onClick={() => setSelectedPhoto(null)}
-                            className="absolute top-6 right-6 z-20 p-2.5 rounded-full bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 backdrop-blur-md transition-all active:scale-95"
+                            className="absolute top-0 right-0 z-50 p-6 text-foreground hover:text-primary transition-colors bg-background/50 backdrop-blur-md border-b border-l border-border"
                           >
-                            <X className="w-5 h-5" />
+                            <X className="w-6 h-6" />
                           </button>
             
-                          <div className="w-full lg:w-[75%] h-full flex items-center justify-center p-6 sm:p-12 bg-black/5 dark:bg-white/5 relative">
-                            <img 
-                              src={resolveAssetUrl(selectedPhoto.url, resolvedCdnDomain)} 
-                              alt={selectedPhoto.title}
-                              className="max-w-full max-h-full object-contain shadow-2xl rounded-sm"
-                            />
+                          <div className="w-full lg:w-[70%] h-full flex items-center justify-center bg-black/5 relative overflow-hidden">
+                            <div className="w-full h-full p-4 md:p-12 flex items-center justify-center">
+                              <img 
+                                src={resolveAssetUrl(selectedPhoto.url, resolvedCdnDomain)} 
+                                alt={selectedPhoto.title}
+                                className="max-w-full max-h-full object-contain shadow-2xl"
+                              />
+                            </div>
                           </div>
             
-                          <div className="w-full lg:w-[25%] h-full flex flex-col border-l border-white/10 overflow-y-auto bg-white/20 dark:bg-black/20">
-                            <div className="p-8 flex-1 space-y-10">
+                          <div className="w-full lg:w-[30%] h-full flex flex-col border-l border-border bg-background overflow-y-auto">
+                            <div className="p-8 md:p-12 space-y-12 flex-1">
                               {/* Header */}
                               <div className="space-y-4">
                                 <div className="flex flex-wrap gap-2">
                                   {selectedPhoto.category.split(',').map(cat => (
-                                    <span key={cat} className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider border border-primary/20">
+                                    <span key={cat} className="text-[10px] font-bold tracking-[0.2em] uppercase text-primary border border-primary px-2 py-1">
                                       {cat}
                                     </span>
                                   ))}
                                   {selectedPhoto.isFeatured && (
-                                    <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider border border-amber-500/20">
-                                      <Star className="w-2.5 h-2.5 fill-current" /> 精选
+                                    <span className="flex items-center gap-1 px-2 py-1 bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[10px] font-bold uppercase tracking-wider">
+                                      <Star className="w-3 h-3 fill-current" /> {t('admin.feat')}
                                     </span>
                                   )}
                                 </div>
-                                <h2 className="text-3xl font-black tracking-tighter leading-tight text-foreground">{selectedPhoto.title}</h2>
+                                <h2 className="font-serif text-5xl leading-[0.9] text-foreground">{selectedPhoto.title}</h2>
                               </div>
             
                                                 {/* Color Palette */}
                                                 <div className="space-y-3">
-                                                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">色彩分析 / Palette</h3>
+                                                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">{t('gallery.palette')}</h3>
                                                   <div className="flex gap-2">
                                                     {dominantColors.length > 0 ? dominantColors.map((color, i) => (
                                                       <div 
                                                         key={i} 
-                                                        className="w-7 h-7 rounded-lg shadow-sm border border-white/10 transition-all hover:scale-110"
+                                                        className="w-8 h-8 border border-border transition-all hover:scale-110"
                                                         style={{ backgroundColor: color }}
                                                         title={color}
                                                       />
                                                     )) : (
                                                       [...Array(5)].map((_, i) => (
-                                                        <div key={i} className="w-7 h-7 rounded-lg bg-muted animate-pulse" />
+                                                        <div key={i} className="w-8 h-8 bg-muted animate-pulse" />
                                                       ))
                                                     )}
                                                   </div>
                                                 </div>            
                               {/* Metadata Card */}
-                              <div className="space-y-4 p-5 rounded-2xl bg-muted/30 border border-white/10 shadow-inner text-foreground">
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground pb-2 border-b border-white/5 mb-4">媒体详细信息</h3>
-                                
-                                <div className="flex items-center justify-between group">
-                                  <div className="flex items-center gap-3 text-muted-foreground group-hover:text-foreground">
-                                    <Ruler className="w-3.5 h-3.5" />
-                                    <span className="text-xs font-medium text-foreground/70">分辨率</span>
+                              <div className="grid grid-cols-2 gap-x-8 gap-y-8">
+                                  <div className="space-y-1">
+                                    <p className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">{t('gallery.resolution')}</p>
+                                    <p className="font-mono text-sm">{selectedPhoto.width} × {selectedPhoto.height}</p>
                                   </div>
-                                  <span className="text-xs font-mono font-bold text-foreground">{selectedPhoto.width} × {selectedPhoto.height}</span>
-                                </div>
-            
-                                <div className="flex items-center justify-between group">
-                                  <div className="flex items-center gap-3 text-muted-foreground group-hover:text-foreground">
-                                    <HardDrive className="w-3.5 h-3.5" />
-                                    <span className="text-xs font-medium text-foreground/70">大小</span>
+                                  <div className="space-y-1">
+                                    <p className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">{t('gallery.size')}</p>
+                                    <p className="font-mono text-sm">{formatFileSize(selectedPhoto.size)}</p>
                                   </div>
-                                  <span className="text-xs font-mono font-bold text-foreground">{formatFileSize(selectedPhoto.size)}</span>
-                                </div>
-            
-                                <div className="flex items-center justify-between group">
-                                  <div className="flex items-center gap-3 text-muted-foreground group-hover:text-foreground">
-                                    <Calendar className="w-3.5 h-3.5" />
-                                    <span className="text-xs font-medium text-foreground/70">创建于</span>
+                                  <div className="space-y-1">
+                                    <p className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">{t('gallery.date')}</p>
+                                    <p className="font-mono text-sm">{new Date(selectedPhoto.createdAt).toLocaleDateString()}</p>
                                   </div>
-                                  <span className="text-xs font-bold text-foreground">{new Date(selectedPhoto.createdAt).toLocaleDateString()}</span>
-                                </div>
                               </div>
             
                               {/* Admin EXIF Details */}
                               {(selectedPhoto.cameraModel || selectedPhoto.aperture || selectedPhoto.iso) ? (
-                                <div className="space-y-4 p-5 rounded-2xl bg-muted/30 border border-white/10 shadow-inner text-foreground">
-                                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground pb-2 border-b border-white/5 mb-4">拍摄参数 (EXIF)</h3>
-                                  
-                                  <div className="grid grid-cols-1 gap-4">
-                                    {selectedPhoto.cameraModel && (
-                                      <div className="flex justify-between items-center text-xs">
-                                        <span className="text-muted-foreground flex items-center gap-2"><Camera className="w-3 h-3" /> 相机</span>
-                                        <span className="font-bold truncate max-w-[120px] text-foreground">{selectedPhoto.cameraModel}</span>
-                                      </div>
-                                    )}
-                                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                                      {selectedPhoto.aperture && (
-                                        <div className="flex flex-col gap-1">
-                                          <span className="text-[9px] text-muted-foreground uppercase font-bold">光圈</span>
-                                          <span className="text-xs font-black text-foreground">{selectedPhoto.aperture}</span>
-                                        </div>
-                                      )}
-                                      {selectedPhoto.shutterSpeed && (
-                                        <div className="flex flex-col gap-1">
-                                          <span className="text-[9px] text-muted-foreground uppercase font-bold">快门</span>
-                                          <span className="text-xs font-black text-foreground">{selectedPhoto.shutterSpeed}</span>
-                                        </div>
-                                      )}
-                                      {selectedPhoto.iso && (
-                                        <div className="flex flex-col gap-1">
-                                          <span className="text-[9px] text-muted-foreground uppercase font-bold">ISO</span>
-                                          <span className="text-xs font-black text-foreground">{selectedPhoto.iso}</span>
-                                        </div>
-                                      )}
-                                      {selectedPhoto.focalLength && (
-                                        <div className="flex flex-col gap-1">
-                                          <span className="text-[9px] text-muted-foreground uppercase font-bold">焦距</span>
-                                          <span className="text-xs font-black text-foreground">{selectedPhoto.focalLength}</span>
-                                        </div>
-                                      )}
-                                    </div>
+                                <div className="space-y-8 pt-8 border-t border-border">
+                                  <div className="space-y-2">
+                                     <p className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase flex items-center gap-2">
+                                       <Camera className="w-3 h-3" /> {t('gallery.equipment')}
+                                     </p>
+                                     <p className="font-serif text-xl">{selectedPhoto.cameraMake} {selectedPhoto.cameraModel}</p>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-4">
+                                     <div className="p-4 border border-border">
+                                        <p className="text-[9px] font-bold tracking-[0.2em] text-muted-foreground uppercase mb-1">{t('gallery.aperture')}</p>
+                                        <p className="font-mono text-lg">{selectedPhoto.aperture}</p>
+                                     </div>
+                                     <div className="p-4 border border-border">
+                                        <p className="text-[9px] font-bold tracking-[0.2em] text-muted-foreground uppercase mb-1">{t('gallery.shutter')}</p>
+                                        <p className="font-mono text-lg">{selectedPhoto.shutterSpeed}</p>
+                                     </div>
+                                     <div className="p-4 border border-border">
+                                        <p className="text-[9px] font-bold tracking-[0.2em] text-muted-foreground uppercase mb-1">{t('gallery.iso')}</p>
+                                        <p className="font-mono text-lg">{selectedPhoto.iso}</p>
+                                     </div>
+                                     <div className="p-4 border border-border">
+                                        <p className="text-[9px] font-bold tracking-[0.2em] text-muted-foreground uppercase mb-1">{t('gallery.focal')}</p>
+                                        <p className="font-mono text-lg">{selectedPhoto.focalLength}</p>
+                                     </div>
+                                  </div>
+
                                     {selectedPhoto.latitude && selectedPhoto.longitude && (
                                       <button 
                                         onClick={() => window.open(`https://www.google.com/maps?q=${selectedPhoto.latitude},${selectedPhoto.longitude}`, '_blank')}
-                                        className="mt-2 w-full py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-[10px] font-black uppercase transition-all border border-primary/10 flex items-center justify-center gap-2"
+                                        className="mt-4 w-full py-3 bg-muted hover:bg-muted/80 text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2"
                                       >
-                                        <MapPin className="w-3 h-3" /> 查看地图位置
+                                        <MapPin className="w-3 h-3" /> View on Map
                                       </button>
                                     )}
-                                  </div>
                                 </div>
                               ) : (
-                                <div className="text-center py-6">
-                                  <Code className="w-6 h-6 mx-auto mb-2 opacity-10" />
-                                  <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-black">无 EXIF 元数据</p>
+                                <div className="pt-8 border-t border-border opacity-50">
+                                  <p className="text-[10px] tracking-[0.2em] uppercase">{t('gallery.no_exif')}</p>
                                 </div>
                               )}
                             </div>
-                <div className="p-6 border-t border-white/10 bg-black/5 dark:bg-white/5">
+                <div className="p-6 border-t border-border bg-muted/10">
                   <button 
                     onClick={() => window.open(resolveAssetUrl(selectedPhoto.url, resolvedCdnDomain), '_blank')}
-                    className="w-full py-4 bg-foreground text-background dark:bg-white dark:text-black rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-black/10 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                    className="w-full py-4 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] hover:bg-primary hover:text-primary-foreground transition-all flex items-center justify-center gap-2"
                   >
                     <Maximize2 className="w-4 h-4" />
-                    查看原文件
+                    {t('gallery.download')}
                   </button>
                 </div>
               </div>
@@ -1197,7 +1149,7 @@ function AdminDashboard() {
 }
 
 function formatFileSize(bytes?: number): string {
-  if (!bytes) return '未知'
+  if (!bytes) return 'Unknown'
   if (bytes === 0) return '0 Bytes'
   const k = 1024
   const sizes = ['Bytes', 'KB', 'MB', 'GB']

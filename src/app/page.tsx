@@ -3,30 +3,33 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { getFeaturedPhotos, resolveAssetUrl, type PhotoDto } from '@/lib/api'
 import { useSettings } from '@/contexts/SettingsContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function Home() {
   const { settings } = useSettings()
+  const { t } = useLanguage()
   const siteTitle = settings?.site_title || 'MO GALLERY'
 
   const fallbackFeatured: Array<Pick<PhotoDto, 'id' | 'title' | 'category' | 'url' | 'thumbnailUrl'>> = [
     {
       id: 'fallback-1',
-      title: '城市光影',
-      category: '建筑',
+      title: 'Urban Silence',
+      category: 'Architecture',
       url: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=800&q=80',
     },
     {
       id: 'fallback-2',
-      title: '林间清晨',
-      category: '自然',
+      title: 'Morning Haze',
+      category: 'Nature',
       url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=800&q=80',
     },
     {
       id: 'fallback-3',
-      title: '街头瞬间',
-      category: '人文',
+      title: 'Street Pulse',
+      category: 'Humanity',
       url: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=800&q=80',
     },
   ]
@@ -34,113 +37,139 @@ export default function Home() {
   const [featuredImages, setFeaturedImages] = useState<
     Array<Pick<PhotoDto, 'id' | 'title' | 'category' | 'url' | 'thumbnailUrl'>>
   >(fallbackFeatured)
-  const [featuredError, setFeaturedError] = useState('')
 
   useEffect(() => {
     const run = async () => {
-      setFeaturedError('')
       try {
         const data = await getFeaturedPhotos()
-        setFeaturedImages(data)
+        if (data && data.length > 0) {
+          setFeaturedImages(data)
+        }
       } catch (err) {
-        setFeaturedError(err instanceof Error ? err.message : '加载精选作品失败')
+        console.error('Failed to load featured images', err)
       }
     }
     run()
   }, [])
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
       {/* Hero Section */}
-      <section className="relative w-full h-[80vh] flex items-center justify-center overflow-hidden bg-muted">
-        <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=2000&q=80" 
-            alt="Hero" 
-            className="w-full h-full object-cover brightness-75 dark:brightness-50"
-            loading="eager"
-            fetchPriority="high"
-          />
-          <div className="absolute inset-0 bg-black/30 dark:bg-black/50" />
-        </div>
-        
-        <div className="relative z-10 text-center px-4">
-          <h1 
-            className="text-5xl md:text-7xl font-bold text-white tracking-tighter mb-6"
-          >
-            捕获瞬间的永恒
+      <section className="relative w-full h-screen flex flex-col justify-center items-center overflow-hidden px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          className="z-10 text-center mix-blend-difference"
+        >
+          <h1 className="text-[15vw] md:text-[12vw] font-serif font-light leading-[0.8] tracking-tighter text-foreground">
+            {t('home.hero_vis')}
+            <span className="block font-sans font-bold text-[4vw] md:text-[2vw] tracking-[0.5em] mt-4 text-primary">
+              {t('home.hero_real')}
+            </span>
           </h1>
-          <p 
-            className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-8"
-          >
-            在这里，每一张照片都是一个故事。探索自然、城市与人文交织的世界。
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8, duration: 1 }}
+          className="absolute bottom-12 left-6 md:left-12 max-w-xs md:max-w-md"
+        >
+          <p className="font-sans text-xs md:text-sm tracking-widest text-muted-foreground uppercase leading-relaxed">
+            {t('home.hero_desc')}
           </p>
-          <div>
-            <Link 
-              href="/gallery" 
-              className="inline-flex items-center px-8 py-3 bg-white text-black font-semibold rounded-full hover:bg-white/90 transition-colors group"
-            >
-              浏览相册
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-        </div>
+        </motion.div>
+
+        <motion.div 
+           initial={{ opacity: 0 }}
+           animate={{ opacity: 1 }}
+           transition={{ delay: 1, duration: 1 }}
+           className="absolute bottom-12 right-6 md:right-12"
+        >
+          <Link 
+            href="/gallery" 
+            className="group flex items-center gap-4 font-sans text-sm tracking-[0.2em] hover:text-primary transition-colors duration-300"
+          >
+            {t('home.enter')}
+            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-2" />
+          </Link>
+        </motion.div>
       </section>
 
-      {/* Featured Works */}
-      <section className="max-w-7xl w-full px-4 py-24 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-end mb-12">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">精选作品</h2>
-            <p className="text-muted-foreground mt-2">每一张都是精心挑选的瞬间</p>
+      {/* Featured Works - Stark Grid */}
+      <section className="w-full px-6 md:px-12 py-32 border-t border-border/50">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-24">
+          <h2 className="font-serif text-5xl md:text-7xl font-light text-foreground">
+            {t('home.curated')}<br />{t('home.works')}
+          </h2>
+          <div className="mt-8 md:mt-0 text-right">
+             <span className="block font-sans text-xs tracking-[0.2em] text-primary mb-2">{t('home.latest')}</span>
+             <p className="font-sans text-sm text-muted-foreground max-w-xs ml-auto">
+               {t('home.latest_desc')}
+             </p>
           </div>
-          <Link href="/gallery" className="text-sm font-medium hover:underline flex items-center">
-            查看全部 <ArrowRight className="ml-1 w-4 h-4" />
-          </Link>
         </div>
 
-        {featuredError && (
-          <div className="mb-6 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded">
-            后端未连接（{featuredError}），已回退到示例数据
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
           {featuredImages.map((image, index) => (
-            <div
+            <motion.div
               key={image.id}
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1, duration: 0.8 }}
               className="group relative cursor-pointer"
             >
-              <div className="aspect-[4/5] overflow-hidden rounded-lg bg-muted">
+              <div className="relative aspect-[3/4] overflow-hidden bg-secondary">
+                 <div className="absolute top-4 left-4 z-10 font-sans text-xs font-bold text-white mix-blend-difference tracking-widest">
+                    {(index + 1).toString().padStart(2, '0')}
+                 </div>
                 <img 
                   src={resolveAssetUrl(image.thumbnailUrl || image.url)} 
                   alt={image.title}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 ease-out scale-100 group-hover:scale-105"
                 />
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
               </div>
-              <div className="mt-4">
-                <h3 className="text-lg font-semibold">{image.title}</h3>
-                <p className="text-sm text-muted-foreground">{image.category}</p>
+              
+              <div className="mt-6 flex justify-between items-start border-b border-border pb-4 group-hover:border-primary transition-colors duration-500">
+                <div>
+                  <h3 className="font-serif text-2xl text-foreground group-hover:text-primary transition-colors duration-300">{image.title}</h3>
+                  <p className="font-sans text-xs text-muted-foreground uppercase tracking-widest mt-1">{image.category}</p>
+                </div>
+                <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary -rotate-45 group-hover:rotate-0 transition-all duration-300" />
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>
 
-      {/* Call to action */}
-      <section className="w-full bg-muted/30 py-24">
-        <div className="max-w-3xl mx-auto text-center px-4">
-          <h2 className="text-3xl font-bold mb-6">关于 {siteTitle}</h2>
-          <p className="text-muted-foreground mb-10 leading-relaxed">
-            {siteTitle} 是一个致力于展示高质量摄影作品的平台。我们相信影像的力量，
-            它能够跨越语言与文化的障碍，触动人心。
-          </p>
-          <Link
-            href="/about"
-            className="text-sm font-semibold border-b-2 border-primary pb-1 hover:text-muted-foreground hover:border-muted-foreground transition-colors"
-          >
-            了解更多关于我的故事
-          </Link>
+      {/* About Section - Text Heavy */}
+      <section className="w-full py-32 bg-secondary text-secondary-foreground">
+        <div className="max-w-[1920px] mx-auto px-6 md:px-12 flex flex-col md:flex-row gap-16 md:gap-32">
+          <div className="w-full md:w-1/3">
+             <h2 className="font-sans text-xs font-bold tracking-[0.2em] text-primary mb-8">{t('home.artist')}</h2>
+             <div className="w-full h-[1px] bg-border mb-8"></div>
+             <p className="font-serif text-3xl md:text-4xl leading-tight">
+               {t('home.quote')}
+             </p>
+          </div>
+          <div className="w-full md:w-2/3 flex flex-col justify-between">
+             <div className="prose prose-invert max-w-none">
+                <p className="font-sans text-lg md:text-xl text-muted-foreground leading-relaxed">
+                  {t('home.about_text')}
+                </p>
+             </div>
+             <div className="mt-12">
+               <Link
+                href="/about"
+                className="inline-block border border-primary px-8 py-4 font-sans text-xs tracking-[0.2em] hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+              >
+                {t('home.read_bio')}
+              </Link>
+             </div>
+          </div>
         </div>
       </section>
     </div>
