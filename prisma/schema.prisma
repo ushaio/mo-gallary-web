@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id       String @id @default(uuid())
+  username String @unique
+  password String
+}
+
+model Photo {
+  id              String     @id @default(uuid())
+  title           String
+  url             String
+  thumbnailUrl    String?
+  storageProvider String     @default("local")
+  storageKey      String?
+  width           Int
+  height          Int
+  size            Int?
+  isFeatured      Boolean    @default(false)
+  createdAt       DateTime   @default(now())
+
+  // EXIF Information
+  cameraMake      String?
+  cameraModel     String?
+  lens            String?
+  focalLength     String?
+  aperture        String?
+  shutterSpeed    String?
+  iso             Int?
+  takenAt         DateTime?
+  latitude        Float?
+  longitude       Float?
+  orientation     Int?
+  software        String?
+  exifRaw         String?
+
+  categories      Category[]
+}
+
+model Category {
+  id     String  @id @default(uuid())
+  name   String  @unique
+  photos Photo[]
+}
+
+model Setting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+}

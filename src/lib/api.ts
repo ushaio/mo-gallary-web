@@ -1,15 +1,19 @@
 function getApiBase(): string {
+  // In integrated mode, API is served from the same origin
+  // NEXT_PUBLIC_API_URL is optional for external backend
   const base = process.env.NEXT_PUBLIC_API_URL
-  if (!base) {
-    throw new Error('Missing NEXT_PUBLIC_API_URL (external backend base URL)')
+  if (base) {
+    return base.replace(/\/+$/, '')
   }
-  return base.replace(/\/+$/, '')
+  // Default to same origin (integrated backend)
+  return ''
 }
 
 function buildApiUrl(path: string): string {
   if (/^https?:\/\//i.test(path)) return path
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
-  return `${getApiBase()}${normalizedPath}`
+  const base = getApiBase()
+  return base ? `${base}${normalizedPath}` : normalizedPath
 }
 
 export class ApiUnauthorizedError extends Error {
@@ -287,7 +291,8 @@ export function resolveAssetUrl(assetPath: string, cdnDomain?: string): string {
   const cdn = cdnDomain?.trim()
   if (cdn) return `${cdn.replace(/\/+$/, '')}${normalizedPath}`
 
-  return `${getApiBase()}${normalizedPath}`
+  const base = getApiBase()
+  return base ? `${base}${normalizedPath}` : normalizedPath
 }
 
 // --- Comment APIs ---
