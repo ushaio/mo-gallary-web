@@ -34,7 +34,7 @@ import { UploadTab } from './UploadTab'
 import { LogsTab } from './LogsTab'
 import { SettingsTab } from './SettingsTab'
 import { DeleteConfirmDialog } from '@/components/admin/DeleteConfirmDialog'
-import { AdminPreviewModal } from '@/components/admin/AdminPreviewModal'
+import { PhotoDetailModal } from '@/components/PhotoDetailModal'
 
 function AdminDashboard() {
   const { logout, token, user } = useAuth()
@@ -134,7 +134,7 @@ function AdminDashboard() {
 
   useEffect(() => {
     if (activeTab === 'photos' || activeTab === 'logs') refreshPhotos()
-    if (activeTab === 'settings') refreshSettings()
+    if (activeTab === 'settings' || activeTab === 'upload') refreshSettings()
   }, [activeTab, token]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // --- Photos Handlers ---
@@ -405,12 +405,10 @@ function AdminDashboard() {
         </div>
       </main>
 
-      <AdminPreviewModal
+      <PhotoDetailModal
         photo={selectedPhoto}
         isOpen={!!selectedPhoto}
         onClose={() => setSelectedPhoto(null)}
-        t={t}
-        settings={settings}
       />
 
       <DeleteConfirmDialog

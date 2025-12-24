@@ -63,6 +63,8 @@ export const dictionaries = {
       download: '查看原图',
       palette: '色彩分析',
       empty: '此合集中暂无作品。',
+      technical_specs: '技术参数',
+      file_info: '文件信息',
     },
     about: {
       title: 'MO',
@@ -229,6 +231,8 @@ export const dictionaries = {
       download: 'Download Original',
       palette: 'Palette',
       empty: 'No works found in this collection.',
+      technical_specs: 'Technical Specs',
+      file_info: 'File Info',
     },
     about: {
       title: 'MO',

@@ -31,33 +31,33 @@
 
 :root {
   /* Light Mode - "Gallery Wall" (Stark White & Sharp Black) */
-  --background: #F4F4F4; /* Light Greyish White */
-  --foreground: #0A0A0A; /* Deep Black */
+  --background: #FFFFFF; /* Pure White for cleaner look */
+  --foreground: #0F0F0F; /* Slightly softer black */
 
-  --card: #FFFFFF;
-  --card-foreground: #0A0A0A;
+  --card: #F9F9F9; /* Very subtle grey for cards */
+  --card-foreground: #0F0F0F;
 
   --popover: #FFFFFF;
-  --popover-foreground: #0A0A0A;
+  --popover-foreground: #0F0F0F;
 
-  --primary: #0A0A0A; /* Black primary actions */
+  --primary: #111111; /* Almost black */
   --primary-foreground: #FFFFFF;
 
-  --secondary: #E5E5E5;
-  --secondary-foreground: #0A0A0A;
+  --secondary: #F4F4F4; /* Light grey for secondary sections */
+  --secondary-foreground: #111111;
 
-  --muted: #F0F0F0;
+  --muted: #F5F5F5;
   --muted-foreground: #666666;
 
-  --accent: #D4AF37; /* Gold Accent */
-  --accent-foreground: #FFFFFF;
+  --accent: #E0E0E0; /* Subtle accent */
+  --accent-foreground: #111111;
 
-  --destructive: #990000;
+  --destructive: #CC0000;
   --destructive-foreground: #FFFFFF;
 
-  --border: #D4D4D4;
+  --border: #E5E5E5; /* Lighter border */
   --input: #FFFFFF;
-  --ring: #D4AF37;
+  --ring: #111111;
 
   --radius: 0rem; /* Sharp corners */
 }

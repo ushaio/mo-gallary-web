@@ -10,6 +10,7 @@ import {
   Trash2,
   List as ListIcon,
   LayoutGrid,
+  Plus,
 } from 'lucide-react'
 import { AdminSettingsDto, uploadPhoto } from '@/lib/api'
 import { UploadFileItem } from '@/components/admin/UploadFileItem'
@@ -48,20 +49,22 @@ export function UploadTab({
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 })
   const [uploadError, setUploadError] = useState('')
   
-  const [uploadSource, setUploadSource] = useState('')
+  const [uploadSource, setUploadSource] = useState('local')
+  const [isInitialized, setIsInitialized] = useState(false)
   const [uploadPath, setUploadPath] = useState('')
 
   // Initialize defaults from settings
   useEffect(() => {
-    if (settings) {
-      if (settings.storage_provider) setUploadSource(settings.storage_provider)
+    if (settings?.storage_provider && !isInitialized) {
+      setUploadSource(settings.storage_provider)
+      setIsInitialized(true)
     }
     // Default category
     if (uploadCategories.length === 0 && categories.length > 0) {
        const first = categories.find(c => c !== '全部')
        if (first) setUploadCategories([first])
     }
-  }, [settings, categories]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [settings, categories, isInitialized]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredCategories = useMemo(() => {
     return categories.filter(

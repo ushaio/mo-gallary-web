@@ -425,7 +425,7 @@ export function SettingsTab({
                           Access Method (访问方式)
                         </label>
                         <select
-                          value={settings.github_access_method ?? 'jsdelivr'}
+                          value={settings.github_access_method || 'jsdelivr'}
                           onChange={(e) =>
                             setSettings({
                               ...settings,

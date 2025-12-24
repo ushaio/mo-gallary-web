@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { getPhotos, getCategories, type PhotoDto } from '@/lib/api'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useSettings } from '@/contexts/SettingsContext'
-import ExifModal from '@/components/ExifModal'
+import { PhotoDetailModal } from '@/components/PhotoDetailModal'
 import { GalleryHeader } from '@/components/gallery/GalleryHeader'
 import { PhotoGrid } from '@/components/gallery/PhotoGrid'
 
@@ -58,7 +58,7 @@ export default function GalleryPage() {
         t={t}
       />
 
-      <ExifModal
+      <PhotoDetailModal
         photo={selectedPhoto}
         isOpen={!!selectedPhoto}
         onClose={() => setSelectedPhoto(null)}
