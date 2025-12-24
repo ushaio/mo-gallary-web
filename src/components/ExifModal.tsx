@@ -146,34 +146,34 @@ export default function ExifModal({ photo, isOpen, onClose }: ExifModalProps) {
                   {/* Title Section */}
                   <div className="space-y-4">
                     <div className="flex flex-wrap gap-2">
-                        {photo.category.split(',').map(cat => (
+                      {photo.category.split(',').map(cat => (
                         <span key={cat} className="text-[10px] font-bold tracking-[0.2em] uppercase text-primary border border-primary px-2 py-1">
-                            {cat}
+                          {cat}
                         </span>
-                        ))}
+                      ))}
                     </div>
                     <h2 className="font-serif text-5xl leading-[0.9] text-foreground mb-2">
-                        {photo.title}
+                      {photo.title}
                     </h2>
                   </div>
 
                   {/* EXIF Info */}
                   <div className="space-y-8">
                     {hasExif ? (
-                        <div className="grid grid-cols-2 gap-4">
-                            {exifItems.map((item, idx) => (
-                                <div key={idx} className="p-4 border border-border">
-                                    <p className="text-[9px] font-bold tracking-[0.2em] text-muted-foreground uppercase mb-1 flex items-center gap-2">
-                                        <item.icon className="w-3 h-3" /> {item.label}
-                                    </p>
-                                    <p className="font-mono text-sm">{item.value}</p>
-                                </div>
-                            ))}
-                        </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        {exifItems.map((item, idx) => (
+                          <div key={idx} className="p-4 border border-border">
+                            <p className="text-[9px] font-bold tracking-[0.2em] text-muted-foreground uppercase mb-1 flex items-center gap-2">
+                              <item.icon className="w-3 h-3" /> {item.label}
+                            </p>
+                            <p className="font-mono text-sm">{item.value}</p>
+                          </div>
+                        ))}
+                      </div>
                     ) : (
-                        <div className="pt-8 border-t border-border opacity-50">
-                            <p className="text-[10px] tracking-[0.2em] uppercase">{t('gallery.no_exif')}</p>
-                        </div>
+                      <div className="pt-8 border-t border-border opacity-50">
+                        <p className="text-[10px] tracking-[0.2em] uppercase">{t('gallery.no_exif')}</p>
+                      </div>
                     )}
                   </div>
 
