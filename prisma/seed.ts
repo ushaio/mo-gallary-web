@@ -18,10 +18,23 @@ async function main() {
     },
   })
 
+  // Default settings - modify these to change storage provider
   const settings = [
-    { key: 'site_title', value: 'MO GALLERY' },
-    { key: 'storage_provider', value: 'local' },
-    { key: 'cdn_domain', value: '' },
+    { key: 'site_title', value: process.env.SITE_TITLE || 'MO GALLERY' },
+    { key: 'storage_provider', value: process.env.STORAGE_PROVIDER || 'local' },
+    { key: 'cdn_domain', value: process.env.CDN_DOMAIN || '' },
+    // GitHub Storage Settings
+    { key: 'github_token', value: process.env.GITHUB_TOKEN || '' },
+    { key: 'github_repo', value: process.env.GITHUB_REPO || '' },
+    { key: 'github_path', value: process.env.GITHUB_PATH || 'uploads' },
+    { key: 'github_branch', value: process.env.GITHUB_BRANCH || 'main' },
+    { key: 'github_access_method', value: process.env.GITHUB_ACCESS_METHOD || 'jsdelivr' },
+    { key: 'github_pages_url', value: process.env.GITHUB_PAGES_URL || '' },
+    // R2 Storage Settings (for future use)
+    { key: 'r2_access_key_id', value: process.env.R2_ACCESS_KEY_ID || '' },
+    { key: 'r2_secret_access_key', value: process.env.R2_SECRET_ACCESS_KEY || '' },
+    { key: 'r2_bucket', value: process.env.R2_BUCKET || '' },
+    { key: 'r2_endpoint', value: process.env.R2_ENDPOINT || '' },
   ]
 
   for (const setting of settings) {
