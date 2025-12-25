@@ -1,0 +1,1 @@
+onlyBuiltDependencies: prisma,@prisma/client,@prisma/engines

@@ -1,7 +1,5 @@
 import 'server-only'
 import { Hono } from 'hono'
-import bcrypt from 'bcryptjs'
-import { db } from '~/server/lib/db'
 import { signToken } from '~/server/lib/jwt'
 
 const auth = new Hono()
@@ -14,23 +12,16 @@ auth.post('/login', async (c) => {
       return c.json({ error: 'Username and password are required' }, 400)
     }
 
-    const user = await db.user.findUnique({
-      where: { username },
-    })
+    const adminUsername = process.env.ADMIN_USERNAME || 'admin'
+    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123'
 
-    if (!user) {
-      return c.json({ error: 'Invalid credentials' }, 401)
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password)
-
-    if (!isMatch) {
+    if (username !== adminUsername || password !== adminPassword) {
       return c.json({ error: 'Invalid credentials' }, 401)
     }
 
     const token = signToken({
-      sub: user.id,
-      username: user.username,
+      sub: 'admin',
+      username: adminUsername,
     })
 
     return c.json({
