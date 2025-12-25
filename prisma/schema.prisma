@@ -7,6 +7,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -44,6 +45,8 @@ model Photo {
   exifRaw         String?
 
   categories      Category[]
+  stories         Story[]    @relation("PhotoStories")
+  comments        Comment[]
 }
 
 model Category {
@@ -56,4 +59,36 @@ model Setting {
   id    String @id @default(uuid())
   key   String @unique
   value String
+}
+
+model Story {
+  id          String   @id @default(uuid())
+  title       String
+  content     String   // Markdown content
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  photos      Photo[]  @relation("PhotoStories")
+
+  @@index([isPublished])
+  @@index([createdAt])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  photoId   String
+  author    String
+  email     String?
+  content   String
+  status    String   @default("pending") // pending, approved, rejected
+  ip        String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  photo     Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+
+  @@index([photoId])
+  @@index([status])
+  @@index([createdAt])
 }

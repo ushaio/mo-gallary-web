@@ -15,12 +15,18 @@ import {
   Download,
   Info,
   Star,
+  BookOpen,
+  MessageSquare,
 } from 'lucide-react'
 import { PhotoDto, resolveAssetUrl } from '@/lib/api'
 import { useSettings } from '@/contexts/SettingsContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { formatFileSize } from '@/lib/utils'
 import { Toast, type Notification } from '@/components/Toast'
+import { StoryTab } from '@/components/StoryTab'
+import { CommentsTab } from '@/components/CommentsTab'
+
+type TabType = 'info' | 'story' | 'comments'
 
 interface PhotoDetailModalProps {
   photo: PhotoDto | null
@@ -36,6 +42,7 @@ export function PhotoDetailModal({
   const { settings } = useSettings()
   const { t, locale } = useLanguage()
   const [showInfo, setShowInfo] = useState(true)
+  const [activeTab, setActiveTab] = useState<TabType>('info')
   const [dominantColors, setDominantColors] = useState<string[]>([])
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [imageLoaded, setImageLoaded] = useState(false)
@@ -263,6 +270,45 @@ export function PhotoDetailModal({
                     exit={{ opacity: 0 }}
                     className="w-full md:w-[350px] lg:w-[30%] border-t md:border-t-0 md:border-l border-border bg-card flex flex-col overflow-hidden shrink-0"
                   >
+                    {/* Tab Navigation */}
+                    <div className="flex border-b border-border shrink-0">
+                      <button
+                        onClick={() => setActiveTab('info')}
+                        className={`flex items-center gap-2 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] border-b-2 transition-colors ${
+                          activeTab === 'info'
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        <Info className="w-4 h-4" />
+                        {t('gallery.info')}
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('story')}
+                        className={`flex items-center gap-2 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] border-b-2 transition-colors ${
+                          activeTab === 'story'
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        <BookOpen className="w-4 h-4" />
+                        {t('gallery.story')}
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('comments')}
+                        className={`flex items-center gap-2 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] border-b-2 transition-colors ${
+                          activeTab === 'comments'
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                        {t('gallery.comments')}
+                      </button>
+                    </div>
+
+                    {/* Tab Content */}
+                    {activeTab === 'info' && (
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 space-y-8">
                       {/* Header */}
                       <div className="space-y-3">
@@ -378,6 +424,13 @@ export function PhotoDetailModal({
                         </div>
                       </div>
                     </div>
+                    )}
+
+                    {/* Story Tab */}
+                    {activeTab === 'story' && photo && <StoryTab photoId={photo.id} />}
+
+                    {/* Comments Tab */}
+                    {activeTab === 'comments' && photo && <CommentsTab photoId={photo.id} />}
 
                     {/* Footer Actions */}
                     <div className="p-6 border-t border-border bg-muted/5">

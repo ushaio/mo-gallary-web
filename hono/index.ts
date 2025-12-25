@@ -4,6 +4,8 @@ import { HTTPException } from 'hono/http-exception'
 import auth from './auth'
 import photos from './photos'
 import settings from './settings'
+import stories from './stories'
+import comments from './comments'
 
 const route = new Hono()
 
@@ -28,6 +30,8 @@ route.get('/', (c) => {
 // API routes
 route.route('/auth', auth)
 route.route('/', photos)
+route.route('/', stories)
+route.route('/', comments)
 route.route('/admin/settings', settings)
 
 export default route

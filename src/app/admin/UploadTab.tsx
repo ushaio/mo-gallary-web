@@ -11,8 +11,9 @@ import {
   List as ListIcon,
   LayoutGrid,
   Plus,
+  BookOpen,
 } from 'lucide-react'
-import { AdminSettingsDto, uploadPhoto } from '@/lib/api'
+import { AdminSettingsDto, uploadPhoto, getAdminStories, addPhotosToStory, type StoryDto } from '@/lib/api'
 import { UploadFileItem } from '@/components/admin/UploadFileItem'
 
 interface UploadTabProps {
