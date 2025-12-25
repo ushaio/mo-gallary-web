@@ -20,6 +20,7 @@ export const dictionaries = {
     nav: {
       home: '首页',
       gallery: '画廊',
+      blog: '博客',
       about: '关于',
       admin: '管理',
       login: '登录',
@@ -202,6 +203,7 @@ export const dictionaries = {
     nav: {
       home: 'HOME',
       gallery: 'GALLERY',
+      blog: 'BLOG',
       about: 'ABOUT',
       admin: 'ADMIN',
       login: 'LOGIN',

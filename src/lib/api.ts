@@ -182,6 +182,17 @@ export interface StoryDto {
   photos: PhotoDto[]
 }
 
+export interface BlogDto {
+  id: string
+  title: string
+  content: string
+  category: string
+  tags: string
+  isPublished: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export interface PublicSettingsDto {
   site_title: string
   cdn_domain: string
@@ -454,4 +465,61 @@ export async function submitPhotoComment(
   }
   return response.data as any
 }
+
+// --- Blog APIs ---
+
+export async function getBlogs(limit?: number): Promise<BlogDto[]> {
+  const query = limit ? `?limit=${limit}` : ''
+  return apiRequestData<BlogDto[]>(`/api/blogs${query}`)
+}
+
+export async function getBlog(id: string): Promise<BlogDto> {
+  return apiRequestData<BlogDto>(`/api/blogs/${encodeURIComponent(id)}`)
+}
+
+export async function getBlogCategories(): Promise<string[]> {
+  return apiRequestData<string[]>('/api/blogs/categories/list')
+}
+
+export async function getAdminBlogs(token: string): Promise<BlogDto[]> {
+  return apiRequestData<BlogDto[]>('/api/admin/blogs', {}, token)
+}
+
+export async function createBlog(
+  token: string,
+  data: { title: string; content: string; category?: string; tags?: string; isPublished: boolean }
+): Promise<BlogDto> {
+  return apiRequestData<BlogDto>(
+    '/api/admin/blogs',
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    },
+    token
+  )
+}
+
+export async function updateBlog(
+  token: string,
+  id: string,
+  data: { title?: string; content?: string; category?: string; tags?: string; isPublished?: boolean }
+): Promise<BlogDto> {
+  return apiRequestData<BlogDto>(
+    `/api/admin/blogs/${encodeURIComponent(id)}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    },
+    token
+  )
+}
+
+export async function deleteBlog(token: string, id: string): Promise<void> {
+  await apiRequest(
+    `/api/admin/blogs/${encodeURIComponent(id)}`,
+    { method: 'DELETE' },
+    token
+  )
+}
+
 

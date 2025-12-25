@@ -92,3 +92,18 @@ model Comment {
   @@index([status])
   @@index([createdAt])
 }
+
+model Blog {
+  id          String   @id @default(uuid())
+  title       String
+  content     String   // Markdown content
+  category    String   @default("未分类") // Blog category
+  tags        String   @default("") // Comma-separated tags
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isPublished])
+  @@index([createdAt])
+  @@index([category])
+}

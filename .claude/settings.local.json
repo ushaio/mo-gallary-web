@@ -6,7 +6,11 @@
       "Bash(npx prisma generate:*)",
       "Bash(npm run db:seed:*)",
       "Bash(cat:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npx tsc:*)",
+      "Bash(sqlite3:*)",
+      "Bash(curl:*)",
+      "Bash(echo:*)"
     ]
   }
 }
