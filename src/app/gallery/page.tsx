@@ -42,21 +42,23 @@ export default function GalleryPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground pt-24 pb-16 px-4 md:px-8 lg:px-12">
-      <GalleryHeader
-        activeCategory={activeCategory}
-        categories={categories}
-        onCategoryChange={setActiveCategory}
-        photoCount={filteredPhotos.length}
-        t={t}
-      />
+      <div className="max-w-screen-2xl mx-auto">
+        <GalleryHeader
+          activeCategory={activeCategory}
+          categories={categories}
+          onCategoryChange={setActiveCategory}
+          photoCount={filteredPhotos.length}
+          t={t}
+        />
 
-      <PhotoGrid
-        loading={loading}
-        photos={filteredPhotos}
-        settings={settings}
-        onPhotoClick={setSelectedPhoto}
-        t={t}
-      />
+        <PhotoGrid
+          loading={loading}
+          photos={filteredPhotos}
+          settings={settings}
+          onPhotoClick={setSelectedPhoto}
+          t={t}
+        />
+      </div>
 
       <PhotoDetailModal
         photo={selectedPhoto}

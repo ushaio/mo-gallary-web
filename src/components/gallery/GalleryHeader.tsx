@@ -18,7 +18,7 @@ export function GalleryHeader({
   t,
 }: GalleryHeaderProps) {
   return (
-    <header className="max-w-screen-2xl mx-auto mb-12">
+    <header className="mb-12">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="space-y-4">
           <motion.div

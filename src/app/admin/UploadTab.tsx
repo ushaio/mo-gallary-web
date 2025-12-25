@@ -11,8 +11,9 @@ import {
   List as ListIcon,
   LayoutGrid,
   Plus,
+  BookOpen,
 } from 'lucide-react'
-import { AdminSettingsDto, uploadPhoto } from '@/lib/api'
+import { AdminSettingsDto, uploadPhoto, getAdminStories, addPhotosToStory, type StoryDto } from '@/lib/api'
 import { UploadFileItem } from '@/components/admin/UploadFileItem'
 
 interface UploadTabProps {
@@ -44,7 +45,11 @@ export function UploadTab({
   const [categoryInput, setCategoryInput] = useState('')
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
   const categoryContainerRef = useRef<HTMLDivElement>(null)
-  
+
+  const [uploadStoryId, setUploadStoryId] = useState<string>('')
+  const [stories, setStories] = useState<StoryDto[]>([])
+  const [loadingStories, setLoadingStories] = useState(false)
+
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 })
   const [uploadError, setUploadError] = useState('')
@@ -65,6 +70,23 @@ export function UploadTab({
        if (first) setUploadCategories([first])
     }
   }, [settings, categories, isInitialized]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load stories
+  useEffect(() => {
+    async function loadStories() {
+      if (!token) return
+      try {
+        setLoadingStories(true)
+        const data = await getAdminStories(token)
+        setStories(data)
+      } catch (err) {
+        console.error('Failed to load stories:', err)
+      } finally {
+        setLoadingStories(false)
+      }
+    }
+    loadStories()
+  }, [token])
 
   const filteredCategories = useMemo(() => {
     return categories.filter(
@@ -131,6 +153,8 @@ export function UploadTab({
     setUploadProgress({ current: 0, total: uploadFiles.length })
 
     try {
+      const uploadedPhotoIds: string[] = []
+
       for (let i = 0; i < uploadFiles.length; i++) {
         setUploadProgress((prev) => ({ ...prev, current: i + 1 }))
         const { file } = uploadFiles[i]
@@ -138,7 +162,7 @@ export function UploadTab({
           uploadFiles.length === 1
             ? uploadTitle.trim()
             : file.name.replace(/\.[^/.]+$/, '')
-        await uploadPhoto({
+        const photo = await uploadPhoto({
           token,
           file: file,
           title: title,
@@ -146,13 +170,26 @@ export function UploadTab({
           storage_provider: uploadSource || undefined,
           storage_path: uploadPath.trim() || undefined,
         })
+        uploadedPhotoIds.push(photo.id)
       }
+
+      // Associate with story if selected
+      if (uploadStoryId && uploadedPhotoIds.length > 0) {
+        try {
+          await addPhotosToStory(token, uploadStoryId, uploadedPhotoIds)
+        } catch (err) {
+          console.error('Failed to associate photos with story:', err)
+          // Don't fail the upload, just log the error
+        }
+      }
+
       const count = uploadFiles.length
       setUploadFiles([])
       setSelectedUploadIds(new Set())
       setUploadTitle('')
+      setUploadStoryId('')
       // setUploadCategories([]) // Keep categories for next upload? Maybe reset.
-      
+
       onUploadSuccess()
       notify(`${count} ${t('admin.notify_upload_success')}`)
     } catch (err) {
@@ -310,6 +347,30 @@ export function UploadTab({
                     </div>
                   )}
                 </div>
+              )}
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 flex items-center gap-2">
+                <BookOpen className="w-3 h-3" />
+                照片故事 (可选)
+              </label>
+              <select
+                value={uploadStoryId}
+                onChange={(e) => setUploadStoryId(e.target.value)}
+                disabled={loadingStories}
+                className="w-full p-3 bg-background border-b border-border focus:border-primary outline-none text-xs font-bold uppercase tracking-wider disabled:opacity-50"
+              >
+                <option value="">不关联故事</option>
+                {stories.map((story) => (
+                  <option key={story.id} value={story.id}>
+                    {story.title} {!story.isPublished && '(草稿)'}
+                  </option>
+                ))}
+              </select>
+              {loadingStories && (
+                <p className="mt-2 text-[10px] text-muted-foreground">
+                  加载故事列表...
+                </p>
               )}
             </div>
             <div className="space-y-6">

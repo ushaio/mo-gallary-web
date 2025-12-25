@@ -1,15 +1,19 @@
 function getApiBase(): string {
+  // In integrated mode, API is served from the same origin
+  // NEXT_PUBLIC_API_URL is optional for external backend
   const base = process.env.NEXT_PUBLIC_API_URL
-  if (!base) {
-    throw new Error('Missing NEXT_PUBLIC_API_URL (external backend base URL)')
+  if (base) {
+    return base.replace(/\/+$/, '')
   }
-  return base.replace(/\/+$/, '')
+  // Default to same origin (integrated backend)
+  return ''
 }
 
 function buildApiUrl(path: string): string {
   if (/^https?:\/\//i.test(path)) return path
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
-  return `${getApiBase()}${normalizedPath}`
+  const base = getApiBase()
+  return base ? `${base}${normalizedPath}` : normalizedPath
 }
 
 export class ApiUnauthorizedError extends Error {
@@ -158,6 +162,35 @@ export interface CommentDto {
   status: 'pending' | 'approved' | 'rejected'
   createdAt: string
   ip?: string
+  email?: string
+}
+
+export interface PublicCommentDto {
+  id: string
+  author: string
+  content: string
+  createdAt: string
+}
+
+export interface StoryDto {
+  id: string
+  title: string
+  content: string
+  isPublished: boolean
+  createdAt: string
+  updatedAt: string
+  photos: PhotoDto[]
+}
+
+export interface BlogDto {
+  id: string
+  title: string
+  content: string
+  category: string
+  tags: string
+  isPublished: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export interface PublicSettingsDto {
@@ -287,7 +320,8 @@ export function resolveAssetUrl(assetPath: string, cdnDomain?: string): string {
   const cdn = cdnDomain?.trim()
   if (cdn) return `${cdn.replace(/\/+$/, '')}${normalizedPath}`
 
-  return `${getApiBase()}${normalizedPath}`
+  const base = getApiBase()
+  return base ? `${base}${normalizedPath}` : normalizedPath
 }
 
 // --- Comment APIs ---
@@ -319,3 +353,173 @@ export async function deleteComment(token: string, id: string): Promise<void> {
     token
   )
 }
+
+// --- Story APIs ---
+
+export async function getStories(): Promise<StoryDto[]> {
+  return apiRequestData<StoryDto[]>('/api/stories')
+}
+
+export async function getStory(id: string): Promise<StoryDto> {
+  return apiRequestData<StoryDto>(`/api/stories/${encodeURIComponent(id)}`)
+}
+
+export async function getPhotoStory(photoId: string): Promise<StoryDto | null> {
+  try {
+    return await apiRequestData<StoryDto>(`/api/photos/${encodeURIComponent(photoId)}/story`)
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('404')) {
+      return null
+    }
+    throw error
+  }
+}
+
+export async function getAdminStories(token: string): Promise<StoryDto[]> {
+  return apiRequestData<StoryDto[]>('/api/admin/stories', {}, token)
+}
+
+export async function createStory(
+  token: string,
+  data: { title: string; content: string; isPublished: boolean; photoIds?: string[] }
+): Promise<StoryDto> {
+  return apiRequestData<StoryDto>(
+    '/api/admin/stories',
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    },
+    token
+  )
+}
+
+export async function updateStory(
+  token: string,
+  id: string,
+  data: { title?: string; content?: string; isPublished?: boolean }
+): Promise<StoryDto> {
+  return apiRequestData<StoryDto>(
+    `/api/admin/stories/${encodeURIComponent(id)}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    },
+    token
+  )
+}
+
+export async function deleteStory(token: string, id: string): Promise<void> {
+  await apiRequest(
+    `/api/admin/stories/${encodeURIComponent(id)}`,
+    { method: 'DELETE' },
+    token
+  )
+}
+
+export async function addPhotosToStory(
+  token: string,
+  storyId: string,
+  photoIds: string[]
+): Promise<StoryDto> {
+  return apiRequestData<StoryDto>(
+    `/api/admin/stories/${encodeURIComponent(storyId)}/photos`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ photoIds }),
+    },
+    token
+  )
+}
+
+export async function removePhotoFromStory(
+  token: string,
+  storyId: string,
+  photoId: string
+): Promise<StoryDto> {
+  return apiRequestData<StoryDto>(
+    `/api/admin/stories/${encodeURIComponent(storyId)}/photos/${encodeURIComponent(photoId)}`,
+    { method: 'DELETE' },
+    token
+  )
+}
+
+// --- Public Comment APIs ---
+
+export async function getPhotoComments(photoId: string): Promise<PublicCommentDto[]> {
+  return apiRequestData<PublicCommentDto[]>(`/api/photos/${encodeURIComponent(photoId)}/comments`)
+}
+
+export async function submitPhotoComment(
+  photoId: string,
+  data: { author: string; email?: string; content: string }
+): Promise<{ id: string; author: string; content: string; createdAt: string; status: string }> {
+  const response = await apiRequest(
+    `/api/photos/${encodeURIComponent(photoId)}/comments`,
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }
+  )
+  if (!('data' in response)) {
+    throw new Error('Unexpected API response')
+  }
+  return response.data as any
+}
+
+// --- Blog APIs ---
+
+export async function getBlogs(limit?: number): Promise<BlogDto[]> {
+  const query = limit ? `?limit=${limit}` : ''
+  return apiRequestData<BlogDto[]>(`/api/blogs${query}`)
+}
+
+export async function getBlog(id: string): Promise<BlogDto> {
+  return apiRequestData<BlogDto>(`/api/blogs/${encodeURIComponent(id)}`)
+}
+
+export async function getBlogCategories(): Promise<string[]> {
+  return apiRequestData<string[]>('/api/blogs/categories/list')
+}
+
+export async function getAdminBlogs(token: string): Promise<BlogDto[]> {
+  return apiRequestData<BlogDto[]>('/api/admin/blogs', {}, token)
+}
+
+export async function createBlog(
+  token: string,
+  data: { title: string; content: string; category?: string; tags?: string; isPublished: boolean }
+): Promise<BlogDto> {
+  return apiRequestData<BlogDto>(
+    '/api/admin/blogs',
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    },
+    token
+  )
+}
+
+export async function updateBlog(
+  token: string,
+  id: string,
+  data: { title?: string; content?: string; category?: string; tags?: string; isPublished?: boolean }
+): Promise<BlogDto> {
+  return apiRequestData<BlogDto>(
+    `/api/admin/blogs/${encodeURIComponent(id)}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    },
+    token
+  )
+}
+
+export async function deleteBlog(token: string, id: string): Promise<void> {
+  await apiRequest(
+    `/api/admin/blogs/${encodeURIComponent(id)}`,
+    { method: 'DELETE' },
+    token
+  )
+}
+
+

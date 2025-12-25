@@ -360,6 +360,7 @@ function AdminDashboard() {
 
           {activeTab === 'logs' && (
             <LogsTab
+              token={token}
               photos={photos}
               settings={settings}
               t={t}
