@@ -116,6 +116,15 @@
     text-wrap: balance;
   }
 
+  /* Hide scrollbar for horizontal scroll areas */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Modern Gallery Utilities */
   .gallery-grid {
     display: grid;

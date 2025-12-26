@@ -83,43 +83,54 @@ export default function BlogListPage() {
     <div className="min-h-screen bg-background text-foreground pt-24 pb-16 px-4 md:px-8 lg:px-12">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <header className="mb-12">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-            <div className="space-y-4">
+        <header className="mb-8 md:mb-12">
+          <div className="flex flex-col gap-6 md:gap-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-8">
+              <div className="space-y-3 md:space-y-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-3 text-primary"
+                >
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em]">Blog</span>
+                  <div className="h-[1px] w-12 bg-primary/30" />
+                </motion.div>
+                <motion.h1
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="text-4xl md:text-5xl lg:text-7xl font-serif font-light tracking-tighter leading-none"
+                >
+                  {activeCategory === '全部' ? '博客' : activeCategory}
+                </motion.h1>
+              </div>
+
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-3 text-primary"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="flex flex-col items-start md:items-end gap-3 md:gap-4"
               >
-                <span className="text-[10px] font-black uppercase tracking-[0.4em]">Blog</span>
-                <div className="h-[1px] w-12 bg-primary/30" />
+                <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
+                  {filteredBlogs.length} 篇文章
+                </div>
               </motion.div>
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="text-5xl md:text-7xl font-serif font-light tracking-tighter leading-none"
-              >
-                {activeCategory === '全部' ? '博客' : activeCategory}
-              </motion.h1>
             </div>
 
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="flex flex-col items-start md:items-end gap-4"
-            >
-              <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
-                {filteredBlogs.length} 篇文章
-              </div>
-              {categories.length > 1 && (
-                <div className="flex flex-wrap gap-2 md:justify-end">
+            {/* Category Filter - Horizontal scroll on mobile */}
+            {categories.length > 1 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="-mx-4 md:mx-0 px-4 md:px-0 overflow-x-auto scrollbar-hide"
+              >
+                <div className="flex gap-2 md:flex-wrap md:justify-start pb-2 md:pb-0">
                   {categories.map((category) => (
                     <button
                       key={category}
                       onClick={() => setActiveCategory(category)}
-                      className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all border ${
+                      className={`px-3 md:px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all border whitespace-nowrap shrink-0 ${
                         activeCategory === category
                           ? 'bg-primary text-primary-foreground border-primary'
                           : 'border-border text-muted-foreground hover:border-foreground hover:text-foreground'
@@ -129,8 +140,8 @@ export default function BlogListPage() {
                     </button>
                   ))}
                 </div>
-              )}
-            </motion.div>
+              </motion.div>
+            )}
           </div>
         </header>
 
@@ -181,7 +192,7 @@ export default function BlogListPage() {
                           </div>
 
                           {/* Blog Posts */}
-                          <div className="space-y-6 pl-8 border-l-2 border-border">
+                          <div className="space-y-4 md:space-y-6 pl-6 md:pl-8 border-l-2 border-border">
                             {timelineData[year][month].map((blog, index) => (
                               <motion.article
                                 key={blog.id}
@@ -191,19 +202,19 @@ export default function BlogListPage() {
                                 className="relative group"
                               >
                                 {/* Timeline Dot */}
-                                <div className="absolute -left-[33px] top-2 w-2 h-2 rounded-full bg-border group-hover:bg-primary transition-colors" />
+                                <div className="absolute -left-[27px] md:-left-[33px] top-2 w-2 h-2 rounded-full bg-border group-hover:bg-primary transition-colors" />
 
                                 <Link
                                   href={`/blog/${blog.id}`}
-                                  className="block space-y-3 p-6 -ml-8 border border-transparent hover:border-border hover:bg-card/30 transition-all"
+                                  className="block space-y-2 md:space-y-3 p-4 md:p-6 -ml-6 md:-ml-8 border border-transparent hover:border-border hover:bg-card/30 transition-all"
                                 >
                                   {/* Title */}
-                                  <h3 className="text-2xl font-serif font-light leading-tight group-hover:text-primary transition-colors">
+                                  <h3 className="text-xl md:text-2xl font-serif font-light leading-tight group-hover:text-primary transition-colors">
                                     {blog.title}
                                   </h3>
 
                                   {/* Meta */}
-                                  <div className="flex items-center gap-4 text-[10px] text-muted-foreground uppercase tracking-widest">
+                                  <div className="flex flex-wrap items-center gap-3 md:gap-4 text-[10px] text-muted-foreground uppercase tracking-widest">
                                     <div className="flex items-center gap-1">
                                       <Calendar className="w-3 h-3" />
                                       {new Date(blog.createdAt).toLocaleDateString('zh-CN', {
@@ -220,7 +231,7 @@ export default function BlogListPage() {
                                   </div>
 
                                   {/* Excerpt */}
-                                  <p className="text-muted-foreground line-clamp-2 leading-relaxed">
+                                  <p className="text-sm md:text-base text-muted-foreground line-clamp-2 leading-relaxed">
                                     {blog.content.replace(/[#*`\[\]]/g, '').substring(0, 150)}...
                                   </p>
 

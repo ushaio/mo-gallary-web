@@ -76,15 +76,16 @@ settings.patch('/', async (c) => {
   try {
     const data = await c.req.json()
 
-    const promises = Object.keys(data).map((key) =>
-      db.setting.upsert({
-        where: { key },
-        update: { value: String(data[key]) },
-        create: { key, value: String(data[key]) },
-      }),
+    // Use transaction to avoid prepared statement conflicts with connection poolers
+    await db.$transaction(
+      Object.keys(data).map((key) =>
+        db.setting.upsert({
+          where: { key },
+          update: { value: String(data[key]) },
+          create: { key, value: String(data[key]) },
+        }),
+      ),
     )
-
-    await Promise.all(promises)
 
     // Return updated settings
     const settingsList = await db.setting.findMany()

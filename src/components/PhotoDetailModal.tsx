@@ -41,7 +41,6 @@ export function PhotoDetailModal({
 }: PhotoDetailModalProps) {
   const { settings } = useSettings()
   const { t, locale } = useLanguage()
-  const [showInfo, setShowInfo] = useState(true)
   const [activeTab, setActiveTab] = useState<TabType>('info')
   const [dominantColors, setDominantColors] = useState<string[]>([])
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -221,231 +220,214 @@ export function PhotoDetailModal({
 
           {/* Modal Container */}
           <div
-            className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-8 pointer-events-none"
+            className="fixed inset-0 z-[110] flex items-center justify-center p-0 md:p-8 pointer-events-none"
           >
             <div
-              className="relative w-full h-full max-w-7xl max-h-[90vh] bg-card border border-border shadow-2xl flex flex-col md:flex-row overflow-hidden pointer-events-auto rounded-lg"
+              className="relative w-full h-full md:max-w-7xl md:max-h-[90vh] bg-card md:border md:border-border shadow-2xl flex flex-col md:flex-row overflow-hidden pointer-events-auto md:rounded-lg"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button - Floating */}
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 z-50 p-2.5 text-foreground/50 hover:text-foreground bg-background/50 hover:bg-background backdrop-blur-sm border border-border hover:border-foreground/30 transition-all rounded-none"
+                className="absolute top-4 right-4 z-50 p-2.5 text-foreground/50 hover:text-foreground bg-background/50 hover:bg-background backdrop-blur-sm border border-border hover:border-foreground/30 transition-all rounded-full md:rounded-none"
               >
                 <X className="w-5 h-5" />
               </button>
 
               {/* Left Side - Photo Display */}
-              <div className="flex-1 lg:flex-none lg:w-[70%] relative bg-muted/30 flex items-center justify-center overflow-hidden h-[50vh] md:h-auto">
+              <div className="flex-none h-[40vh] md:h-auto md:flex-1 lg:flex-none lg:w-[70%] relative bg-muted/30 flex items-center justify-center overflow-hidden">
                 {/* Thumbnail / Placeholder */}
                 <img
                   src={resolveAssetUrl(photo.thumbnailUrl || photo.url, settings?.cdn_domain)}
                   alt={photo.title}
-                  className="absolute w-full h-full object-contain p-4 md:p-8 blur-sm scale-105"
+                  className="absolute w-full h-full object-contain p-2 md:p-8 blur-sm scale-105"
                 />
-                
+
                 {/* Full Image */}
                 <img
                   src={resolveAssetUrl(photo.url, settings?.cdn_domain)}
                   alt={photo.title}
-                  className={`relative w-full h-full object-contain p-4 md:p-8 transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                  className={`relative w-full h-full object-contain p-2 md:p-8 transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                   onLoad={() => setImageLoaded(true)}
                 />
-
-                {/* Mobile Info Toggle */}
-                <button
-                  onClick={() => setShowInfo(!showInfo)}
-                  className="md:hidden absolute bottom-4 right-4 p-2 bg-background/80 backdrop-blur border border-border rounded-full text-foreground/70"
-                >
-                  <Info className="w-5 h-5" />
-                </button>
               </div>
 
-              {/* Right Side - Info Panel */}
-              <AnimatePresence mode="wait">
-                {showInfo && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="w-full md:w-[350px] lg:w-[30%] border-t md:border-t-0 md:border-l border-border bg-card flex flex-col overflow-hidden shrink-0"
+              {/* Right Side - Info Panel (Always visible, scrollable on mobile) */}
+              <div className="flex-1 md:flex-none w-full md:w-[350px] lg:w-[30%] border-t md:border-t-0 md:border-l border-border bg-card flex flex-col overflow-hidden">
+                {/* Tab Navigation */}
+                <div className="flex border-b border-border shrink-0 overflow-x-auto">
+                  <button
+                    onClick={() => setActiveTab('info')}
+                    className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-3 text-[10px] font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] border-b-2 transition-colors whitespace-nowrap ${
+                      activeTab === 'info'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
                   >
-                    {/* Tab Navigation */}
-                    <div className="flex border-b border-border shrink-0">
-                      <button
-                        onClick={() => setActiveTab('info')}
-                        className={`flex items-center gap-2 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] border-b-2 transition-colors ${
-                          activeTab === 'info'
-                            ? 'border-primary text-primary'
-                            : 'border-transparent text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        <Info className="w-4 h-4" />
-                        {t('gallery.info')}
-                      </button>
-                      <button
-                        onClick={() => setActiveTab('story')}
-                        className={`flex items-center gap-2 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] border-b-2 transition-colors ${
-                          activeTab === 'story'
-                            ? 'border-primary text-primary'
-                            : 'border-transparent text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        <BookOpen className="w-4 h-4" />
-                        {t('gallery.story')}
-                      </button>
-                      <button
-                        onClick={() => setActiveTab('comments')}
-                        className={`flex items-center gap-2 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] border-b-2 transition-colors ${
-                          activeTab === 'comments'
-                            ? 'border-primary text-primary'
-                            : 'border-transparent text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                        {t('gallery.comments')}
-                      </button>
-                    </div>
+                    <Info className="w-4 h-4" />
+                    {t('gallery.info')}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('story')}
+                    className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-3 text-[10px] font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] border-b-2 transition-colors whitespace-nowrap ${
+                      activeTab === 'story'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    {t('gallery.story')}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('comments')}
+                    className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-3 text-[10px] font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] border-b-2 transition-colors whitespace-nowrap ${
+                      activeTab === 'comments'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    {t('gallery.comments')}
+                  </button>
+                </div>
 
-                    {/* Tab Content */}
-                    {activeTab === 'info' && (
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 space-y-8">
-                      {/* Header */}
-                      <div className="space-y-3">
-                        <div className="flex flex-wrap gap-2">
-                          {photo.category.split(',').map((cat) => (
-                            <span
-                              key={cat}
-                              className="text-[10px] font-bold tracking-[0.2em] uppercase text-primary bg-primary/5 border border-primary/20 px-2 py-1 rounded-sm"
+                {/* Tab Content */}
+                {activeTab === 'info' && (
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8">
+                  {/* Header */}
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      {photo.category.split(',').map((cat) => (
+                        <span
+                          key={cat}
+                          className="text-[10px] font-bold tracking-[0.2em] uppercase text-primary bg-primary/5 border border-primary/20 px-2 py-1 rounded-sm"
+                        >
+                          {cat}
+                        </span>
+                      ))}
+                      {photo.isFeatured && (
+                        <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-sm flex items-center gap-1">
+                          <Star className="w-3 h-3 fill-current" />
+                          {t('admin.feat')}
+                        </span>
+                      )}
+                    </div>
+                    <h2 className="font-serif text-2xl md:text-3xl leading-tight text-foreground">
+                      {photo.title}
+                    </h2>
+                  </div>
+
+                  {/* Palette */}
+                  <div className="space-y-4 md:space-y-6">
+                    <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground border-b border-border pb-2">
+                      {t('gallery.palette')}
+                    </h3>
+                    <div className="flex flex-wrap gap-3 md:gap-4">
+                      {dominantColors.length > 0
+                        ? dominantColors.map((color, i) => (
+                            <div
+                              key={i}
+                              className="flex flex-col items-center gap-1.5 md:gap-2 cursor-pointer group"
+                              onClick={() => handleCopyColor(color)}
+                              title="Click to copy"
                             >
-                              {cat}
-                            </span>
-                          ))}
-                          {photo.isFeatured && (
-                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-sm flex items-center gap-1">
-                              <Star className="w-3 h-3 fill-current" />
-                              {t('admin.feat')}
-                            </span>
-                          )}
-                        </div>
-                        <h2 className="font-serif text-3xl leading-tight text-foreground">
-                          {photo.title}
-                        </h2>
-                      </div>
-
-                      {/* Palette */}
-                      <div className="space-y-6">
-                        <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground border-b border-border pb-2">
-                          {t('gallery.palette')}
-                        </h3>
-                        <div className="flex flex-wrap gap-4">
-                          {dominantColors.length > 0
-                            ? dominantColors.map((color, i) => (
-                                <div
-                                  key={i}
-                                  className="flex flex-col items-center gap-2 cursor-pointer group"
-                                  onClick={() => handleCopyColor(color)}
-                                  title="Click to copy"
-                                >
-                                  <div
-                                    className="w-10 h-10 rounded-full border border-border shadow-sm transition-transform group-hover:scale-110"
-                                    style={{ backgroundColor: color }}
-                                  />
-                                  <span className="text-[10px] font-mono text-muted-foreground group-hover:text-foreground transition-colors uppercase">
-                                    {color}
-                                  </span>
-                                </div>
-                              ))
-                            : [...Array(5)].map((_, i) => (
-                                <div
-                                  key={i}
-                                  className="w-10 h-10 rounded-full bg-muted animate-pulse"
-                                />
-                              ))}
-                        </div>
-                      </div>
-
-                      {/* Technical Specs - Grid Layout */}
-                      <div className="space-y-6">
-                        <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground border-b border-border pb-2">
-                          {t('gallery.technical_specs')}
-                        </h3>
-                        {hasExif ? (
-                          <div className="grid grid-cols-2 gap-3">
-                            {exifItems.map((item, idx) => (
                               <div
-                                key={idx}
-                                className="p-3 bg-muted/20 border border-border rounded-md flex flex-col gap-1.5 group hover:bg-muted/40 transition-colors"
-                              >
-                                <div className="flex items-center gap-2 text-muted-foreground group-hover:text-primary transition-colors">
-                                  <item.icon className="w-3.5 h-3.5" />
-                                  <span className="text-[9px] font-bold tracking-[0.1em] uppercase truncate">
-                                    {item.label}
-                                  </span>
-                                </div>
-                                <p
-                                  className="text-xs font-mono text-foreground font-medium truncate"
-                                  title={item.value}
-                                >
-                                  {item.value || '—'}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-muted-foreground italic">
-                            {t('gallery.no_exif')}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* File Info */}
-                      <div className="space-y-6">
-                        <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground border-b border-border pb-2">
-                          {t('gallery.file_info')}
-                        </h3>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="p-3 bg-muted/20 border border-border rounded-md">
-                            <p className="text-[9px] font-bold tracking-[0.1em] text-muted-foreground uppercase mb-1">
-                              {t('gallery.resolution')}
-                            </p>
-                            <p className="text-xs font-mono font-medium">
-                              {photo.width} × {photo.height}
-                            </p>
-                          </div>
-                          <div className="p-3 bg-muted/20 border border-border rounded-md">
-                            <p className="text-[9px] font-bold tracking-[0.1em] text-muted-foreground uppercase mb-1">
-                              {t('gallery.size')}
-                            </p>
-                            <p className="text-xs font-mono font-medium">
-                              {formatFileSize(photo.size)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
+                                className="w-8 h-8 md:w-10 md:h-10 rounded-full border border-border shadow-sm transition-transform group-hover:scale-110"
+                                style={{ backgroundColor: color }}
+                              />
+                              <span className="text-[9px] md:text-[10px] font-mono text-muted-foreground group-hover:text-foreground transition-colors uppercase">
+                                {color}
+                              </span>
+                            </div>
+                          ))
+                        : [...Array(5)].map((_, i) => (
+                            <div
+                              key={i}
+                              className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-muted animate-pulse"
+                            />
+                          ))}
                     </div>
+                  </div>
+
+                  {/* Technical Specs - Grid Layout */}
+                  <div className="space-y-4 md:space-y-6">
+                    <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground border-b border-border pb-2">
+                      {t('gallery.technical_specs')}
+                    </h3>
+                    {hasExif ? (
+                      <div className="grid grid-cols-2 gap-2 md:gap-3">
+                        {exifItems.map((item, idx) => (
+                          <div
+                            key={idx}
+                            className="p-2 md:p-3 bg-muted/20 border border-border rounded-md flex flex-col gap-1 md:gap-1.5 group hover:bg-muted/40 transition-colors"
+                          >
+                            <div className="flex items-center gap-1.5 md:gap-2 text-muted-foreground group-hover:text-primary transition-colors">
+                              <item.icon className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                              <span className="text-[8px] md:text-[9px] font-bold tracking-[0.1em] uppercase truncate">
+                                {item.label}
+                              </span>
+                            </div>
+                            <p
+                              className="text-[11px] md:text-xs font-mono text-foreground font-medium truncate"
+                              title={item.value}
+                            >
+                              {item.value || '—'}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">
+                        {t('gallery.no_exif')}
+                      </p>
                     )}
+                  </div>
 
-                    {/* Story Tab */}
-                    {activeTab === 'story' && photo && <StoryTab photoId={photo.id} />}
-
-                    {/* Comments Tab */}
-                    {activeTab === 'comments' && photo && <CommentsTab photoId={photo.id} />}
-
-                    {/* Footer Actions */}
-                    <div className="p-6 border-t border-border bg-muted/5">
-                      <a
-                        href={resolveAssetUrl(photo.url, settings?.cdn_domain)}
-                        target="_blank"
-                        className="w-full py-3 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-[0.2em] hover:bg-primary/90 transition-all rounded-sm flex items-center justify-center gap-2 shadow-sm"
-                      >
-                        <Download className="w-4 h-4" />
-                        {t('gallery.download')}
-                      </a>
+                  {/* File Info */}
+                  <div className="space-y-4 md:space-y-6">
+                    <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground border-b border-border pb-2">
+                      {t('gallery.file_info')}
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3 md:gap-4">
+                      <div className="p-2 md:p-3 bg-muted/20 border border-border rounded-md">
+                        <p className="text-[8px] md:text-[9px] font-bold tracking-[0.1em] text-muted-foreground uppercase mb-1">
+                          {t('gallery.resolution')}
+                        </p>
+                        <p className="text-[11px] md:text-xs font-mono font-medium">
+                          {photo.width} × {photo.height}
+                        </p>
+                      </div>
+                      <div className="p-2 md:p-3 bg-muted/20 border border-border rounded-md">
+                        <p className="text-[8px] md:text-[9px] font-bold tracking-[0.1em] text-muted-foreground uppercase mb-1">
+                          {t('gallery.size')}
+                        </p>
+                        <p className="text-[11px] md:text-xs font-mono font-medium">
+                          {formatFileSize(photo.size)}
+                        </p>
+                      </div>
                     </div>
-                  </motion.div>
+                  </div>
+                </div>
                 )}
-              </AnimatePresence>
+
+                {/* Story Tab */}
+                {activeTab === 'story' && photo && <StoryTab photoId={photo.id} />}
+
+                {/* Comments Tab */}
+                {activeTab === 'comments' && photo && <CommentsTab photoId={photo.id} />}
+
+                {/* Footer Actions */}
+                <div className="p-4 md:p-6 border-t border-border bg-muted/5 shrink-0">
+                  <a
+                    href={resolveAssetUrl(photo.url, settings?.cdn_domain)}
+                    target="_blank"
+                    className="w-full py-3 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-[0.2em] hover:bg-primary/90 transition-all rounded-sm flex items-center justify-center gap-2 shadow-sm"
+                  >
+                    <Download className="w-4 h-4" />
+                    {t('gallery.download')}
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         </>

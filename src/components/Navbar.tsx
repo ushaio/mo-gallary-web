@@ -1,8 +1,9 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { LogOut, Sun, Moon, Monitor, Languages } from 'lucide-react'
+import { LogOut, Sun, Moon, Monitor, Menu, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
@@ -17,8 +18,26 @@ export default function Navbar() {
   const { t, locale, setLocale } = useLanguage()
   const pathname = usePathname()
   const router = useRouter()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const siteTitle = settings?.site_title || 'MO GALLERY'
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [pathname])
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [mobileMenuOpen])
 
   // Hide navbar on admin pages
   if (pathname?.startsWith('/admin/')) {
@@ -76,89 +95,195 @@ export default function Navbar() {
   )
 
   return (
-    <nav
-      className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-border/50 transition-all duration-300"
-    >
-      <div className="max-w-[1920px] mx-auto px-6 md:px-12">
-        <div className="flex justify-between items-center h-20">
-          {/* Logo Section */}
-          <Link href="/" className="group relative">
-            <span className="font-serif text-2xl md:text-3xl font-bold tracking-widest text-foreground group-hover:text-primary transition-colors duration-500">
-              {siteTitle.toUpperCase()}
-            </span>
-            <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary transition-all duration-500 group-hover:w-full"></span>
-          </Link>
+    <>
+      <nav
+        className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-border/50 transition-all duration-300"
+      >
+        <div className="max-w-[1920px] mx-auto px-4 md:px-12">
+          <div className="flex justify-between items-center h-16 md:h-20">
+            {/* Logo Section */}
+            <Link href="/" className="group relative">
+              <span className="font-serif text-xl md:text-3xl font-bold tracking-widest text-foreground group-hover:text-primary transition-colors duration-500">
+                {siteTitle.toUpperCase()}
+              </span>
+              <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary transition-all duration-500 group-hover:w-full"></span>
+            </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-12">
-            <div className="flex space-x-8">
-              {[
-                { name: t('nav.home'), path: '/' },
-                { name: t('nav.gallery'), path: '/gallery' },
-                { name: t('nav.blog'), path: '/blog' },
-                { name: t('nav.about'), path: '/about' },
-              ].map((item) => (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  className="font-sans text-xs font-medium tracking-[0.2em] hover:text-primary transition-colors duration-300 uppercase"
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </div>
-
-            <div className="h-4 w-[1px] bg-border"></div>
-
-            <div className="flex items-center space-x-6">
-              <button
-                onClick={toggleLanguage}
-                className="font-sans text-[10px] font-bold tracking-widest hover:text-primary transition-colors duration-300 flex items-center gap-1"
-                aria-label="Toggle Language"
-              >
-                {locale === 'zh' ? 'EN' : '中'}
-              </button>
-
-              <button
-                onClick={toggleTheme}
-                className="hover:text-primary transition-colors duration-300"
-                aria-label="Toggle Theme"
-              >
-                 <AnimatePresence mode="wait">
-                  {themeIcon}
-                </AnimatePresence>
-              </button>
-
-              {isAuthenticated ? (
-                <>
-                  <Link 
-                    href="/admin" 
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-12">
+              <div className="flex space-x-8">
+                {[
+                  { name: t('nav.home'), path: '/' },
+                  { name: t('nav.gallery'), path: '/gallery' },
+                  { name: t('nav.blog'), path: '/blog' },
+                  { name: t('nav.about'), path: '/about' },
+                ].map((item) => (
+                  <Link
+                    key={item.path}
+                    href={item.path}
                     className="font-sans text-xs font-medium tracking-[0.2em] hover:text-primary transition-colors duration-300 uppercase"
                   >
-                    {t('nav.admin')}
+                    {item.name}
                   </Link>
-                  <div className="flex items-center space-x-4">
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center space-x-2 font-sans text-xs font-medium tracking-[0.2em] hover:text-destructive transition-colors duration-300 uppercase"
-                    >
-                      <span>{t('nav.logout')}</span>
-                      <LogOut className="w-3 h-3" />
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <Link 
-                  href="/login" 
-                  className="font-sans text-xs font-medium tracking-[0.2em] hover:text-primary transition-colors duration-300 uppercase"
+                ))}
+              </div>
+
+              <div className="h-4 w-[1px] bg-border"></div>
+
+              <div className="flex items-center space-x-6">
+                <button
+                  onClick={toggleLanguage}
+                  className="font-sans text-[10px] font-bold tracking-widest hover:text-primary transition-colors duration-300 flex items-center gap-1"
+                  aria-label="Toggle Language"
                 >
-                  {t('nav.login')}
-                </Link>
-              )}
+                  {locale === 'zh' ? 'EN' : '中'}
+                </button>
+
+                <button
+                  onClick={toggleTheme}
+                  className="hover:text-primary transition-colors duration-300"
+                  aria-label="Toggle Theme"
+                >
+                  <AnimatePresence mode="wait">
+                    {themeIcon}
+                  </AnimatePresence>
+                </button>
+
+                {isAuthenticated ? (
+                  <>
+                    <Link
+                      href="/admin"
+                      className="font-sans text-xs font-medium tracking-[0.2em] hover:text-primary transition-colors duration-300 uppercase"
+                    >
+                      {t('nav.admin')}
+                    </Link>
+                    <div className="flex items-center space-x-4">
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center space-x-2 font-sans text-xs font-medium tracking-[0.2em] hover:text-destructive transition-colors duration-300 uppercase"
+                      >
+                        <span>{t('nav.logout')}</span>
+                        <LogOut className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="font-sans text-xs font-medium tracking-[0.2em] hover:text-primary transition-colors duration-300 uppercase"
+                  >
+                    {t('nav.login')}
+                  </Link>
+                )}
+              </div>
             </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-foreground hover:text-primary transition-colors"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* Mobile Menu - Outside nav element */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden fixed inset-0 top-16 z-40 bg-background border-t border-border overflow-y-auto"
+          >
+            <div className="px-6 py-8 flex flex-col">
+              {/* Navigation Links */}
+              <nav className="flex flex-col space-y-1">
+                {[
+                  { name: t('nav.home'), path: '/' },
+                  { name: t('nav.gallery'), path: '/gallery' },
+                  { name: t('nav.blog'), path: '/blog' },
+                  { name: t('nav.about'), path: '/about' },
+                ].map((item, index) => (
+                  <motion.div
+                    key={item.path}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Link
+                      href={item.path}
+                      className={`block py-4 font-serif text-3xl tracking-tight transition-colors ${
+                        pathname === item.path ? 'text-primary' : 'text-foreground hover:text-primary'
+                      }`}
+                    >
+                      {item.name}
+                    </Link>
+                  </motion.div>
+                ))}
+              </nav>
+
+              {/* Divider */}
+              <div className="my-8 h-[1px] bg-border" />
+
+              {/* Actions */}
+              <div className="flex flex-col space-y-6">
+                {/* Theme & Language Row */}
+                <div className="flex items-center gap-6">
+                  <button
+                    onClick={toggleTheme}
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <AnimatePresence mode="wait">
+                      {themeIcon}
+                    </AnimatePresence>
+                    <span className="font-sans text-xs uppercase tracking-widest">
+                      {theme === 'system' ? t('nav.system') : theme === 'light' ? t('nav.light') : t('nav.dark')}
+                    </span>
+                  </button>
+                  <div className="h-4 w-[1px] bg-border" />
+                  <button
+                    onClick={toggleLanguage}
+                    className="font-sans text-xs font-bold tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {locale === 'zh' ? 'English' : '中文'}
+                  </button>
+                </div>
+
+                {/* Auth Actions */}
+                {isAuthenticated ? (
+                  <div className="flex flex-col space-y-4">
+                    <Link
+                      href="/admin"
+                      className="font-sans text-sm font-medium tracking-[0.2em] text-primary hover:text-primary/80 transition-colors uppercase"
+                    >
+                      {t('nav.admin')}
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-2 font-sans text-sm font-medium tracking-[0.2em] text-muted-foreground hover:text-destructive transition-colors uppercase"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      {t('nav.logout')}
+                    </button>
+                  </div>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center justify-center py-3 px-6 border border-primary text-primary font-sans text-xs font-bold tracking-[0.2em] uppercase hover:bg-primary hover:text-primary-foreground transition-all"
+                  >
+                    {t('nav.login')}
+                  </Link>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   )
 }

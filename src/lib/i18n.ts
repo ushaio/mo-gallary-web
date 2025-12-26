@@ -27,6 +27,9 @@ export const dictionaries = {
       logout: '退出',
       toggle_theme: '切换主题',
       logs: '日志',
+      system: '跟随系统',
+      light: '浅色',
+      dark: '深色',
     },
     footer: {
       desc: '透过现代感知的镜头，捕捉存在中无言的瞬间。',
@@ -210,6 +213,9 @@ export const dictionaries = {
       logout: 'LOGOUT',
       toggle_theme: 'Toggle Theme',
       logs: 'LOGS',
+      system: 'System',
+      light: 'Light',
+      dark: 'Dark',
     },
     footer: {
       desc: 'Capturing the unspoken moments of existence through the lens of modern perception.',
