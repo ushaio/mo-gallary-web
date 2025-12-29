@@ -139,6 +139,8 @@ export interface AdminSettingsDto {
   r2_secret_access_key?: string
   r2_bucket?: string
   r2_endpoint?: string
+  r2_public_url?: string
+  r2_path?: string
   github_token?: string
   github_repo?: string
   github_path?: string

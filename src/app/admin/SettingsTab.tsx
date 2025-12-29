@@ -254,6 +254,7 @@ export function SettingsTab({
                               r2_endpoint: e.target.value,
                             })
                           }
+                          placeholder="https://<account-id>.r2.cloudflarestorage.com"
                           className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                         />
                       </div>
@@ -289,7 +290,7 @@ export function SettingsTab({
                           className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                         />
                       </div>
-                      <div className="md:col-span-2 space-y-2">
+                      <div className="space-y-2">
                         <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">
                           Bucket
                         </label>
@@ -304,6 +305,43 @@ export function SettingsTab({
                           }
                           className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                         />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">
+                          Path Prefix
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.r2_path ?? ''}
+                          onChange={(e) =>
+                            setSettings({
+                              ...settings,
+                              r2_path: e.target.value,
+                            })
+                          }
+                          placeholder="photos"
+                          className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
+                        />
+                      </div>
+                      <div className="md:col-span-2 space-y-2">
+                        <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">
+                          Public URL <span className="text-destructive">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.r2_public_url ?? ''}
+                          onChange={(e) =>
+                            setSettings({
+                              ...settings,
+                              r2_public_url: e.target.value,
+                            })
+                          }
+                          placeholder="https://pub-xxx.r2.dev"
+                          className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
+                        />
+                        <p className="text-[10px] text-muted-foreground font-mono">
+                          Required. Enable public access in R2 bucket settings or use a custom domain.
+                        </p>
                       </div>
                     </div>
                   )}
