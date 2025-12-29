@@ -1,0 +1,476 @@
+'use client'
+
+import React, { useEffect, useState, createContext, useContext, useCallback } from 'react'
+import {
+  Upload as UploadIcon,
+  Image as ImageIcon,
+  Settings,
+  BookText,
+  Menu,
+  ExternalLink,
+  LogOut,
+  LucideIcon,
+} from 'lucide-react'
+import ProtectedRoute from '@/components/ProtectedRoute'
+import { useAuth } from '@/contexts/AuthContext'
+import { useSettings } from '@/contexts/SettingsContext'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { useRouter, usePathname } from 'next/navigation'
+import Link from 'next/link'
+import {
+  ApiUnauthorizedError,
+  deletePhoto,
+  getAdminSettings,
+  getCategories,
+  getPhotos,
+  updateAdminSettings,
+  updatePhoto,
+  type AdminSettingsDto,
+  type PhotoDto,
+} from '@/lib/api'
+import { Toast, type Notification } from '@/components/Toast'
+import { DeleteConfirmDialog } from '@/components/admin/DeleteConfirmDialog'
+import { PhotoDetailModal } from '@/components/PhotoDetailModal'
+
+// Admin Context for shared state
+interface AdminContextType {
+  token: string | null
+  photos: PhotoDto[]
+  categories: string[]
+  settings: AdminSettingsDto | null
+  setSettings: (settings: AdminSettingsDto) => void
+  photosLoading: boolean
+  settingsLoading: boolean
+  settingsSaving: boolean
+  refreshPhotos: () => Promise<void>
+  refreshSettings: () => Promise<void>
+  refreshCategories: () => Promise<void>
+  handleSaveSettings: () => Promise<void>
+  handleDelete: (photoId?: string) => void
+  handleToggleFeatured: (photo: PhotoDto) => Promise<void>
+  selectedPhotoIds: Set<string>
+  setSelectedPhotoIds: React.Dispatch<React.SetStateAction<Set<string>>>
+  handleSelectPhotoToggle: (id: string) => void
+  handleSelectAllPhotos: () => void
+  photosViewMode: 'grid' | 'list'
+  setPhotosViewMode: (mode: 'grid' | 'list') => void
+  photosError: string
+  settingsError: string
+  notify: (message: string, type?: 'success' | 'error' | 'info') => void
+  t: (key: string) => string
+  selectedPhoto: PhotoDto | null
+  setSelectedPhoto: (photo: PhotoDto | null) => void
+  handleUnauthorized: () => void
+}
+
+const AdminContext = createContext<AdminContextType | null>(null)
+
+export function useAdmin() {
+  const context = useContext(AdminContext)
+  if (!context) {
+    throw new Error('useAdmin must be used within AdminLayout')
+  }
+  return context
+}
+
+interface SidebarItem {
+  id: string
+  href: string
+  label: string
+  icon: LucideIcon
+}
+
+function AdminLayoutContent({ children }: { children: React.ReactNode }) {
+  const { logout, token, user } = useAuth()
+  const { settings: globalSettings, refresh: refreshGlobalSettings } = useSettings()
+  const { t } = useLanguage()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  // Mobile menu state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  // Notification State
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const notify = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    const id = Math.random().toString(36).substring(2, 9)
+    setNotifications((prev) => [...prev, { id, message, type }])
+    setTimeout(() => setNotifications((prev) => prev.filter((n) => n.id !== id)), 4000)
+  }, [])
+
+  // Photos State
+  const [categories, setCategories] = useState<string[]>([])
+  const [photos, setPhotos] = useState<PhotoDto[]>([])
+  const [photosLoading, setPhotosLoading] = useState(false)
+  const [photosError, setPhotosError] = useState('')
+  const [photosViewMode, setPhotosViewMode] = useState<'grid' | 'list'>('grid')
+  const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(new Set())
+  const [selectedPhoto, setSelectedPhoto] = useState<PhotoDto | null>(null)
+
+  // Delete Dialog State
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{
+    photoIds: string[]
+    isBulk: boolean
+  } | null>(null)
+  const [deleteFromStorage, setDeleteFromStorage] = useState(true)
+
+  // Settings State
+  const [settings, setSettings] = useState<AdminSettingsDto | null>(null)
+  const [settingsLoading, setSettingsLoading] = useState(false)
+  const [settingsSaving, setSettingsSaving] = useState(false)
+  const [settingsError, setSettingsError] = useState('')
+
+  const siteTitle = globalSettings?.site_title || 'MO GALLERY'
+
+  const handleUnauthorized = useCallback(() => {
+    logout()
+    router.push('/login')
+  }, [logout, router])
+
+  // --- Data Fetching ---
+  const refreshCategories = useCallback(async () => {
+    try {
+      const data = await getCategories()
+      setCategories(data)
+    } catch { }
+  }, [])
+
+  const refreshPhotos = useCallback(async () => {
+    setPhotosError('')
+    setPhotosLoading(true)
+    try {
+      const data = await getPhotos()
+      setPhotos(data)
+    } catch (err) {
+      if (err instanceof ApiUnauthorizedError) {
+        handleUnauthorized()
+        return
+      }
+      setPhotosError(err instanceof Error ? err.message : t('common.error'))
+    } finally {
+      setPhotosLoading(false)
+    }
+  }, [handleUnauthorized, t])
+
+  const refreshSettings = useCallback(async () => {
+    if (!token) return
+    setSettingsError('')
+    setSettingsLoading(true)
+    try {
+      const data = await getAdminSettings(token)
+      setSettings(data)
+    } catch (err) {
+      if (err instanceof ApiUnauthorizedError) {
+        handleUnauthorized()
+        return
+      }
+      setSettingsError(err instanceof Error ? err.message : t('common.error'))
+    } finally {
+      setSettingsLoading(false)
+    }
+  }, [token, handleUnauthorized, t])
+
+  useEffect(() => {
+    refreshCategories()
+    refreshPhotos()
+    refreshSettings()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // --- Photos Handlers ---
+  const handleDelete = useCallback((photoId?: string) => {
+    if (!token) return
+    if (photoId) {
+      setDeleteConfirmDialog({ photoIds: [photoId], isBulk: false })
+    } else if (selectedPhotoIds.size > 0) {
+      setDeleteConfirmDialog({
+        photoIds: Array.from(selectedPhotoIds),
+        isBulk: true,
+      })
+    }
+  }, [token, selectedPhotoIds])
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmDialog || !token) return
+
+    try {
+      if (deleteConfirmDialog.isBulk) {
+        setPhotosLoading(true)
+        for (const id of deleteConfirmDialog.photoIds) {
+          await deletePhoto({ token, id, deleteFromStorage })
+        }
+        setSelectedPhotoIds(new Set())
+      } else {
+        await deletePhoto({
+          token,
+          id: deleteConfirmDialog.photoIds[0],
+          deleteFromStorage,
+        })
+      }
+      await refreshPhotos()
+      notify(t('admin.notify_photo_deleted'))
+      setDeleteConfirmDialog(null)
+      setDeleteFromStorage(true)
+    } catch (err) {
+      if (err instanceof ApiUnauthorizedError) {
+        handleUnauthorized()
+        return
+      }
+      notify(err instanceof Error ? err.message : t('common.error'), 'error')
+    } finally {
+      setPhotosLoading(false)
+    }
+  }
+
+  const handleToggleFeatured = useCallback(async (photo: PhotoDto) => {
+    if (!token) return
+    try {
+      await updatePhoto({
+        token,
+        id: photo.id,
+        patch: { isFeatured: !photo.isFeatured },
+      })
+      await refreshPhotos()
+      notify(
+        photo.isFeatured
+          ? t('admin.notify_featured_removed')
+          : t('admin.notify_featured_added')
+      )
+    } catch (err) {
+      if (err instanceof ApiUnauthorizedError) {
+        handleUnauthorized()
+        return
+      }
+      notify(err instanceof Error ? err.message : t('common.error'), 'error')
+    }
+  }, [token, refreshPhotos, notify, t, handleUnauthorized])
+
+  const handleSelectPhotoToggle = useCallback((id: string) => {
+    setSelectedPhotoIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const handleSelectAllPhotos = useCallback(() => {
+    if (selectedPhotoIds.size === photos.length) {
+      setSelectedPhotoIds(new Set())
+    } else {
+      setSelectedPhotoIds(new Set(photos.map((p) => p.id)))
+    }
+  }, [selectedPhotoIds.size, photos])
+
+  // --- Settings Handlers ---
+  const handleSaveSettings = useCallback(async () => {
+    if (!token || !settings) return
+    setSettingsError('')
+    setSettingsSaving(true)
+    try {
+      const updated = await updateAdminSettings(token, settings)
+      setSettings(updated)
+      await refreshGlobalSettings()
+      notify(t('admin.notify_config_saved'))
+    } catch (err) {
+      if (err instanceof ApiUnauthorizedError) {
+        handleUnauthorized()
+        return
+      }
+      setSettingsError(err instanceof Error ? err.message : t('common.error'))
+      notify('Failed to save settings', 'error')
+    } finally {
+      setSettingsSaving(false)
+    }
+  }, [token, settings, refreshGlobalSettings, notify, t, handleUnauthorized])
+
+  // --- Sidebar Items ---
+  const sidebarItems: SidebarItem[] = [
+    { id: 'photos', href: '/admin/photos', label: t('admin.library'), icon: ImageIcon },
+    { id: 'upload', href: '/admin/upload', label: t('admin.upload'), icon: UploadIcon },
+    { id: 'logs', href: '/admin/logs', label: t('admin.logs'), icon: BookText },
+    { id: 'settings', href: '/admin/settings', label: t('admin.config'), icon: Settings },
+  ]
+
+  // Get current active tab from pathname
+  const getActiveTab = () => {
+    if (pathname.startsWith('/admin/photos')) return 'photos'
+    if (pathname.startsWith('/admin/upload')) return 'upload'
+    if (pathname.startsWith('/admin/logs')) return 'logs'
+    if (pathname.startsWith('/admin/settings')) return 'settings'
+    return 'photos'
+  }
+
+  const activeTab = getActiveTab()
+
+  // Get page title
+  const getPageTitle = () => {
+    switch (activeTab) {
+      case 'photos': return t('admin.library')
+      case 'upload': return t('admin.upload')
+      case 'logs': return t('admin.logs')
+      case 'settings': return t('admin.config')
+      default: return t('admin.library')
+    }
+  }
+
+  const contextValue: AdminContextType = {
+    token,
+    photos,
+    categories,
+    settings,
+    setSettings,
+    photosLoading,
+    settingsLoading,
+    settingsSaving,
+    refreshPhotos,
+    refreshSettings,
+    refreshCategories,
+    handleSaveSettings,
+    handleDelete,
+    handleToggleFeatured,
+    selectedPhotoIds,
+    setSelectedPhotoIds,
+    handleSelectPhotoToggle,
+    handleSelectAllPhotos,
+    photosViewMode,
+    setPhotosViewMode,
+    photosError,
+    settingsError,
+    notify,
+    t,
+    selectedPhoto,
+    setSelectedPhoto,
+    handleUnauthorized,
+  }
+
+  return (
+    <AdminContext.Provider value={contextValue}>
+      <div className="flex h-screen overflow-hidden bg-background text-foreground">
+        <Toast
+          notifications={notifications}
+          remove={(id) =>
+            setNotifications((prev) => prev.filter((n) => n.id !== id))
+          }
+        />
+
+        {/* Sidebar */}
+        <aside
+          className={`fixed inset-y-0 left-0 z-40 w-64 bg-background border-r border-border transform transition-transform duration-300 md:translate-x-0 ${
+            isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <div className="flex flex-col h-full">
+            <div className="p-8 border-b border-border">
+              <h2 className="font-serif text-2xl font-bold tracking-tight">
+                {siteTitle}
+              </h2>
+              <p className="font-sans text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+                {t('admin.console')}
+              </p>
+            </div>
+            <nav className="flex-1 p-6 space-y-2">
+              {sidebarItems.map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 text-xs font-bold tracking-widest uppercase transition-all ${
+                    activeTab === item.id
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`}
+                >
+                  <item.icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </nav>
+            <div className="p-6 border-t border-border">
+              <div className="flex items-center space-x-3 mb-6 px-2">
+                <div className="w-8 h-8 bg-primary flex items-center justify-center text-xs text-primary-foreground font-bold">
+                  {user?.username?.substring(0, 1).toUpperCase() || 'A'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold truncate uppercase tracking-wider">
+                    {user?.username || 'ADMIN'}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground truncate uppercase tracking-widest">
+                    {t('admin.super_user')}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  logout()
+                  router.push('/')
+                }}
+                className="w-full flex items-center space-x-3 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>{t('nav.logout')}</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden">
+          <header className="flex-shrink-0 flex items-center justify-between px-8 py-4 bg-background/95 backdrop-blur-xl border-b border-border">
+            <div className="flex items-center">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 mr-4 md:hidden hover:bg-muted"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <h1 className="font-serif text-2xl font-light tracking-tight uppercase">
+                {getPageTitle()}
+              </h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/gallery')}
+                className="flex items-center gap-2 px-3 py-1.5 border border-border hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all text-xs font-bold uppercase tracking-widest"
+              >
+                <span>{t('admin.view_site')}</span>
+                <ExternalLink className="w-3 h-3" />
+              </button>
+            </div>
+          </header>
+
+          <div className="p-8 flex-1 overflow-y-auto custom-scrollbar">
+            {children}
+          </div>
+        </main>
+
+        <PhotoDetailModal
+          photo={selectedPhoto}
+          isOpen={!!selectedPhoto}
+          onClose={() => setSelectedPhoto(null)}
+        />
+
+        <DeleteConfirmDialog
+          isOpen={!!deleteConfirmDialog}
+          isBulk={deleteConfirmDialog?.isBulk ?? false}
+          count={deleteConfirmDialog?.photoIds.length ?? 0}
+          deleteFromStorage={deleteFromStorage}
+          setDeleteFromStorage={setDeleteFromStorage}
+          onConfirm={confirmDelete}
+          onCancel={() => {
+            setDeleteConfirmDialog(null)
+            setDeleteFromStorage(true)
+          }}
+          t={t}
+        />
+      </div>
+    </AdminContext.Provider>
+  )
+}
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </ProtectedRoute>
+  )
+}
