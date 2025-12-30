@@ -150,24 +150,38 @@ photos.post('/admin/photos', async (c) => {
       return c.json({ error: 'File and title are required' }, 400)
     }
 
-    // Get storage configuration
-    const storageConfig = await getStorageConfig(storageProvider || undefined)
+    // Process image buffer
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    // Run these operations in parallel:
+    // 1. Get storage configuration
+    // 2. Extract EXIF data
+    // 3. Get metadata + generate thumbnail
+    const [storageConfig, exifData, { metadata, thumbnailBuffer }] = await Promise.all([
+      getStorageConfig(storageProvider || undefined),
+      extractExifData(buffer),
+      (async () => {
+        const sharpInstance = sharp(buffer)
+        const [metadata, thumbnailBuffer] = await Promise.all([
+          sharpInstance.metadata(),
+          sharp(buffer)
+            .resize(800, 800, {
+              fit: 'inside',
+              withoutEnlargement: true,
+            })
+            .jpeg({ quality: 80 })
+            .toBuffer(),
+        ])
+        return { metadata, thumbnailBuffer }
+      })(),
+    ])
 
     // Create storage provider instance
     const storage = StorageProviderFactory.create(storageConfig)
 
     // Validate provider
     storage.validateConfig()
-
-    // Process image
-    const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-
-    // Extract EXIF data
-    const exifData = await extractExifData(buffer)
-
-    // Get metadata
-    const metadata = await sharp(buffer).metadata()
 
     // Generate random filename
     const randomName = Array(32)
@@ -178,16 +192,7 @@ photos.post('/admin/photos', async (c) => {
     const filename = `${randomName}${ext}`
     const thumbnailFilename = `thumb-${filename}`
 
-    // Generate thumbnail
-    const thumbnailBuffer = await sharp(buffer)
-      .resize(800, 800, {
-        fit: 'inside',
-        withoutEnlargement: true,
-      })
-      .jpeg({ quality: 80 })
-      .toBuffer()
-
-    // Upload via storage provider
+    // Upload via storage provider (original + thumbnail in parallel)
     const uploadResult = await storage.upload(
       {
         buffer,

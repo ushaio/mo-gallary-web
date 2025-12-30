@@ -154,24 +154,72 @@ export function UploadTab({
 
     try {
       const uploadedPhotoIds: string[] = []
+      const CONCURRENCY = 4 // Number of parallel uploads
 
-      for (let i = 0; i < uploadFiles.length; i++) {
-        setUploadProgress((prev) => ({ ...prev, current: i + 1 }))
-        const { file } = uploadFiles[i]
-        const title =
+      // Create upload tasks
+      const uploadTasks = uploadFiles.map((item, index) => ({
+        index,
+        file: item.file,
+        title:
           uploadFiles.length === 1
             ? uploadTitle.trim()
-            : file.name.replace(/\.[^/.]+$/, '')
-        const photo = await uploadPhoto({
-          token,
-          file: file,
-          title: title,
-          category: uploadCategories,
-          storage_provider: uploadSource || undefined,
-          storage_path: uploadPath.trim() || undefined,
-        })
-        uploadedPhotoIds.push(photo.id)
+            : item.file.name.replace(/\.[^/.]+$/, ''),
+      }))
+
+      // Process in batches with concurrency limit
+      let completed = 0
+      const results: (string | null)[] = new Array(uploadFiles.length).fill(null)
+
+      const processTask = async (task: typeof uploadTasks[0]) => {
+        try {
+          const photo = await uploadPhoto({
+            token,
+            file: task.file,
+            title: task.title,
+            category: uploadCategories,
+            storage_provider: uploadSource || undefined,
+            storage_path: uploadPath.trim() || undefined,
+          })
+          results[task.index] = photo.id
+          completed++
+          setUploadProgress({ current: completed, total: uploadFiles.length })
+          return photo.id
+        } catch (err) {
+          console.error(`Failed to upload ${task.title}:`, err)
+          completed++
+          setUploadProgress({ current: completed, total: uploadFiles.length })
+          throw err
+        }
       }
+
+      // Execute with concurrency limit
+      const executing: Promise<string>[] = []
+      for (const task of uploadTasks) {
+        const p = processTask(task)
+        executing.push(p)
+
+        if (executing.length >= CONCURRENCY) {
+          await Promise.race(executing)
+          // Remove completed promises
+          for (let i = executing.length - 1; i >= 0; i--) {
+            const status = await Promise.race([
+              executing[i].then(() => 'fulfilled').catch(() => 'rejected'),
+              Promise.resolve('pending'),
+            ])
+            if (status !== 'pending') {
+              executing.splice(i, 1)
+            }
+          }
+        }
+      }
+
+      // Wait for remaining uploads
+      await Promise.allSettled(executing)
+
+      // Collect successful uploads
+      results.forEach((id) => {
+        if (id) uploadedPhotoIds.push(id)
+      })
 
       // Associate with story if selected
       if (uploadStoryId && uploadedPhotoIds.length > 0) {
@@ -179,19 +227,23 @@ export function UploadTab({
           await addPhotosToStory(token, uploadStoryId, uploadedPhotoIds)
         } catch (err) {
           console.error('Failed to associate photos with story:', err)
-          // Don't fail the upload, just log the error
         }
       }
 
-      const count = uploadFiles.length
+      const count = uploadedPhotoIds.length
+      const failed = uploadFiles.length - count
+
       setUploadFiles([])
       setSelectedUploadIds(new Set())
       setUploadTitle('')
       setUploadStoryId('')
-      // setUploadCategories([]) // Keep categories for next upload? Maybe reset.
 
       onUploadSuccess()
-      notify(`${count} ${t('admin.notify_upload_success')}`)
+      if (failed > 0) {
+        notify(`${count} ${t('admin.notify_upload_success')}, ${failed} failed`, 'info')
+      } else {
+        notify(`${count} ${t('admin.notify_upload_success')}`)
+      }
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : t('common.error'))
       notify('Upload failed', 'error')

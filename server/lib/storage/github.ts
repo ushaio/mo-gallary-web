@@ -72,29 +72,35 @@ export class GithubStorageProvider implements StorageProvider {
     thumbnail?: UploadFileInput
   ): Promise<UploadResult> {
     try {
-      // Build file path
+      // Build file paths
       const filePath = this.buildPath(file.filename, file.path)
 
-      // Upload original file
-      await this.uploadToGithub(
-        filePath,
-        file.buffer,
-        `Upload: ${file.filename}`
-      )
+      // Upload original and thumbnail in parallel
+      const uploadPromises: Promise<void>[] = [
+        this.uploadToGithub(filePath, file.buffer, `Upload: ${file.filename}`),
+      ]
+
+      let thumbPath: string | undefined
+      if (thumbnail) {
+        thumbPath = this.buildPath(thumbnail.filename, thumbnail.path)
+        uploadPromises.push(
+          this.uploadToGithub(
+            thumbPath,
+            thumbnail.buffer,
+            `Upload thumbnail: ${thumbnail.filename}`
+          )
+        )
+      }
+
+      // Wait for all uploads to complete
+      await Promise.all(uploadPromises)
 
       const result: UploadResult = {
         url: this.getUrl(filePath),
         key: filePath,
       }
 
-      // Upload thumbnail if provided
-      if (thumbnail) {
-        const thumbPath = this.buildPath(thumbnail.filename, thumbnail.path)
-        await this.uploadToGithub(
-          thumbPath,
-          thumbnail.buffer,
-          `Upload thumbnail: ${thumbnail.filename}`
-        )
+      if (thumbnail && thumbPath) {
         result.thumbnailUrl = this.getUrl(thumbPath)
         result.thumbnailKey = thumbPath
       }

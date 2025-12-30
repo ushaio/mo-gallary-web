@@ -80,18 +80,28 @@ export class R2StorageProvider implements StorageProvider {
       // Build file key
       const fileKey = this.buildKey(file.filename, file.path)
 
-      // Upload original file
-      await this.uploadToR2(fileKey, file.buffer, file.contentType)
+      // Upload original and thumbnail in parallel
+      const uploadPromises: Promise<void>[] = [
+        this.uploadToR2(fileKey, file.buffer, file.contentType),
+      ]
+
+      let thumbKey: string | undefined
+      if (thumbnail) {
+        thumbKey = this.buildKey(thumbnail.filename, thumbnail.path)
+        uploadPromises.push(
+          this.uploadToR2(thumbKey, thumbnail.buffer, thumbnail.contentType)
+        )
+      }
+
+      // Wait for all uploads to complete
+      await Promise.all(uploadPromises)
 
       const result: UploadResult = {
         url: this.getUrl(fileKey),
         key: fileKey,
       }
 
-      // Upload thumbnail if provided
-      if (thumbnail) {
-        const thumbKey = this.buildKey(thumbnail.filename, thumbnail.path)
-        await this.uploadToR2(thumbKey, thumbnail.buffer, thumbnail.contentType)
+      if (thumbnail && thumbKey) {
         result.thumbnailUrl = this.getUrl(thumbKey)
         result.thumbnailKey = thumbKey
       }
