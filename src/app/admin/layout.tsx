@@ -229,7 +229,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         id: photo.id,
         patch: { isFeatured: !photo.isFeatured },
       })
-      await refreshPhotos()
+      // Update local state instead of refreshing all photos
+      setPhotos((prevPhotos) =>
+        prevPhotos.map((p) =>
+          p.id === photo.id ? { ...p, isFeatured: !p.isFeatured } : p
+        )
+      )
       notify(
         photo.isFeatured
           ? t('admin.notify_featured_removed')
@@ -242,7 +247,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       }
       notify(err instanceof Error ? err.message : t('common.error'), 'error')
     }
-  }, [token, refreshPhotos, notify, t, handleUnauthorized])
+  }, [token, notify, t, handleUnauthorized])
 
   const handleSelectPhotoToggle = useCallback((id: string) => {
     setSelectedPhotoIds((prev) => {
