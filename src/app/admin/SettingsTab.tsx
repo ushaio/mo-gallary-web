@@ -19,6 +19,7 @@ import {
   deleteComment,
   ApiUnauthorizedError,
 } from '@/lib/api'
+import { CustomInput } from '@/components/ui/CustomInput'
 
 interface SettingsTabProps {
   token: string | null
@@ -159,27 +160,25 @@ export function SettingsTab({
                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                       {t('admin.site_title')}
                     </label>
-                    <input
-                      type="text"
+                    <CustomInput
+                      variant="config"
                       value={settings.site_title}
                       onChange={(e) =>
                         setSettings({ ...settings, site_title: e.target.value })
                       }
-                      className="w-full p-4 bg-transparent border border-border focus:border-primary outline-none text-sm transition-colors rounded-none"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                       {t('admin.cdn_host')}
                     </label>
-                    <input
-                      type="text"
+                    <CustomInput
+                      variant="config"
                       value={settings.cdn_domain}
                       onChange={(e) =>
                         setSettings({ ...settings, cdn_domain: e.target.value })
                       }
                       placeholder="https://cdn.example.com"
-                      className="w-full p-4 bg-transparent border border-border focus:border-primary outline-none text-sm transition-colors rounded-none"
                     />
                     <p className="text-[10px] text-muted-foreground font-mono">
                       Leave empty to use API host.
@@ -245,7 +244,8 @@ export function SettingsTab({
                         <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">
                           Endpoint
                         </label>
-                        <input
+                        <CustomInput
+                          variant="config"
                           type="text"
                           value={settings.r2_endpoint ?? ''}
                           onChange={(e) =>
@@ -255,14 +255,14 @@ export function SettingsTab({
                             })
                           }
                           placeholder="https://<account-id>.r2.cloudflarestorage.com"
-                          className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                         />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">
                           Access Key ID
                         </label>
-                        <input
+                        <CustomInput
+                          variant="config"
                           type="text"
                           value={settings.r2_access_key_id ?? ''}
                           onChange={(e) =>
@@ -271,14 +271,14 @@ export function SettingsTab({
                               r2_access_key_id: e.target.value,
                             })
                           }
-                          className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                         />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">
                           Secret Access Key
                         </label>
-                        <input
+                        <CustomInput
+                          variant="config"
                           type="password"
                           value={settings.r2_secret_access_key ?? ''}
                           onChange={(e) =>
@@ -287,14 +287,14 @@ export function SettingsTab({
                               r2_secret_access_key: e.target.value,
                             })
                           }
-                          className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                         />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">
                           Bucket
                         </label>
-                        <input
+                        <CustomInput
+                          variant="config"
                           type="text"
                           value={settings.r2_bucket ?? ''}
                           onChange={(e) =>
@@ -303,14 +303,14 @@ export function SettingsTab({
                               r2_bucket: e.target.value,
                             })
                           }
-                          className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                         />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">
                           Path Prefix
                         </label>
-                        <input
+                        <CustomInput
+                          variant="config"
                           type="text"
                           value={settings.r2_path ?? ''}
                           onChange={(e) =>
@@ -320,14 +320,14 @@ export function SettingsTab({
                             })
                           }
                           placeholder="photos"
-                          className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                         />
                       </div>
                       <div className="md:col-span-2 space-y-2">
                         <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">
                           Public URL <span className="text-destructive">*</span>
                         </label>
-                        <input
+                        <CustomInput
+                          variant="config"
                           type="text"
                           value={settings.r2_public_url ?? ''}
                           onChange={(e) =>
@@ -337,7 +337,6 @@ export function SettingsTab({
                             })
                           }
                           placeholder="https://pub-xxx.r2.dev"
-                          className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                         />
                         <p className="text-[10px] text-muted-foreground font-mono">
                           Required. Enable public access in R2 bucket settings or use a custom domain.
@@ -352,7 +351,8 @@ export function SettingsTab({
                         <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">
                           Personal Access Token
                         </label>
-                        <input
+                        <CustomInput
+                          variant="config"
                           type="password"
                           value={settings.github_token ?? ''}
                           onChange={(e) =>
@@ -361,7 +361,6 @@ export function SettingsTab({
                               github_token: e.target.value,
                             })
                           }
-                          className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                           placeholder={t('admin.gh_placeholder_token')}
                         />
                       </div>
@@ -371,7 +370,8 @@ export function SettingsTab({
                             Repo (owner/repo)
                           </label>
                         </div>
-                        <input
+                        <CustomInput
+                          variant="config"
                           type="text"
                           value={settings.github_repo ?? ''}
                           onChange={(e) =>
@@ -380,7 +380,6 @@ export function SettingsTab({
                               github_repo: e.target.value,
                             })
                           }
-                          className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                           placeholder={t('admin.gh_placeholder_repo')}
                         />
                       </div>
@@ -428,7 +427,8 @@ export function SettingsTab({
                             {t('admin.gh_test')}
                           </button>
                         </div>
-                        <input
+                        <CustomInput
+                          variant="config"
                           type="text"
                           value={settings.github_branch ?? ''}
                           onChange={(e) =>
@@ -437,7 +437,6 @@ export function SettingsTab({
                               github_branch: e.target.value,
                             })
                           }
-                          className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                           placeholder="main"
                         />
                       </div>
@@ -445,7 +444,8 @@ export function SettingsTab({
                         <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">
                           {t('admin.path_prefix')}
                         </label>
-                        <input
+                        <CustomInput
+                          variant="config"
                           type="text"
                           value={settings.github_path ?? ''}
                           onChange={(e) =>
@@ -454,7 +454,6 @@ export function SettingsTab({
                               github_path: e.target.value,
                             })
                           }
-                          className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                           placeholder={t('admin.gh_placeholder_path')}
                         />
                       </div>
@@ -486,7 +485,8 @@ export function SettingsTab({
                           <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">
                             GitHub Pages URL
                           </label>
-                          <input
+                          <CustomInput
+                            variant="config"
                             type="text"
                             value={settings.github_pages_url ?? ''}
                             onChange={(e) =>
@@ -496,7 +496,6 @@ export function SettingsTab({
                               })
                             }
                             placeholder="https://username.github.io/repo"
-                            className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-xs font-mono"
                           />
                         </div>
                       )}
@@ -582,7 +581,8 @@ export function SettingsTab({
                               <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                                 {t('admin.comment_api_key')}
                               </label>
-                              <input
+                              <CustomInput
+                                variant="config"
                                 type="password"
                                 value={settings.comment_api_key || ''}
                                 onChange={(e) =>
@@ -591,7 +591,6 @@ export function SettingsTab({
                                     comment_api_key: e.target.value,
                                   })
                                 }
-                                className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-sm font-mono"
                                 placeholder="sk-..."
                               />
                             </div>
@@ -599,7 +598,8 @@ export function SettingsTab({
                               <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                                 {t('admin.comment_endpoint')}
                               </label>
-                              <input
+                              <CustomInput
+                                variant="config"
                                 type="text"
                                 value={settings.comment_api_endpoint || ''}
                                 onChange={(e) =>
@@ -608,7 +608,6 @@ export function SettingsTab({
                                     comment_api_endpoint: e.target.value,
                                   })
                                 }
-                                className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-sm font-mono"
                                 placeholder="https://api.openai.com/v1"
                               />
                             </div>
@@ -616,7 +615,8 @@ export function SettingsTab({
                               <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                                 {t('admin.comment_model')}
                               </label>
-                              <input
+                              <CustomInput
+                                variant="config"
                                 type="text"
                                 value={settings.comment_model || ''}
                                 onChange={(e) =>
@@ -625,7 +625,6 @@ export function SettingsTab({
                                     comment_model: e.target.value,
                                   })
                                 }
-                                className="w-full p-3 bg-background border border-border focus:border-primary outline-none text-sm font-mono"
                                 placeholder="gpt-4o, gemini-pro..."
                               />
                             </div>

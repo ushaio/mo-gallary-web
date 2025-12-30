@@ -15,6 +15,7 @@ export default function GalleryPage() {
   const [photos, setPhotos] = useState<PhotoDto[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [activeCategory, setActiveCategory] = useState('全部')
+  const [search, setSearch] = useState('')
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoDto | null>(null)
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<ViewMode>('masonry')
@@ -38,9 +39,24 @@ export default function GalleryPage() {
   }, [])
 
   const filteredPhotos = useMemo(() => {
-    if (activeCategory === '全部') return photos
-    return photos.filter(p => p.category.includes(activeCategory))
-  }, [photos, activeCategory])
+    let filtered = photos
+
+    // Filter by category
+    if (activeCategory !== '全部') {
+      filtered = filtered.filter(p => p.category.includes(activeCategory))
+    }
+
+    // Filter by search
+    if (search.trim()) {
+      const searchLower = search.toLowerCase()
+      filtered = filtered.filter(p =>
+        p.title.toLowerCase().includes(searchLower) ||
+        p.category.toLowerCase().includes(searchLower)
+      )
+    }
+
+    return filtered
+  }, [photos, activeCategory, search])
 
   return (
     <div className="min-h-screen bg-background text-foreground pt-24 pb-16 px-4 md:px-8 lg:px-12">
@@ -49,6 +65,8 @@ export default function GalleryPage() {
           activeCategory={activeCategory}
           categories={categories}
           onCategoryChange={setActiveCategory}
+          search={search}
+          onSearchChange={setSearch}
           photoCount={filteredPhotos.length}
           viewMode={viewMode}
           onViewModeChange={setViewMode}

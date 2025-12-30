@@ -11,11 +11,10 @@ import {
   ImageIcon,
   Star,
   Search,
-  Filter,
-  ChevronDown,
-  ArrowUpDown,
 } from 'lucide-react'
 import { PhotoDto, resolveAssetUrl, PublicSettingsDto } from '@/lib/api'
+import { CustomSelect } from '@/components/ui/CustomSelect'
+import { CustomInput } from '@/components/ui/CustomInput'
 
 interface PhotosTabProps {
   photos: PhotoDto[]
@@ -136,62 +135,52 @@ export function PhotosTab({
 
         {/* Right: Search, Filters, Actions */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 lg:justify-end">
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder={t('common.search')}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-muted/30 border border-border focus:border-primary outline-none text-xs font-mono transition-all"
-            />
-          </div>
+          <CustomInput
+            variant="search"
+            icon={Search}
+            placeholder={t('common.search')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            containerClassName="w-full sm:w-64"
+          />
 
           <div className="flex flex-wrap items-center gap-2">
             {/* Sort Selector */}
-            <div className="relative group">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="appearance-none pl-3 pr-8 py-2 bg-muted/30 border border-border focus:border-primary outline-none text-xs font-mono cursor-pointer transition-all hover:bg-muted/50 [&>option]:bg-background [&>option]:text-foreground"
-              >
-                <option value="upload-desc">{t('admin.sort_upload_desc')}</option>
-                <option value="upload-asc">{t('admin.sort_upload_asc')}</option>
-                <option value="taken-desc">{t('admin.sort_taken_desc')}</option>
-                <option value="taken-asc">{t('admin.sort_taken_asc')}</option>
-              </select>
-              <ArrowUpDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none group-hover:text-foreground transition-colors" />
-            </div>
+            <CustomSelect
+              value={sortBy}
+              onChange={(value) => setSortBy(value as any)}
+              options={[
+                { value: 'upload-desc', label: t('admin.sort_upload_desc') },
+                { value: 'upload-asc', label: t('admin.sort_upload_asc') },
+                { value: 'taken-desc', label: t('admin.sort_taken_desc') },
+                { value: 'taken-asc', label: t('admin.sort_taken_asc') },
+              ]}
+            />
 
             {/* Category Filter */}
-            <div className="relative group">
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="appearance-none pl-3 pr-8 py-2 bg-muted/30 border border-border focus:border-primary outline-none text-xs font-mono cursor-pointer transition-all hover:bg-muted/50 [&>option]:bg-background [&>option]:text-foreground"
-              >
-                <option value="全部">分类: {t('gallery.all')}</option>
-                {categories.filter(c => c !== '全部').map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none group-hover:text-foreground transition-colors" />
-            </div>
+            <CustomSelect
+              value={categoryFilter}
+              onChange={setCategoryFilter}
+              options={[
+                { value: '全部', label: `分类: ${t('gallery.all')}` },
+                ...categories.filter(c => c !== '全部').map(cat => ({
+                  value: cat,
+                  label: cat,
+                })),
+              ]}
+            />
 
             {/* Channel Filter */}
-            <div className="relative group">
-              <select
-                value={channelFilter}
-                onChange={(e) => setChannelFilter(e.target.value)}
-                className="appearance-none pl-3 pr-8 py-2 bg-muted/30 border border-border focus:border-primary outline-none text-xs font-mono cursor-pointer transition-all hover:bg-muted/50 [&>option]:bg-background [&>option]:text-foreground"
-              >
-                <option value="全部">渠道: 全部</option>
-                <option value="local">Local</option>
-                <option value="r2">Cloudflare R2</option>
-                <option value="github">GitHub</option>
-              </select>
-              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none group-hover:text-foreground transition-colors" />
-            </div>
+            <CustomSelect
+              value={channelFilter}
+              onChange={setChannelFilter}
+              options={[
+                { value: '全部', label: '渠道: 全部' },
+                { value: 'local', label: 'Local' },
+                { value: 'r2', label: 'Cloudflare R2' },
+                { value: 'github', label: 'GitHub' },
+              ]}
+            />
 
             {/* Featured Filter (Switch) */}
             <div className="flex items-center gap-3 px-3 py-2 bg-muted/30 border border-border">

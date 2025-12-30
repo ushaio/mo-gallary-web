@@ -19,6 +19,7 @@ import {
 import imageCompression from 'browser-image-compression'
 import { AdminSettingsDto, uploadPhoto, createStory, addPhotosToStory } from '@/lib/api'
 import { formatFileSize } from '@/lib/utils'
+import { CustomInput } from '@/components/ui/CustomInput'
 
 interface StoryUploadFile {
   id: string
@@ -433,11 +434,11 @@ export function StoryUploadTab({
               <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
                 {t('admin.story_title')} *
               </label>
-              <input
+              <CustomInput
+                variant="config"
                 type="text"
                 value={storyTitle}
                 onChange={(e) => setStoryTitle(e.target.value)}
-                className="w-full p-3 bg-background border-b border-border focus:border-primary outline-none text-sm transition-colors rounded-none placeholder:text-muted-foreground/30"
                 placeholder="e.g., 春日漫步"
               />
             </div>
@@ -551,11 +552,11 @@ export function StoryUploadTab({
               <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
                 {t('admin.batch_photo_title')}
               </label>
-              <input
+              <CustomInput
+                variant="config"
                 type="text"
                 value={batchPhotoTitle}
                 onChange={(e) => setBatchPhotoTitle(e.target.value)}
-                className="w-full p-3 bg-background border-b border-border focus:border-primary outline-none text-sm transition-colors rounded-none placeholder:text-muted-foreground/30"
                 placeholder={t('admin.batch_photo_title_hint')}
               />
             </div>
@@ -580,11 +581,11 @@ export function StoryUploadTab({
                 <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
                   {t('admin.path_prefix')}
                 </label>
-                <input
+                <CustomInput
+                  variant="config"
                   type="text"
                   value={uploadPath}
                   onChange={(e) => setUploadPath(e.target.value)}
-                  className="w-full p-3 bg-background border-b border-border focus:border-primary outline-none text-sm font-mono transition-colors rounded-none placeholder:text-muted-foreground/30"
                   placeholder="e.g., 2025/stories"
                 />
               </div>
@@ -619,14 +620,15 @@ export function StoryUploadTab({
                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap">
                       {t('admin.max_size_mb')}
                     </label>
-                    <input
+                    <CustomInput
+                      variant="config"
                       type="number"
                       min="0.5"
                       max="10"
                       step="0.5"
                       value={maxSizeMB}
                       onChange={(e) => setMaxSizeMB(parseFloat(e.target.value) || 4)}
-                      className="w-20 p-2 bg-background border-b border-border focus:border-primary outline-none text-sm font-mono text-center"
+                      className="w-20 text-center"
                     />
                   </div>
                 </div>

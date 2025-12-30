@@ -22,6 +22,7 @@ import {
   deleteStory,
   type StoryDto,
 } from '@/lib/api'
+import { CustomInput } from '@/components/ui/CustomInput'
 
 interface StoriesTabProps {
   token: string | null
@@ -332,7 +333,8 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
               </div>
             ) : (
               <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-                <input
+                <CustomInput
+                  variant="config"
                   type="text"
                   value={currentStory?.title || ''}
                   onChange={(e) =>
@@ -342,7 +344,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
                     }))
                   }
                   placeholder="故事标题"
-                  className="w-full p-6 bg-transparent border border-border focus:border-primary outline-none text-2xl font-serif rounded-none"
+                  className="text-2xl font-serif p-6"
                 />
                 <div className="flex items-center gap-3 px-6">
                   <input

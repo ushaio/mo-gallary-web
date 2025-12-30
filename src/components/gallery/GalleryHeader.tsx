@@ -1,12 +1,16 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { Search } from 'lucide-react'
 import { ViewModeToggle, ViewMode } from './ViewModeToggle'
+import { CustomInput } from '@/components/ui/CustomInput'
 
 interface GalleryHeaderProps {
   activeCategory: string
   categories: string[]
   onCategoryChange: (category: string) => void
+  search: string
+  onSearchChange: (search: string) => void
   photoCount: number
   viewMode: ViewMode
   onViewModeChange: (mode: ViewMode) => void
@@ -17,6 +21,8 @@ export function GalleryHeader({
   activeCategory,
   categories,
   onCategoryChange,
+  search,
+  onSearchChange,
   photoCount,
   viewMode,
   onViewModeChange,
@@ -61,6 +67,22 @@ export function GalleryHeader({
             />
           </motion.div>
         </div>
+
+        {/* Search Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="w-full md:w-96"
+        >
+          <CustomInput
+            variant="search"
+            icon={Search}
+            placeholder={t('common.search')}
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+        </motion.div>
 
         {/* Category Filter - Horizontal scroll on mobile */}
         <motion.div

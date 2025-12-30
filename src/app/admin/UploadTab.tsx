@@ -19,6 +19,7 @@ import { AdminSettingsDto, getAdminStories, type StoryDto } from '@/lib/api'
 import { UploadFileItem } from '@/components/admin/UploadFileItem'
 import { useUploadQueue } from '@/contexts/UploadQueueContext'
 import { CustomSelect } from '@/components/ui/CustomSelect'
+import { CustomInput } from '@/components/ui/CustomInput'
 
 interface UploadTabProps {
   token: string | null
@@ -259,12 +260,11 @@ export function UploadTab({
               <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
                 {t('admin.photo_title')}
               </label>
-              <input
-                type="text"
+              <CustomInput
+                variant="config"
                 value={uploadTitle}
                 onChange={(e) => setUploadTitle(e.target.value)}
                 disabled={uploadFiles.length > 1}
-                className="w-full p-3 bg-background border-b border-border focus:border-primary outline-none text-sm transition-colors rounded-none placeholder:text-muted-foreground/30"
                 placeholder={
                   uploadFiles.length > 1
                     ? t('admin.title_hint_multi')
@@ -406,11 +406,10 @@ export function UploadTab({
                 <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
                   {t('admin.path_prefix')}
                 </label>
-                <input
-                  type="text"
+                <CustomInput
+                  variant="config"
                   value={uploadPath}
                   onChange={(e) => setUploadPath(e.target.value)}
-                  className="w-full p-3 bg-background border-b border-border focus:border-primary outline-none text-sm font-mono transition-colors rounded-none placeholder:text-muted-foreground/30"
                   placeholder="e.g., 2025/vacation"
                 />
               </div>
@@ -445,14 +444,15 @@ export function UploadTab({
                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap">
                       {t('admin.max_size_mb')}
                     </label>
-                    <input
+                    <CustomInput
+                      variant="config"
                       type="number"
                       min="0.5"
                       max="10"
                       step="0.5"
                       value={maxSizeMB}
                       onChange={(e) => setMaxSizeMB(parseFloat(e.target.value) || 4)}
-                      className="w-20 p-2 bg-background border-b border-border focus:border-primary outline-none text-sm font-mono text-center"
+                      className="w-20 text-center"
                     />
                   </div>
                 </div>
