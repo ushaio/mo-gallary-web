@@ -1,7 +1,7 @@
 'use client'
 
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react'
-import { uploadPhotoWithProgress, type PhotoDto } from '@/lib/api'
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react'
+import { uploadPhotoWithProgress } from '@/lib/api'
 
 export type UploadTaskStatus = 'pending' | 'uploading' | 'completed' | 'failed'
 
@@ -66,6 +66,13 @@ export function UploadQueueProvider({
   const [isMinimized, setIsMinimized] = useState(false)
   const activeUploadsRef = useRef(0)
   const tokenRef = useRef<string>('')
+  const onUploadCompleteRef = useRef(onUploadComplete)
+  const completedBatchesRef = useRef<Set<string>>(new Set())
+
+  // Keep the ref updated
+  useEffect(() => {
+    onUploadCompleteRef.current = onUploadComplete
+  }, [onUploadComplete])
 
   const createPreview = (file: File): Promise<string | null> => {
     return new Promise((resolve) => {
@@ -82,6 +89,39 @@ export function UploadQueueProvider({
         t.id === taskId ? { ...t, progress } : t
       )
     )
+  }, [])
+
+  const checkBatchComplete = useCallback((storyId: string | undefined) => {
+    // Use a unique key for the batch
+    const batchKey = storyId || 'no-story'
+
+    setTasks((currentTasks) => {
+      const batchTasks = currentTasks.filter((t) => (t.storyId || 'no-story') === batchKey)
+      const completedTasks = batchTasks.filter((t) => t.status === 'completed')
+      const pendingOrUploading = batchTasks.filter(
+        (t) => t.status === 'pending' || t.status === 'uploading'
+      )
+
+      // Check if batch is complete and hasn't been processed yet
+      if (pendingOrUploading.length === 0 && completedTasks.length > 0) {
+        if (!completedBatchesRef.current.has(batchKey)) {
+          completedBatchesRef.current.add(batchKey)
+
+          const photoIds = completedTasks
+            .map((t) => t.photoId)
+            .filter((id): id is string => !!id)
+
+          if (photoIds.length > 0 && onUploadCompleteRef.current) {
+            // Schedule callback outside of render
+            setTimeout(() => {
+              onUploadCompleteRef.current?.(photoIds, storyId)
+            }, 0)
+          }
+        }
+      }
+
+      return currentTasks
+    })
   }, [])
 
   const processQueue = useCallback(() => {
@@ -131,29 +171,9 @@ export function UploadQueueProvider({
         )
       )
 
-      // Check if all tasks for this batch are complete
+      // Check if batch is complete after a short delay
       setTimeout(() => {
-        setTasks((currentTasks) => {
-          const completedTasks = currentTasks.filter(
-            (t) => t.status === 'completed' && t.storyId === task.storyId
-          )
-          const pendingOrUploading = currentTasks.filter(
-            (t) =>
-              (t.status === 'pending' || t.status === 'uploading') &&
-              t.storyId === task.storyId
-          )
-
-          if (pendingOrUploading.length === 0 && completedTasks.length > 0) {
-            const photoIds = completedTasks
-              .map((t) => t.photoId)
-              .filter((id): id is string => !!id)
-            if (photoIds.length > 0 && onUploadComplete) {
-              onUploadComplete(photoIds, task.storyId)
-            }
-          }
-
-          return currentTasks
-        })
+        checkBatchComplete(task.storyId)
       }, 100)
     } catch (err) {
       setTasks((prev) =>
@@ -185,6 +205,10 @@ export function UploadQueueProvider({
       token: string
     }) => {
       tokenRef.current = params.token
+
+      // Reset batch tracking for this story
+      const batchKey = params.storyId || 'no-story'
+      completedBatchesRef.current.delete(batchKey)
 
       const newTasks: UploadTask[] = await Promise.all(
         params.files.map(async (item) => {
@@ -222,13 +246,20 @@ export function UploadQueueProvider({
   const retryTask = useCallback(
     (taskId: string, token: string) => {
       tokenRef.current = token
-      setTasks((prev) =>
-        prev.map((t) =>
+
+      // Get the task's storyId and reset batch tracking
+      setTasks((prev) => {
+        const task = prev.find((t) => t.id === taskId)
+        if (task) {
+          const batchKey = task.storyId || 'no-story'
+          completedBatchesRef.current.delete(batchKey)
+        }
+        return prev.map((t) =>
           t.id === taskId
             ? { ...t, status: 'pending' as UploadTaskStatus, error: null, progress: 0 }
             : t
         )
-      )
+      })
       setTimeout(processQueue, 50)
     },
     [processQueue]
@@ -262,6 +293,7 @@ export function UploadQueueProvider({
       })
       return []
     })
+    completedBatchesRef.current.clear()
   }, [])
 
   return (
