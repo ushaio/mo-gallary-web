@@ -213,6 +213,10 @@ export const dictionaries = {
       pending: '等待中',
       retry: '重试',
       retry_all_failed: '重试所有失败项',
+      sort_upload_desc: '上传: 最新',
+      sort_upload_asc: '上传: 最早',
+      sort_taken_desc: '拍摄: 最新',
+      sort_taken_asc: '拍摄: 最早',
     }
   },
   en: {
@@ -427,6 +431,10 @@ export const dictionaries = {
       pending: 'Pending',
       retry: 'Retry',
       retry_all_failed: 'Retry all failed',
+      sort_upload_desc: 'Upload: Newest',
+      sort_upload_asc: 'Upload: Oldest',
+      sort_taken_desc: 'Taken: Newest',
+      sort_taken_asc: 'Taken: Oldest',
     }
   }
 }

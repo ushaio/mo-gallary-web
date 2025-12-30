@@ -13,6 +13,7 @@ import {
   Search,
   Filter,
   ChevronDown,
+  ArrowUpDown,
 } from 'lucide-react'
 import { PhotoDto, resolveAssetUrl, PublicSettingsDto } from '@/lib/api'
 
@@ -57,26 +58,49 @@ export function PhotosTab({
   const [categoryFilter, setCategoryFilter] = useState('全部')
   const [channelFilter, setChannelFilter] = useState('全部')
   const [onlyFeatured, setOnlyFeatured] = useState(false)
+  const [sortBy, setSortBy] = useState<'upload-desc' | 'upload-asc' | 'taken-desc' | 'taken-asc'>('upload-desc')
 
   const resolvedCdnDomain = settings?.cdn_domain?.trim() || undefined
 
   const filteredPhotos = useMemo(() => {
-    return photos.filter((p) => {
+    let filtered = photos.filter((p) => {
       const matchesSearch =
         p.title.toLowerCase().includes(search.toLowerCase()) ||
         p.category.toLowerCase().includes(search.toLowerCase())
-      
+
       const matchesCategory =
         categoryFilter === '全部' || p.category.includes(categoryFilter)
-      
+
       const matchesChannel =
         channelFilter === '全部' || p.storageProvider === channelFilter
-      
+
       const matchesFeatured = !onlyFeatured || p.isFeatured
 
       return matchesSearch && matchesCategory && matchesChannel && matchesFeatured
     })
-  }, [photos, search, categoryFilter, channelFilter, onlyFeatured])
+
+    // Apply sorting
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'upload-desc':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        case 'upload-asc':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        case 'taken-desc':
+          if (!a.takenAt && !b.takenAt) return 0
+          if (!a.takenAt) return 1
+          if (!b.takenAt) return -1
+          return new Date(b.takenAt).getTime() - new Date(a.takenAt).getTime()
+        case 'taken-asc':
+          if (!a.takenAt && !b.takenAt) return 0
+          if (!a.takenAt) return 1
+          if (!b.takenAt) return -1
+          return new Date(a.takenAt).getTime() - new Date(b.takenAt).getTime()
+        default:
+          return 0
+      }
+    })
+  }, [photos, search, categoryFilter, channelFilter, onlyFeatured, sortBy])
 
   return (
     <div className="space-y-6">
@@ -122,14 +146,29 @@ export function PhotosTab({
               className="w-full pl-10 pr-4 py-2 bg-muted/30 border border-border focus:border-primary outline-none text-xs font-mono transition-all"
             />
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-2">
+            {/* Sort Selector */}
+            <div className="relative group">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="appearance-none pl-3 pr-8 py-2 bg-muted/30 border border-border focus:border-primary outline-none text-xs font-mono cursor-pointer transition-all hover:bg-muted/50 [&>option]:bg-background [&>option]:text-foreground"
+              >
+                <option value="upload-desc">{t('admin.sort_upload_desc')}</option>
+                <option value="upload-asc">{t('admin.sort_upload_asc')}</option>
+                <option value="taken-desc">{t('admin.sort_taken_desc')}</option>
+                <option value="taken-asc">{t('admin.sort_taken_asc')}</option>
+              </select>
+              <ArrowUpDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none group-hover:text-foreground transition-colors" />
+            </div>
+
             {/* Category Filter */}
             <div className="relative group">
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="appearance-none pl-3 pr-8 py-2 bg-muted/30 border border-border focus:border-primary outline-none text-xs font-mono cursor-pointer transition-all hover:bg-muted/50"
+                className="appearance-none pl-3 pr-8 py-2 bg-muted/30 border border-border focus:border-primary outline-none text-xs font-mono cursor-pointer transition-all hover:bg-muted/50 [&>option]:bg-background [&>option]:text-foreground"
               >
                 <option value="全部">分类: {t('gallery.all')}</option>
                 {categories.filter(c => c !== '全部').map(cat => (
@@ -144,7 +183,7 @@ export function PhotosTab({
               <select
                 value={channelFilter}
                 onChange={(e) => setChannelFilter(e.target.value)}
-                className="appearance-none pl-3 pr-8 py-2 bg-muted/30 border border-border focus:border-primary outline-none text-xs font-mono cursor-pointer transition-all hover:bg-muted/50"
+                className="appearance-none pl-3 pr-8 py-2 bg-muted/30 border border-border focus:border-primary outline-none text-xs font-mono cursor-pointer transition-all hover:bg-muted/50 [&>option]:bg-background [&>option]:text-foreground"
               >
                 <option value="全部">渠道: 全部</option>
                 <option value="local">Local</option>
@@ -263,6 +302,8 @@ export function PhotosTab({
                       loading="lazy"
                     />
                   </div>
+
+                  {/* Checkbox - Always visible on mobile, hover on desktop */}
                   <div
                     className="absolute top-2 left-2 z-10"
                     onClick={(e) => e.stopPropagation()}
@@ -271,22 +312,31 @@ export function PhotosTab({
                       type="checkbox"
                       checked={selectedIds.has(photo.id)}
                       onChange={() => onSelect(photo.id)}
-                      className="w-4 h-4 accent-primary cursor-pointer border-white"
+                      className="w-4 h-4 accent-primary cursor-pointer border-white shadow-lg"
                     />
                   </div>
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
-                  {/* Action Buttons */}
-                  <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                  {/* Featured Badge - Always visible if featured */}
+                  {photo.isFeatured && (
+                    <div className="absolute top-2 left-8 px-1.5 py-0.5 bg-amber-500 text-white text-[8px] font-black uppercase tracking-widest z-10 shadow-lg">
+                      {t('admin.feat')}
+                    </div>
+                  )}
+
+                  {/* Gradient Overlay - Desktop only */}
+                  <div className="hidden md:block absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                  {/* Action Buttons - Always visible on mobile, hover on desktop */}
+                  <div className="absolute top-2 right-2 flex flex-col gap-2 z-20 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
                         onToggleFeatured(photo)
                       }}
-                      className={`p-2 bg-black/50 backdrop-blur-sm text-white hover:text-amber-500 transition-colors ${
+                      className={`p-2 bg-black/70 backdrop-blur-sm text-white hover:text-amber-500 transition-colors shadow-lg ${
                         photo.isFeatured ? 'text-amber-500' : ''
                       }`}
+                      title={photo.isFeatured ? 'Remove from featured' : 'Add to featured'}
                     >
                       <Star
                         className={`w-4 h-4 ${
@@ -299,14 +349,15 @@ export function PhotosTab({
                         e.stopPropagation()
                         onDelete(photo.id)
                       }}
-                      className="p-2 bg-black/50 backdrop-blur-sm text-white hover:text-destructive transition-colors"
+                      className="p-2 bg-black/70 backdrop-blur-sm text-white hover:text-destructive transition-colors shadow-lg"
+                      title="Delete photo"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
 
-                  {/* Bottom Info */}
-                  <div className="absolute bottom-0 left-0 w-full p-4 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 pointer-events-none z-10">
+                  {/* Bottom Info - Desktop hover only */}
+                  <div className="hidden md:block absolute bottom-0 left-0 w-full p-4 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 pointer-events-none z-10">
                     <p className="text-[9px] font-black text-primary uppercase tracking-[0.3em] mb-1">
                       {photo.category.split(',')[0]}
                     </p>
@@ -314,11 +365,16 @@ export function PhotosTab({
                       {photo.title}
                     </h3>
                   </div>
-                  {photo.isFeatured && (
-                    <div className="absolute top-2 left-8 px-1.5 py-0.5 bg-amber-500 text-white text-[8px] font-black uppercase tracking-widest z-10">
-                      {t('admin.feat')}
-                    </div>
-                  )}
+
+                  {/* Mobile Info - Always visible on mobile */}
+                  <div className="md:hidden absolute bottom-0 left-0 w-full p-2 bg-gradient-to-t from-black/90 to-transparent pointer-events-none z-10">
+                    <p className="text-[8px] font-black text-primary uppercase tracking-[0.2em] mb-0.5 truncate">
+                      {photo.category.split(',')[0]}
+                    </p>
+                    <h3 className="text-xs font-serif text-white leading-tight truncate">
+                      {photo.title}
+                    </h3>
+                  </div>
                 </div>
               ) : (
                 <div
