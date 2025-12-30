@@ -86,11 +86,7 @@ export function StoryUploadTab({
       setUploadSource(settings.storage_provider)
       setIsInitialized(true)
     }
-    if (uploadCategories.length === 0 && categories.length > 0) {
-      const first = categories.find(c => c !== '全部')
-      if (first) setUploadCategories([first])
-    }
-  }, [settings, categories, isInitialized]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [settings, isInitialized])
 
   // Click outside to close dropdown
   useEffect(() => {
