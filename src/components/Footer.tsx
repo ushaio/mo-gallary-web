@@ -68,7 +68,15 @@ export default function Footer() {
         {/* Copyright */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-t border-border pt-6 md:pt-8 gap-2 md:gap-0">
           <p className="font-sans text-[10px] md:text-xs text-muted-foreground tracking-[0.1em] uppercase">
-            © {currentYear} {siteTitle}. {t('footer.rights')}
+            © {currentYear} {siteTitle} ·{' '}
+            <a
+              href="https://github.com/ushaio/mo-gallary-web"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-foreground transition-colors duration-300"
+            >
+              GitHub
+            </a>
           </p>
           <p className="font-sans text-[10px] md:text-xs text-muted-foreground tracking-[0.1em] uppercase">
             {t('footer.designed_by')}

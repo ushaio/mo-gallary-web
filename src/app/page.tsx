@@ -13,30 +13,10 @@ export default function Home() {
   const { t } = useLanguage()
   const siteTitle = settings?.site_title || 'MO GALLERY'
 
-  const fallbackFeatured: Array<Pick<PhotoDto, 'id' | 'title' | 'category' | 'url' | 'thumbnailUrl'>> = [
-    {
-      id: 'fallback-1',
-      title: 'Urban Silence',
-      category: 'Architecture',
-      url: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      id: 'fallback-2',
-      title: 'Morning Haze',
-      category: 'Nature',
-      url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      id: 'fallback-3',
-      title: 'Street Pulse',
-      category: 'Humanity',
-      url: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=800&q=80',
-    },
-  ]
-
   const [featuredImages, setFeaturedImages] = useState<
     Array<Pick<PhotoDto, 'id' | 'title' | 'category' | 'url' | 'thumbnailUrl'>>
-  >(fallbackFeatured)
+  >([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const run = async () => {
@@ -47,6 +27,8 @@ export default function Home() {
         }
       } catch (err) {
         console.error('Failed to load featured images', err)
+      } finally {
+        setIsLoading(false)
       }
     }
     run()
@@ -99,51 +81,115 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Featured Works - Stark Grid */}
-      <section className="w-full px-6 md:px-12 py-32 border-t border-border/50">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-24">
-          <h2 className="font-serif text-5xl md:text-7xl font-light text-foreground">
-            {t('home.curated')}<br />{t('home.works')}
+      {/* Featured Works - Horizontal Scroll */}
+      <section className="w-full py-16 md:py-24 border-t border-border/50">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-12 px-6 md:px-12">
+          <h2 className="font-serif text-3xl md:text-5xl font-light text-foreground">
+            {t('home.curated')} {t('home.works')}
           </h2>
-          <div className="mt-8 md:mt-0 text-right">
-             <span className="block font-sans text-xs tracking-[0.2em] text-primary mb-2">{t('home.latest')}</span>
-             <p className="font-sans text-sm text-muted-foreground max-w-xs ml-auto">
+          <div className="mt-4 md:mt-0 md:text-right">
+             <span className="block font-sans text-xs tracking-[0.2em] text-primary mb-1">{t('home.latest')}</span>
+             <p className="font-sans text-xs text-muted-foreground max-w-xs md:ml-auto">
                {t('home.latest_desc')}
              </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-          {featuredImages.map((image, index) => (
-            <motion.div
-              key={image.id}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1, duration: 0.8 }}
-              className="group relative cursor-pointer"
-            >
-              <div className="relative aspect-[3/4] overflow-hidden bg-secondary">
-                 <div className="absolute top-4 left-4 z-10 font-sans text-xs font-bold text-white mix-blend-difference tracking-widest">
-                    {(index + 1).toString().padStart(2, '0')}
-                 </div>
-                <img 
-                  src={resolveAssetUrl(image.thumbnailUrl || image.url)} 
-                  alt={image.title}
-                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 ease-out scale-100 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
-              </div>
-              
-              <div className="mt-6 flex justify-between items-start border-b border-border pb-4 group-hover:border-primary transition-colors duration-500">
-                <div>
-                  <h3 className="font-serif text-2xl text-foreground group-hover:text-primary transition-colors duration-300">{image.title}</h3>
-                  <p className="font-sans text-xs text-muted-foreground uppercase tracking-widest mt-1">{image.category}</p>
+        <div className="overflow-x-auto scrollbar-hide">
+          <div className="flex gap-4 md:gap-6 px-6 md:px-12 pb-4">
+            {isLoading ? (
+              // Skeleton placeholders
+              <>
+                {[...Array(5)].map((_, index) => (
+                  <div
+                    key={index}
+                    className="flex-shrink-0 w-[200px] md:w-[240px] animate-pulse"
+                  >
+                    <div className="aspect-[4/5] bg-secondary rounded-sm" />
+                    <div className="mt-3 space-y-2">
+                      <div className="h-4 bg-secondary rounded w-3/4" />
+                      <div className="h-3 bg-secondary rounded w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </>
+            ) : featuredImages.length > 0 ? (
+              <>
+                {featuredImages.map((image, index) => (
+                  <motion.div
+                    key={image.id}
+                    initial={{ opacity: 0, x: 30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1, duration: 0.6 }}
+                    className="group relative cursor-pointer flex-shrink-0 w-[200px] md:w-[240px]"
+                  >
+                    <div className="relative aspect-[4/5] overflow-hidden bg-secondary rounded-sm">
+                       <div className="absolute top-2 left-2 z-10 font-sans text-[10px] font-bold text-white mix-blend-difference tracking-widest">
+                          {(index + 1).toString().padStart(2, '0')}
+                       </div>
+                      <img
+                        src={resolveAssetUrl(image.thumbnailUrl || image.url)}
+                        alt={image.title}
+                        className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 ease-out scale-100 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
+                    </div>
+
+                    <div className="mt-3 flex justify-between items-start">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-serif text-sm md:text-base text-foreground group-hover:text-primary transition-colors duration-300 truncate">{image.title}</h3>
+                        <p className="font-sans text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5 truncate">{image.category}</p>
+                      </div>
+                      <ArrowRight className="w-3 h-3 text-muted-foreground group-hover:text-primary -rotate-45 group-hover:rotate-0 transition-all duration-300 flex-shrink-0 ml-2" />
+                    </div>
+                  </motion.div>
+                ))}
+
+                {/* Go to Gallery Card */}
+                <motion.div
+                  initial={{ opacity: 0, x: 30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: featuredImages.length * 0.1, duration: 0.6 }}
+                  className="flex-shrink-0 w-[200px] md:w-[240px]"
+                >
+                  <Link
+                    href="/gallery"
+                    className="group flex flex-col items-center justify-center aspect-[4/5] bg-secondary/50 hover:bg-secondary border border-border/50 hover:border-primary/50 rounded-sm transition-all duration-500"
+                  >
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-border group-hover:border-primary flex items-center justify-center transition-all duration-300">
+                        <ArrowRight className="w-5 h-5 md:w-6 md:h-6 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-sans text-xs tracking-[0.15em] text-muted-foreground group-hover:text-foreground transition-colors duration-300 uppercase">
+                          {t('home.enter')}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              </>
+            ) : (
+              // Empty state - just show the gallery link
+              <Link
+                href="/gallery"
+                className="group flex flex-col items-center justify-center flex-shrink-0 w-[200px] md:w-[240px] aspect-[4/5] bg-secondary/50 hover:bg-secondary border border-border/50 hover:border-primary/50 rounded-sm transition-all duration-500"
+              >
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-border group-hover:border-primary flex items-center justify-center transition-all duration-300">
+                    <ArrowRight className="w-5 h-5 md:w-6 md:h-6 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-sans text-xs tracking-[0.15em] text-muted-foreground group-hover:text-foreground transition-colors duration-300 uppercase">
+                      {t('home.enter')}
+                    </p>
+                  </div>
                 </div>
-                <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary -rotate-45 group-hover:rotate-0 transition-all duration-300" />
-              </div>
-            </motion.div>
-          ))}
+              </Link>
+            )}
+          </div>
         </div>
       </section>
 
