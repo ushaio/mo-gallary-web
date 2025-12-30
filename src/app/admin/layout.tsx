@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState, createContext, useContext, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload as UploadIcon,
   Image as ImageIcon,
@@ -131,6 +132,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     isBulk: boolean
   } | null>(null)
   const [deleteFromStorage, setDeleteFromStorage] = useState(true)
+
+  // Logout Confirmation State
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   // Settings State
   const [settings, setSettings] = useState<AdminSettingsDto | null>(null)
@@ -396,7 +400,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           }`}
         >
           <div className="flex flex-col h-full">
-            <div className="p-8 border-b border-border">
+            {/* Header */}
+            <div className="p-6 border-b border-border">
               <h2 className="font-serif text-2xl font-bold tracking-tight">
                 {siteTitle}
               </h2>
@@ -404,13 +409,15 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 {t('admin.console')}
               </p>
             </div>
-            <nav className="flex-1 p-6 space-y-2">
+
+            {/* Navigation */}
+            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
               {sidebarItems.map((item) => (
                 <Link
                   key={item.id}
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 text-xs font-bold tracking-widest uppercase transition-all ${
+                  className={`w-full flex items-center space-x-3 px-4 py-3 text-xs font-bold tracking-widest uppercase transition-all rounded-sm ${
                     activeTab === item.id
                       ? 'bg-primary text-primary-foreground'
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -421,28 +428,15 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 </Link>
               ))}
             </nav>
-            <div className="p-6 border-t border-border space-y-4">
-              {/* User Info */}
-              <div className="flex items-center space-x-3 px-2">
-                <div className="w-8 h-8 bg-primary flex items-center justify-center text-xs text-primary-foreground font-bold">
-                  {user?.username?.substring(0, 1).toUpperCase() || 'A'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold truncate uppercase tracking-wider">
-                    {user?.username || 'ADMIN'}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground truncate uppercase tracking-widest">
-                    {t('admin.super_user')}
-                  </p>
-                </div>
-              </div>
 
+            {/* Footer */}
+            <div className="p-4 border-t border-border space-y-3">
               {/* Settings Row */}
-              <div className="flex items-center gap-2 px-2">
+              <div className="flex items-center gap-2">
                 {/* Theme Toggle */}
                 <button
                   onClick={toggleTheme}
-                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex-1 flex items-center gap-2 px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors rounded-sm border border-border"
                   title={t('nav.toggle_theme')}
                 >
                   {!mounted ? (
@@ -459,24 +453,37 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                   </span>
                 </button>
 
-                <div className="h-4 w-[1px] bg-border" />
-
                 {/* Language Toggle */}
                 <button
                   onClick={toggleLanguage}
-                  className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex-1 flex items-center justify-center px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors rounded-sm border border-border"
                 >
                   {locale === 'zh' ? 'EN' : '中'}
                 </button>
               </div>
 
+              {/* Divider */}
+              <div className="-mx-4 border-t border-border" />
+
+              {/* User Info */}
+              <div className="flex items-center space-x-3 px-2">
+                <div className="w-8 h-8 bg-primary rounded-sm flex items-center justify-center text-xs text-primary-foreground font-bold">
+                  {user?.username?.substring(0, 1).toUpperCase() || 'A'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold truncate uppercase tracking-wider">
+                    {user?.username || 'ADMIN'}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground truncate uppercase tracking-widest">
+                    {t('admin.super_user')}
+                  </p>
+                </div>
+              </div>
+
               {/* Logout Button */}
               <button
-                onClick={() => {
-                  logout()
-                  router.push('/')
-                }}
-                className="w-full flex items-center space-x-3 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-destructive hover:bg-destructive/10 transition-colors"
+                onClick={() => setShowLogoutConfirm(true)}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-destructive hover:bg-destructive/10 transition-colors rounded-sm border border-destructive/20"
               >
                 <LogOut className="w-4 h-4" />
                 <span>{t('nav.logout')}</span>
@@ -536,6 +543,75 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           }}
           t={t}
         />
+
+        {/* Logout Confirmation Dialog */}
+        <AnimatePresence>
+          {showLogoutConfirm && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-[120] bg-black/50 backdrop-blur-sm"
+                onClick={() => setShowLogoutConfirm(false)}
+              />
+
+              {/* Dialog */}
+              <div className="fixed inset-0 z-[121] flex items-center justify-center p-4 pointer-events-none">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  className="bg-background border border-border p-8 max-w-md w-full shadow-2xl pointer-events-auto"
+                >
+                  {/* Header with Icon */}
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-12 h-12 bg-destructive/10 flex items-center justify-center">
+                      <LogOut className="w-6 h-6 text-destructive" />
+                    </div>
+                    <div>
+                      <h3 className="font-serif text-xl font-light uppercase tracking-tight">
+                        {t('nav.logout')}
+                      </h3>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">
+                        {t('common.confirm')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mb-6">
+                    <p className="text-sm text-foreground leading-relaxed">
+                      {locale === 'zh' ? '确定要退出登录吗？' : 'Are you sure you want to logout?'}
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowLogoutConfirm(false)}
+                      className="flex-1 px-6 py-3 border border-border text-foreground text-xs font-bold uppercase tracking-widest hover:bg-muted active:bg-muted/70 transition-all"
+                    >
+                      {t('common.cancel')}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowLogoutConfirm(false)
+                        logout()
+                        router.push('/')
+                      }}
+                      className="flex-1 px-6 py-3 bg-destructive text-destructive-foreground text-xs font-bold uppercase tracking-widest hover:bg-destructive/90 active:bg-destructive/80 transition-all flex items-center justify-center gap-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>{t('nav.logout')}</span>
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            </>
+          )}
+        </AnimatePresence>
 
         <UploadProgressPopupWrapper t={t} token={token} />
         </div>
