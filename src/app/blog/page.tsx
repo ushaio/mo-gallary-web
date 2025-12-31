@@ -57,22 +57,24 @@ export default function BlogListPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background text-foreground pt-24 pb-16 px-4 md:px-8 lg:px-12">
-        <div className="max-w-6xl mx-auto">
-          <div className="animate-pulse space-y-8">
-            <div className="h-12 bg-muted rounded w-1/3"></div>
-            <div className="flex gap-4">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-8 bg-muted rounded w-20"></div>
+      <div className="min-h-screen bg-background text-foreground pt-24 pb-16">
+        <div className="px-4 md:px-8 lg:px-12">
+          <div className="max-w-screen-2xl mx-auto">
+            <div className="animate-pulse space-y-8">
+              <div className="h-12 bg-muted rounded w-1/3"></div>
+              <div className="flex gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="h-8 bg-muted rounded w-20"></div>
+                ))}
+              </div>
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="space-y-4 border-l-2 border-border pl-8">
+                  <div className="h-6 bg-muted rounded w-3/4"></div>
+                  <div className="h-4 bg-muted rounded w-1/4"></div>
+                  <div className="h-4 bg-muted rounded"></div>
+                </div>
               ))}
             </div>
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="space-y-4 border-l-2 border-border pl-8">
-                <div className="h-6 bg-muted rounded w-3/4"></div>
-                <div className="h-4 bg-muted rounded w-1/4"></div>
-                <div className="h-4 bg-muted rounded"></div>
-              </div>
-            ))}
           </div>
         </div>
       </div>
@@ -80,192 +82,197 @@ export default function BlogListPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground pt-24 pb-16 px-4 md:px-8 lg:px-12">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <header className="mb-8 md:mb-12">
-          <div className="flex flex-col gap-6 md:gap-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-8">
-              <div className="space-y-3 md:space-y-4">
+    <div className="min-h-screen bg-background text-foreground pt-24 pb-16">
+      {/* Header Section */}
+      <div className="px-4 md:px-8 lg:px-12">
+        <div className="max-w-screen-2xl mx-auto">
+          <header className="mb-6 md:mb-8">
+            <div className="flex flex-col gap-6 md:gap-8">
+              {/* Title Section */}
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-8">
+                <div className="space-y-3 md:space-y-4">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-3 text-primary"
+                  >
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em]">Blog</span>
+                    <div className="h-[1px] w-12 bg-primary/30" />
+                  </motion.div>
+                  <motion.h1
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="text-4xl md:text-5xl lg:text-7xl font-serif font-light tracking-tighter leading-none"
+                  >
+                    {activeCategory === '全部' ? t('nav.blog') : activeCategory}
+                  </motion.h1>
+                </div>
+
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-3 text-primary"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest"
                 >
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em]">Blog</span>
-                  <div className="h-[1px] w-12 bg-primary/30" />
+                  {filteredBlogs.length} {t('blog.count_suffix') || '篇文章'}
                 </motion.div>
-                <motion.h1
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-4xl md:text-5xl lg:text-7xl font-serif font-light tracking-tighter leading-none"
-                >
-                  {activeCategory === '全部' ? '博客' : activeCategory}
-                </motion.h1>
               </div>
 
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="flex flex-col items-start md:items-end gap-3 md:gap-4"
-              >
-                <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
-                  {filteredBlogs.length} 篇文章
-                </div>
-              </motion.div>
+              {/* Category Filter - Horizontal scroll on mobile */}
+              {categories.length > 1 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                  className="-mx-4 md:mx-0 px-4 md:px-0 overflow-x-auto scrollbar-hide"
+                >
+                  <div className="flex gap-2 md:flex-wrap md:justify-start pb-2 md:pb-0">
+                    {categories.map((category) => (
+                      <button
+                        key={category}
+                        onClick={() => setActiveCategory(category)}
+                        className={`px-3 md:px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all border whitespace-nowrap shrink-0 ${
+                          activeCategory === category
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'border-border text-muted-foreground hover:border-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {category === '全部' ? t('gallery.all') : category}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
             </div>
+          </header>
+        </div>
+      </div>
 
-            {/* Category Filter - Horizontal scroll on mobile */}
-            {categories.length > 1 && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="-mx-4 md:mx-0 px-4 md:px-0 overflow-x-auto scrollbar-hide"
-              >
-                <div className="flex gap-2 md:flex-wrap md:justify-start pb-2 md:pb-0">
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => setActiveCategory(category)}
-                      className={`px-3 md:px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all border whitespace-nowrap shrink-0 ${
-                        activeCategory === category
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'border-border text-muted-foreground hover:border-foreground hover:text-foreground'
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </div>
-        </header>
+      {/* Timeline Content */}
+      <div className="px-4 md:px-8 lg:px-12">
+        <div className="max-w-screen-2xl mx-auto">
+          {filteredBlogs.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-20 border border-dashed border-border"
+            >
+              <BookText className="w-16 h-16 mx-auto mb-4 opacity-20" />
+              <p className="text-muted-foreground">{t('blog.empty') || '暂无博客文章'}</p>
+            </motion.div>
+          ) : (
+            <div className="space-y-16">
+              {Object.keys(timelineData)
+                .sort((a, b) => parseInt(b) - parseInt(a))
+                .map((year, yearIndex) => (
+                  <motion.div
+                    key={year}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 + yearIndex * 0.1 }}
+                  >
+                    {/* Year Header */}
+                    <div className="flex items-center gap-4 mb-8">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-5 h-5 text-primary" />
+                        <h2 className="text-3xl font-serif font-light tracking-tight">
+                          {year}
+                        </h2>
+                      </div>
+                      <div className="flex-1 h-[1px] bg-border" />
+                    </div>
 
-        {/* Timeline */}
-        {filteredBlogs.length === 0 ? (
+                    {/* Months */}
+                    <div className="space-y-12">
+                      {Object.keys(timelineData[year])
+                        .sort((a, b) => parseInt(b) - parseInt(a))
+                        .map((month) => (
+                          <div key={`${year}-${month}`} className="relative">
+                            {/* Month Label */}
+                            <div className="flex items-center gap-4 mb-6">
+                              <div className="text-sm font-mono text-muted-foreground uppercase tracking-widest">
+                                {month} 月
+                              </div>
+                              <div className="flex-1 h-[1px] bg-border/50" />
+                            </div>
+
+                            {/* Blog Posts */}
+                            <div className="space-y-4 md:space-y-6 pl-6 md:pl-8 border-l-2 border-border">
+                              {timelineData[year][month].map((blog, index) => (
+                                <motion.article
+                                  key={blog.id}
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: index * 0.05 }}
+                                  className="relative group"
+                                >
+                                  {/* Timeline Dot */}
+                                  <div className="absolute -left-[27px] md:-left-[33px] top-2 w-2 h-2 rounded-full bg-border group-hover:bg-primary transition-colors" />
+
+                                  <Link
+                                    href={`/blog/${blog.id}`}
+                                    className="block space-y-2 md:space-y-3 p-4 md:p-6 -ml-6 md:-ml-8 border border-transparent hover:border-border hover:bg-card/30 transition-all"
+                                  >
+                                    {/* Title */}
+                                    <h3 className="text-xl md:text-2xl font-serif font-light leading-tight group-hover:text-primary transition-colors">
+                                      {blog.title}
+                                    </h3>
+
+                                    {/* Meta */}
+                                    <div className="flex flex-wrap items-center gap-3 md:gap-4 text-[10px] text-muted-foreground uppercase tracking-widest">
+                                      <div className="flex items-center gap-1">
+                                        <Calendar className="w-3 h-3" />
+                                        {new Date(blog.createdAt).toLocaleDateString('zh-CN', {
+                                          month: 'long',
+                                          day: 'numeric',
+                                        })}
+                                      </div>
+                                      {blog.category && blog.category !== '未分类' && (
+                                        <div className="flex items-center gap-1">
+                                          <Tag className="w-3 h-3" />
+                                          {blog.category}
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Excerpt */}
+                                    <p className="text-sm md:text-base text-muted-foreground line-clamp-2 leading-relaxed">
+                                      {blog.content.replace(/[#*`\[\]]/g, '').substring(0, 150)}...
+                                    </p>
+
+                                    {/* Read More */}
+                                    <div className="flex items-center gap-2 text-[10px] text-primary font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                                      {t('blog.read_more') || '阅读全文'}
+                                      <ArrowRight className="w-3 h-3" />
+                                    </div>
+                                  </Link>
+                                </motion.article>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </motion.div>
+                ))}
+            </div>
+          )}
+
+          {/* Back to Gallery */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-20 border border-dashed border-border"
+            transition={{ delay: 0.5 }}
+            className="mt-16 text-center"
           >
-            <BookText className="w-16 h-16 mx-auto mb-4 opacity-20" />
-            <p className="text-muted-foreground">暂无博客文章</p>
+            <Link
+              href="/gallery"
+              className="inline-block px-8 py-3 border border-border hover:border-primary hover:text-primary transition-all text-xs font-bold uppercase tracking-widest"
+            >
+              {t('blog.back_to_gallery') || '返回画廊'}
+            </Link>
           </motion.div>
-        ) : (
-          <div className="space-y-16">
-            {Object.keys(timelineData)
-              .sort((a, b) => parseInt(b) - parseInt(a))
-              .map((year, yearIndex) => (
-                <motion.div
-                  key={year}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 + yearIndex * 0.1 }}
-                >
-                  {/* Year Header */}
-                  <div className="flex items-center gap-4 mb-8">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-primary" />
-                      <h2 className="text-3xl font-serif font-light tracking-tight">
-                        {year}
-                      </h2>
-                    </div>
-                    <div className="flex-1 h-[1px] bg-border" />
-                  </div>
-
-                  {/* Months */}
-                  <div className="space-y-12">
-                    {Object.keys(timelineData[year])
-                      .sort((a, b) => parseInt(b) - parseInt(a))
-                      .map((month) => (
-                        <div key={`${year}-${month}`} className="relative">
-                          {/* Month Label */}
-                          <div className="flex items-center gap-4 mb-6">
-                            <div className="text-sm font-mono text-muted-foreground uppercase tracking-widest">
-                              {month} 月
-                            </div>
-                            <div className="flex-1 h-[1px] bg-border/50" />
-                          </div>
-
-                          {/* Blog Posts */}
-                          <div className="space-y-4 md:space-y-6 pl-6 md:pl-8 border-l-2 border-border">
-                            {timelineData[year][month].map((blog, index) => (
-                              <motion.article
-                                key={blog.id}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                                className="relative group"
-                              >
-                                {/* Timeline Dot */}
-                                <div className="absolute -left-[27px] md:-left-[33px] top-2 w-2 h-2 rounded-full bg-border group-hover:bg-primary transition-colors" />
-
-                                <Link
-                                  href={`/blog/${blog.id}`}
-                                  className="block space-y-2 md:space-y-3 p-4 md:p-6 -ml-6 md:-ml-8 border border-transparent hover:border-border hover:bg-card/30 transition-all"
-                                >
-                                  {/* Title */}
-                                  <h3 className="text-xl md:text-2xl font-serif font-light leading-tight group-hover:text-primary transition-colors">
-                                    {blog.title}
-                                  </h3>
-
-                                  {/* Meta */}
-                                  <div className="flex flex-wrap items-center gap-3 md:gap-4 text-[10px] text-muted-foreground uppercase tracking-widest">
-                                    <div className="flex items-center gap-1">
-                                      <Calendar className="w-3 h-3" />
-                                      {new Date(blog.createdAt).toLocaleDateString('zh-CN', {
-                                        month: 'long',
-                                        day: 'numeric',
-                                      })}
-                                    </div>
-                                    {blog.category && blog.category !== '未分类' && (
-                                      <div className="flex items-center gap-1">
-                                        <Tag className="w-3 h-3" />
-                                        {blog.category}
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  {/* Excerpt */}
-                                  <p className="text-sm md:text-base text-muted-foreground line-clamp-2 leading-relaxed">
-                                    {blog.content.replace(/[#*`\[\]]/g, '').substring(0, 150)}...
-                                  </p>
-
-                                  {/* Read More */}
-                                  <div className="flex items-center gap-2 text-[10px] text-primary font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                                    阅读全文
-                                    <ArrowRight className="w-3 h-3" />
-                                  </div>
-                                </Link>
-                              </motion.article>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </motion.div>
-              ))}
-          </div>
-        )}
-
-        {/* Back to Gallery */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mt-16 text-center"
-        >
-          <Link
-            href="/gallery"
-            className="inline-block px-8 py-3 border border-border hover:border-primary hover:text-primary transition-all text-xs font-bold uppercase tracking-widest"
-          >
-            返回画廊
-          </Link>
-        </motion.div>
+        </div>
       </div>
     </div>
   )
