@@ -69,6 +69,7 @@ export function UploadQueueProvider({
   const tokenRef = useRef<string>('')
   const onUploadCompleteRef = useRef(onUploadComplete)
   const notifiedBatchesRef = useRef<Set<string>>(new Set())
+  const uploadingTasksRef = useRef<Set<string>>(new Set()) // Track tasks currently being uploaded
 
   // Keep the ref updated
   useEffect(() => {
@@ -106,7 +107,9 @@ export function UploadQueueProvider({
 
   const processQueue = useCallback(() => {
     setTasks((currentTasks) => {
-      const pendingTasks = currentTasks.filter((t) => t.status === 'pending')
+      const pendingTasks = currentTasks.filter(
+        (t) => t.status === 'pending' && !uploadingTasksRef.current.has(t.id)
+      )
       const availableSlots = CONCURRENCY - activeUploadsRef.current
 
       if (availableSlots <= 0 || pendingTasks.length === 0) {
@@ -116,8 +119,9 @@ export function UploadQueueProvider({
       const tasksToStart = pendingTasks.slice(0, availableSlots)
       activeUploadsRef.current += tasksToStart.length
 
-      // Start uploads for selected tasks
+      // Mark tasks as uploading to prevent duplicate uploads
       tasksToStart.forEach((task) => {
+        uploadingTasksRef.current.add(task.id)
         uploadSingleFile(task)
       })
 
@@ -202,6 +206,7 @@ export function UploadQueueProvider({
       })
     } finally {
       activeUploadsRef.current--
+      uploadingTasksRef.current.delete(task.id) // Remove from uploading set
       // Process next in queue
       setTimeout(processQueue, 50)
     }

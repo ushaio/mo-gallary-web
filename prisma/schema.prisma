@@ -28,6 +28,7 @@ model Photo {
   height          Int
   size            Int?
   isFeatured      Boolean  @default(false)
+  dominantColors  String?  // JSON array of hex colors, e.g. ["#ff0000", "#00ff00"]
   createdAt       DateTime @default(now())
 
   // EXIF Information

@@ -130,6 +130,31 @@ mo-gallery-web/
 - **数据库**: SQLite / PostgreSQL
 - **存储**: 本地 / GitHub / Cloudflare R2
 
+## 色彩分析（弃用，改为上传时获取）
+R2 存储桶中配置 CORS 规则：
+登录 Cloudflare Dashboard
+进入 R2 存储桶设置
+找到 CORS 配置，添加规则：
+
+[
+  {
+    "AllowedOrigins": ["*"],
+    "AllowedMethods": ["GET"],
+    "AllowedHeaders": ["*"],
+    "MaxAgeSeconds": 3600
+  }
+]
+或者更安全的方式，只允许你的域名：
+
+[
+  {
+    "AllowedOrigins": ["https://your-domain.com", "http://localhost:3000"],
+    "AllowedMethods": ["GET"],
+    "AllowedHeaders": ["*"],
+    "MaxAgeSeconds": 3600
+  }
+]
+
 ## License
 
 MIT

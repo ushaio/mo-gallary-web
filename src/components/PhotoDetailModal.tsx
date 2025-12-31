@@ -98,64 +98,20 @@ export function PhotoDetailModal({
     setTimeout(() => setNotifications((prev) => prev.filter((n) => n.id !== id)), 2000)
   }
 
+  // Use colors from database if available, otherwise keep empty
   useEffect(() => {
     if (photo && isOpen) {
-      const img = new Image()
-      img.crossOrigin = 'Anonymous'
-      // Use thumbnail for faster palette extraction if available
-      img.src = resolveAssetUrl(photo.thumbnailUrl || photo.url, resolvedCdnDomain)
-      img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas')
-          const ctx = canvas.getContext('2d', { willReadFrequently: true })
-          if (!ctx) return
-          canvas.width = 40
-          canvas.height = 40
-          ctx.drawImage(img, 0, 0, 40, 40)
-          const imageData = ctx.getImageData(0, 0, 40, 40).data
-          const colorCounts: Record<string, number> = {}
-          
-          // Sample every pixel (40x40 is small enough)
-          for (let i = 0; i < imageData.length; i += 4) {
-            const r = imageData[i]
-            const g = imageData[i + 1]
-            const b = imageData[i + 2]
-            const a = imageData[i + 3]
-            
-            // Skip transparent or very transparent pixels
-            if (a < 128) continue
-
-            // Quantize colors to reduce noise (bins of 32)
-            // Use bin center for representation
-            const rQ = Math.floor(r / 32) * 32 + 16
-            const gQ = Math.floor(g / 32) * 32 + 16
-            const bQ = Math.floor(b / 32) * 32 + 16
-
-            // Clamp values to 0-255
-            const rC = Math.min(255, Math.max(0, rQ))
-            const gC = Math.min(255, Math.max(0, gQ))
-            const bC = Math.min(255, Math.max(0, bQ))
-
-            const hex = `#${((1 << 24) + (rC << 16) + (gC << 8) + bC)
-              .toString(16)
-              .slice(1)}`
-            
-            colorCounts[hex] = (colorCounts[hex] || 0) + 1
-          }
-          
-          const sorted = Object.entries(colorCounts)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5)
-            .map((c) => c[0])
-          setDominantColors(sorted)
-        } catch (e) {
-          console.error('Palette extraction failed', e)
-        }
+      if (photo.dominantColors && photo.dominantColors.length > 0) {
+        // Use pre-computed colors from database
+        setDominantColors(photo.dominantColors)
+      } else {
+        // No colors available
+        setDominantColors([])
       }
     } else {
       setDominantColors([])
     }
-  }, [photo, isOpen, resolvedCdnDomain])
+  }, [photo, isOpen])
 
   const handleCopyColor = (color: string) => {
     navigator.clipboard.writeText(color)
@@ -165,28 +121,21 @@ export function PhotoDetailModal({
   if (!photo) return null
 
   const hasExif = !!(
-    photo.cameraMake ||
     photo.cameraModel ||
-    photo.lens ||
-    photo.focalLength ||
     photo.aperture ||
     photo.shutterSpeed ||
+    photo.focalLength ||
     photo.iso ||
-    photo.takenAt
+    photo.takenAt ||
+    (photo.latitude && photo.longitude)
   )
 
   const exifItems = [
     {
       icon: Camera,
       label: t('gallery.equipment'),
-      value: [photo.cameraMake, photo.cameraModel].filter(Boolean).join(' '),
-      show: !!(photo.cameraMake || photo.cameraModel),
-    },
-    {
-      icon: Camera,
-      label: 'Lens',
-      value: photo.lens,
-      show: !!photo.lens,
+      value: photo.cameraModel,
+      show: !!photo.cameraModel,
     },
     {
       icon: Aperture,
@@ -201,22 +150,22 @@ export function PhotoDetailModal({
       show: !!photo.shutterSpeed,
     },
     {
-      icon: Gauge,
-      label: t('gallery.iso'),
-      value: photo.iso?.toString(),
-      show: !!photo.iso,
-    },
-    {
       icon: Camera,
       label: t('gallery.focal'),
       value: photo.focalLength,
       show: !!photo.focalLength,
     },
     {
+      icon: Gauge,
+      label: t('gallery.iso'),
+      value: photo.iso?.toString(),
+      show: !!photo.iso,
+    },
+    {
       icon: Calendar,
       label: t('gallery.date'),
-      value: photo.createdAt
-        ? new Date(photo.createdAt).toLocaleString(locale, {
+      value: photo.takenAt
+        ? new Date(photo.takenAt).toLocaleString(locale, {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
@@ -224,7 +173,7 @@ export function PhotoDetailModal({
             minute: '2-digit',
           })
         : undefined,
-      show: !!photo.createdAt,
+      show: !!photo.takenAt,
     },
     {
       icon: MapPin,
@@ -234,18 +183,6 @@ export function PhotoDetailModal({
           ? `${photo.latitude.toFixed(4)}, ${photo.longitude.toFixed(4)}`
           : undefined,
       show: !!(photo.latitude && photo.longitude),
-    },
-    {
-      icon: Monitor,
-      label: 'Orientation',
-      value: photo.orientation ? `${photo.orientation}` : undefined,
-      show: !!photo.orientation,
-    },
-    {
-      icon: Code,
-      label: 'Software',
-      value: photo.software,
-      show: !!photo.software,
     },
   ].filter((item) => item.show)
 

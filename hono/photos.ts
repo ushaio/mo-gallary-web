@@ -3,6 +3,7 @@ import { Hono } from 'hono'
 import { db } from '~/server/lib/db'
 import { authMiddleware, AuthVariables } from './middleware/auth'
 import { extractExifData } from '~/server/lib/exif'
+import { extractDominantColors } from '~/server/lib/colors'
 import { StorageProviderFactory, StorageConfig, StorageError } from '~/server/lib/storage'
 import sharp from 'sharp'
 import path from 'path'
@@ -80,6 +81,7 @@ photos.get('/photos', async (c) => {
     const data = photosList.map((p) => ({
       ...p,
       category: p.categories.map((c) => c.name).join(','),
+      dominantColors: p.dominantColors ? JSON.parse(p.dominantColors) : null,
     }))
 
     return c.json({
@@ -104,6 +106,7 @@ photos.get('/photos/featured', async (c) => {
     const data = photosList.map((p) => ({
       ...p,
       category: p.categories.map((c) => c.name).join(','),
+      dominantColors: p.dominantColors ? JSON.parse(p.dominantColors) : null,
     }))
 
     return c.json({
@@ -216,6 +219,9 @@ photos.post('/admin/photos', async (c) => {
           .filter((c) => c.length > 0)
       : []
 
+    // Extract dominant colors from the image
+    const dominantColors = await extractDominantColors(buffer)
+
     // Create photo record
     const photo = await db.photo.create({
       data: {
@@ -228,6 +234,7 @@ photos.post('/admin/photos', async (c) => {
         height: metadata.height || 0,
         size: buffer.length,
         isFeatured: false,
+        dominantColors: dominantColors.length > 0 ? JSON.stringify(dominantColors) : null,
         // EXIF data
         cameraMake: exifData.cameraMake,
         cameraModel: exifData.cameraModel,

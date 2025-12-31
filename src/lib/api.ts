@@ -115,6 +115,7 @@ export interface PhotoDto {
   isFeatured: boolean
   createdAt: string
   storageProvider?: string
+  dominantColors?: string[] // Array of hex color strings
   // EXIF data
   cameraMake?: string
   cameraModel?: string
