@@ -319,12 +319,46 @@ photos.patch('/admin/photos/:id', async (c) => {
     const id = c.req.param('id')
     const body = await c.req.json()
 
+    // Build update data
+    const updateData: Record<string, unknown> = {}
+
+    if (body.title !== undefined) updateData.title = body.title
+    if (body.isFeatured !== undefined) updateData.isFeatured = body.isFeatured
+    if (body.takenAt !== undefined) updateData.takenAt = body.takenAt ? new Date(body.takenAt) : null
+
+    // Handle category update
+    if (body.category !== undefined) {
+      const categoriesArray = body.category
+        ? body.category
+            .split(',')
+            .map((c: string) => c.trim())
+            .filter((c: string) => c.length > 0)
+        : []
+
+      // First disconnect all existing categories
+      await db.photo.update({
+        where: { id },
+        data: {
+          categories: {
+            set: [], // Clear existing
+          },
+        },
+      })
+
+      // Then connect or create new ones
+      if (categoriesArray.length > 0) {
+        updateData.categories = {
+          connectOrCreate: categoriesArray.map((name: string) => ({
+            where: { name },
+            create: { name },
+          })),
+        }
+      }
+    }
+
     const photo = await db.photo.update({
       where: { id },
-      data: {
-        title: body.title,
-        isFeatured: body.isFeatured,
-      },
+      data: updateData,
       include: { categories: true }
     })
 

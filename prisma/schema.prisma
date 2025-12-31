@@ -81,17 +81,19 @@ model Setting {
 }
 
 model Story {
-  id          String   @id @default(uuid())
-  title       String
-  content     String // Markdown content
-  isPublished Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(uuid())
+  title        String
+  content      String // Markdown content
+  coverPhotoId String?
+  isPublished  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   photos Photo[] @relation("PhotoStories")
 
   @@index([isPublished])
   @@index([createdAt])
+  @@index([coverPhotoId])
 }
 
 model Comment {

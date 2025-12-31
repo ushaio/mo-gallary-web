@@ -39,7 +39,7 @@ import {
 import { Toast, type Notification } from '@/components/Toast'
 import { DeleteConfirmDialog } from '@/components/admin/DeleteConfirmDialog'
 import { UrlUpdateConfirmDialog } from '@/components/admin/UrlUpdateConfirmDialog'
-import { PhotoDetailModal } from '@/components/PhotoDetailModal'
+import { PhotoDetailPanel } from '@/components/admin/PhotoDetailPanel'
 import { UploadQueueProvider, useUploadQueue } from '@/contexts/UploadQueueContext'
 import { UploadProgressPopup } from '@/components/admin/UploadProgressPopup'
 
@@ -298,6 +298,16 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       setSelectedPhotoIds(new Set(photos.map((p) => p.id)))
     }
   }, [selectedPhotoIds.size, photos])
+
+  // Handler for saving photo updates from PhotoDetailPanel
+  const handlePhotoSave = useCallback((updatedPhoto: PhotoDto) => {
+    // Update local photos state
+    setPhotos((prevPhotos) =>
+      prevPhotos.map((p) =>
+        p.id === updatedPhoto.id ? updatedPhoto : p
+      )
+    )
+  }, [])
 
   // --- Settings Handlers ---
   const handleSaveSettings = useCallback(async () => {
@@ -601,10 +611,18 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
         </main>
 
-        <PhotoDetailModal
+        <PhotoDetailPanel
           photo={selectedPhoto}
           isOpen={!!selectedPhoto}
+          categories={categories}
+          allPhotos={photos}
+          cdnDomain={globalSettings?.cdn_domain}
+          token={token}
           onClose={() => setSelectedPhoto(null)}
+          onSave={handlePhotoSave}
+          onUnauthorized={handleUnauthorized}
+          t={t}
+          notify={notify}
         />
 
         <DeleteConfirmDialog

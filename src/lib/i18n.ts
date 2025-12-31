@@ -290,6 +290,7 @@ export const dictionaries = {
       sort_order: '排序',
       sort_order_hint: '数字越小排序越靠前',
       total: '个',
+      edit_photo: '编辑照片',
     }
   },
   en: {
@@ -581,6 +582,7 @@ export const dictionaries = {
       sort_order: 'Sort Order',
       sort_order_hint: 'Lower numbers appear first',
       total: 'total',
+      edit_photo: 'Edit Photo',
     }
   }
 }

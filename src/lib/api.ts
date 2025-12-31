@@ -178,6 +178,7 @@ export interface StoryDto {
   id: string
   title: string
   content: string
+  coverPhotoId?: string
   isPublished: boolean
   createdAt: string
   updatedAt: string
@@ -336,7 +337,12 @@ export async function deletePhoto(input: {
 export async function updatePhoto(input: {
   token: string
   id: string
-  patch: { title?: string; isFeatured?: boolean }
+  patch: {
+    title?: string
+    isFeatured?: boolean
+    category?: string
+    takenAt?: string | null
+  }
 }): Promise<PhotoDto> {
   return apiRequestData<PhotoDto>(
     `/api/admin/photos/${encodeURIComponent(input.id)}`,
@@ -462,13 +468,24 @@ export async function getPhotoStory(photoId: string): Promise<StoryDto | null> {
   }
 }
 
+export async function getAdminPhotoStory(token: string, photoId: string): Promise<StoryDto | null> {
+  try {
+    return await apiRequestData<StoryDto>(`/api/admin/photos/${encodeURIComponent(photoId)}/story`, {}, token)
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('404')) {
+      return null
+    }
+    throw error
+  }
+}
+
 export async function getAdminStories(token: string): Promise<StoryDto[]> {
   return apiRequestData<StoryDto[]>('/api/admin/stories', {}, token)
 }
 
 export async function createStory(
   token: string,
-  data: { title: string; content: string; isPublished: boolean; photoIds?: string[] }
+  data: { title: string; content: string; isPublished: boolean; photoIds?: string[]; coverPhotoId?: string }
 ): Promise<StoryDto> {
   return apiRequestData<StoryDto>(
     '/api/admin/stories',
@@ -483,7 +500,7 @@ export async function createStory(
 export async function updateStory(
   token: string,
   id: string,
-  data: { title?: string; content?: string; isPublished?: boolean }
+  data: { title?: string; content?: string; isPublished?: boolean; coverPhotoId?: string | null }
 ): Promise<StoryDto> {
   return apiRequestData<StoryDto>(
     `/api/admin/stories/${encodeURIComponent(id)}`,

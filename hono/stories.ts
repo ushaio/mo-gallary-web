@@ -12,12 +12,14 @@ const CreateStorySchema = z.object({
   content: z.string().min(1).max(50000),
   isPublished: z.boolean().default(false),
   photoIds: z.array(z.string().uuid()).optional(),
+  coverPhotoId: z.string().uuid().optional().nullable(),
 })
 
 const UpdateStorySchema = z.object({
   title: z.string().min(1).max(200).optional(),
   content: z.string().min(1).max(50000).optional(),
   isPublished: z.boolean().optional(),
+  coverPhotoId: z.string().uuid().optional().nullable(),
 })
 
 const AddPhotosSchema = z.object({
@@ -134,6 +136,46 @@ stories.get('/photos/:photoId/story', async (c) => {
 // Protected admin endpoints
 stories.use('/admin/*', authMiddleware)
 
+// Get story for a specific photo (admin - includes unpublished)
+stories.get('/admin/photos/:photoId/story', async (c) => {
+  try {
+    const photoId = c.req.param('photoId')
+
+    const story = await db.story.findFirst({
+      where: {
+        photos: {
+          some: { id: photoId },
+        },
+      },
+      include: {
+        photos: {
+          include: { categories: true },
+        },
+      },
+    })
+
+    if (!story) {
+      return c.json({ error: 'No story found for this photo' }, 404)
+    }
+
+    const data = {
+      ...story,
+      photos: story.photos.map((p) => ({
+        ...p,
+        category: p.categories.map((c) => c.name).join(','),
+      })),
+    }
+
+    return c.json({
+      success: true,
+      data,
+    })
+  } catch (error) {
+    console.error('Get admin photo story error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
 stories.get('/admin/stories', async (c) => {
   try {
     const storiesList = await db.story.findMany({
@@ -173,6 +215,7 @@ stories.post('/admin/stories', async (c) => {
         title: validated.title,
         content: validated.content,
         isPublished: validated.isPublished,
+        coverPhotoId: validated.coverPhotoId,
         photos: validated.photoIds
           ? {
               connect: validated.photoIds.map((id) => ({ id })),
@@ -213,9 +256,15 @@ stories.patch('/admin/stories/:id', async (c) => {
     const body = await c.req.json()
     const validated = UpdateStorySchema.parse(body)
 
+    const updateData: Record<string, unknown> = {}
+    if (validated.title !== undefined) updateData.title = validated.title
+    if (validated.content !== undefined) updateData.content = validated.content
+    if (validated.isPublished !== undefined) updateData.isPublished = validated.isPublished
+    if (validated.coverPhotoId !== undefined) updateData.coverPhotoId = validated.coverPhotoId
+
     const story = await db.story.update({
       where: { id },
-      data: validated,
+      data: updateData,
       include: {
         photos: {
           include: { categories: true },
