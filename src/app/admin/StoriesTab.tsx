@@ -572,7 +572,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
               </div>
               
               {/* Content Area - WYSIWYG Editor */}
-              <div className="flex-1 relative border border-border bg-card/30 rounded-lg overflow-hidden">
+              <div className="flex-1 relative border border-border bg-card/30 rounded-lg overflow-visible">
                 {currentStory && (
                   <MilkdownEditor
                     key={currentStory.id}

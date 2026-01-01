@@ -46,6 +46,14 @@ const CrepeEditorInner: React.FC<{
         [Crepe.Feature.Cursor]: true,
         [Crepe.Feature.Placeholder]: false,
       },
+      featureConfigs: {
+        [Crepe.Feature.BlockEdit]: {
+          // Configure block handle to appear on the left side
+          blockHandle: {
+            getPlacement: () => 'left',
+          },
+        },
+      },
     })
 
     // Listen for content changes

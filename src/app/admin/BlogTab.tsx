@@ -375,7 +375,7 @@ export function BlogTab({ photos, settings, t, notify }: BlogTabProps) {
                   className="flex-1 p-3 bg-transparent border border-border focus:border-primary outline-none text-sm rounded-none"
                 />
               </div>
-              <div className="flex-1 relative border border-border bg-card/30 overflow-hidden">
+              <div className="flex-1 relative border border-border bg-card/30 overflow-visible">
                 {currentBlog && (
                   <MilkdownEditor
                     key={currentBlog.id || 'new'}
