@@ -159,23 +159,44 @@ export function CommentsTab({ photoId }: CommentsTabProps) {
               key={comment.id}
               className="pb-6 border-b border-border last:border-b-0"
             >
-              <div className="flex items-baseline gap-2 mb-2">
-                <span className="text-sm font-bold text-foreground">
-                  {comment.author}
-                </span>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                  {new Date(comment.createdAt).toLocaleString(locale, {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
+              <div className="flex items-start gap-3">
+                {/* Avatar */}
+                <div className="flex-shrink-0">
+                  {comment.avatarUrl ? (
+                    <img
+                      src={comment.avatarUrl}
+                      alt={comment.author}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                      <span className="text-sm font-bold text-muted-foreground">
+                        {comment.author.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2 mb-1">
+                    <span className="text-sm font-bold text-foreground">
+                      {comment.author}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
+                      {new Date(comment.createdAt).toLocaleString(locale, {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                  <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                    {comment.content}
+                  </p>
+                </div>
               </div>
-              <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-                {comment.content}
-              </p>
             </div>
           ))
         )}

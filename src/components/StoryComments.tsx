@@ -267,29 +267,47 @@ export function StoryComments({ storyId, targetPhotoId }: StoryCommentsProps) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
                   transition={{ duration: 0.3, ease: 'easeOut' }}
-                  className="relative pl-8"
+                  className="relative"
                 >
-                  <div className="absolute left-0 top-0 text-primary/20">
-                    <CornerDownRight className="w-4 h-4" />
+                  <div className="flex items-start gap-4">
+                    {/* Avatar */}
+                    <div className="flex-shrink-0">
+                      {comment.avatarUrl ? (
+                        <img
+                          src={comment.avatarUrl}
+                          alt={comment.author}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                          <span className="text-sm font-bold text-muted-foreground">
+                            {comment.author.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-xs font-bold text-foreground tracking-tight">
+                          {comment.author}
+                        </span>
+                        <div className="w-1 h-1 rounded-full bg-border" />
+                        <span className="text-[9px] font-mono text-muted-foreground/60 uppercase tracking-widest">
+                          {new Date(comment.createdAt).toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-sm font-serif leading-relaxed text-foreground/70">
+                        {comment.content}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-xs font-bold text-foreground tracking-tight">
-                      {comment.author}
-                    </span>
-                    <div className="w-1 h-1 rounded-full bg-border" />
-                    <span className="text-[9px] font-mono text-muted-foreground/60 uppercase tracking-widest">
-                      {new Date(comment.createdAt).toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
-                  <p className="text-sm font-serif leading-relaxed text-foreground/70">
-                    {comment.content}
-                  </p>
                 </motion.div>
               ))}
             </AnimatePresence>

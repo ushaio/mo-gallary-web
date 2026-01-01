@@ -2,9 +2,7 @@
 
 # 📸 MO Gallery
 
-**A modern, feature-rich photo gallery application with integrated backend**
-
-一个现代化的图片画廊应用，前后端集成，支持多种部署方式和存储后端
+**一个现代化的图片画廊应用，前后端集成，支持多种部署方式和存储后端**
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![Hono](https://img.shields.io/badge/Hono-API-orange?style=flat-square)](https://hono.dev/)
@@ -13,77 +11,13 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-[English](#features) | [中文](#功能特性)
+[English](README_EN.md) | 中文
 
 </div>
 
 ---
 
-## ✨ Features
-
-### 📷 Photo Gallery
-- **Multiple View Modes** - Grid, Masonry (waterfall), and Timeline views with smooth transitions
-- **EXIF Data Extraction** - Automatically extracts camera, lens, aperture, shutter speed, ISO, and more
-- **Dominant Color Extraction** - Automatically extracts primary colors from images for beautiful placeholders
-- **Album Management** - Organize photos into albums with cover images
-- **Batch Upload** - Upload multiple photos with progress tracking and album selection
-- **Photo Pagination** - Efficient pagination for large photo collections
-- **Responsive Design** - Optimized for desktop, tablet, and mobile devices
-
-### 📖 Stories / Narratives
-- Create photo stories by combining multiple images
-- Rich text descriptions with Markdown support
-- Beautiful story presentation layout
-- Photo management within stories (add/remove photos)
-
-### 👥 Friend Links (They Page)
-- Showcase your friends and their websites
-- Customizable avatars and descriptions
-- Admin management interface for friend links
-- Beautiful card-based display layout
-
-### 💬 Comment System
-- **Linux DO OAuth Integration** - Seamless authentication with Linux DO accounts
-- Comment moderation in admin panel
-- Display Linux DO usernames and trust levels
-- Optional: Restrict comments to Linux DO users only
-
-### 🔐 Admin Dashboard
-- **Photo Management** - Comprehensive photo management with filtering and pagination
-- **Reusable Photo Selector** - Modal component for selecting photos across the app
-- **Album Management** - Create, edit, and organize albums
-- **Story Management** - Create and manage photo stories with photo selection
-- **Friend Links Management** - Add, edit, and remove friend links
-- **Blog Editor** - Markdown blog post editor with preview
-- **System Settings** - Configure site title, description, social links, and more
-- **Comment Moderation** - Review and manage user comments
-- **Activity Logs** - Track admin actions and system events
-
-### 🏠 Homepage
-- **Dynamic Hero Section** - Random hero images from your gallery
-- **Particle Effects** - Beautiful animated particle background
-- **Auto Carousel** - Automatic image slideshow
-- **Scroll Animations** - Smooth scroll-triggered animations
-
-### 🌍 Internationalization
-- Chinese (中文) and English support
-- Easy to extend for more languages
-- Comprehensive i18n coverage across all pages
-
-### 🎨 Theming
-- Dark and Light mode support
-- Smooth theme transitions
-- System preference detection
-- Consistent styling across all components
-
-### ☁️ Multiple Storage Backends
-- **Local Storage** - Store files on local filesystem
-- **GitHub** - Use GitHub repository as storage
-- **Cloudflare R2** - S3-compatible object storage
-
----
-
-## 功能特性
+## ✨ 功能特性
 
 ### 📷 照片画廊
 - **多种视图模式** - 宫格、瀑布流、时间线视图，支持平滑切换
@@ -96,9 +30,18 @@
 
 ### 📖 故事/叙事
 - 将多张照片组合成故事
-- 支持 Markdown 富文本描述
+- **Milkdown 所见即所得编辑器** - 类似 Typora 的 Markdown 编辑体验
 - 精美的故事展示布局
-- 故事内照片管理（添加/移除照片）
+- 故事内照片管理（添加/移除/排序照片）
+- 支持设置封面照片
+
+### ✍️ 博客系统
+- **Milkdown WYSIWYG 编辑器** - 所见即所得的 Markdown 编辑
+- 支持 Slash 命令菜单（输入 "/" 快速插入内容）
+- 支持拖拽手柄重排段落
+- 支持工具栏格式化
+- 一键插入图库照片
+- 发布/草稿状态管理
 
 ### 👥 友链功能（They 页面）
 - 展示朋友及其网站
@@ -116,9 +59,9 @@
 - **照片管理** - 全面的照片管理，支持筛选和分页
 - **可复用照片选择器** - 模态框组件，可在应用各处选择照片
 - **相册管理** - 创建、编辑和组织相册
-- **故事管理** - 创建和管理照片故事，支持照片选择
+- **故事管理** - 创建和管理照片故事，支持照片选择和排序
 - **友链管理** - 添加、编辑和删除友链
-- **博客编辑器** - Markdown 博客编辑器，支持预览
+- **博客编辑器** - Milkdown 所见即所得编辑器
 - **系统设置** - 配置站点标题、描述、社交链接等
 - **评论审核** - 审核和管理用户评论
 - **操作日志** - 追踪管理员操作和系统事件
@@ -147,260 +90,266 @@
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ 技术栈
 
-| Category | Technology |
-|----------|------------|
-| **Framework** | Next.js 15 (App Router) |
-| **Language** | TypeScript 5 |
+| 分类 | 技术 |
+|------|------|
+| **框架** | Next.js 15 (App Router) |
+| **语言** | TypeScript 5 |
 | **API** | Hono.js |
-| **Database ORM** | Prisma |
-| **Styling** | Tailwind CSS 4 |
-| **Animation** | Framer Motion |
-| **Database** | SQLite (dev) / PostgreSQL (prod) |
-| **Image Processing** | Sharp, ExifReader |
-| **Authentication** | JWT, Linux DO OAuth |
-| **State Management** | React Context |
+| **数据库 ORM** | Prisma |
+| **样式** | Tailwind CSS 4 |
+| **动画** | Framer Motion |
+| **数据库** | SQLite (开发) / PostgreSQL (生产) |
+| **图片处理** | Sharp, ExifReader |
+| **Markdown 编辑器** | Milkdown (Crepe) |
+| **认证** | JWT, Linux DO OAuth |
+| **状态管理** | React Context |
 
 ---
 
-## 🚀 Quick Start
+## 🚀 快速开始
 
-### Prerequisites
+### 前置要求
 
 - Node.js 18+
-- pnpm (recommended) or npm
-- PostgreSQL (production) or SQLite (development)
+- pnpm（推荐）或 npm
+- PostgreSQL（生产环境）或 SQLite（开发环境）
 
-### Local Development
+### 本地开发
 
 ```bash
-# Clone the repository
+# 克隆仓库
 git clone https://github.com/yourusername/mo-gallery.git
 cd mo-gallery
 
-# Install dependencies
+# 安装依赖
 pnpm install
 
-# Configure environment variables
+# 配置环境变量
 cp .env.example .env
-# Edit .env file with your settings
+# 编辑 .env 文件
 
-# Initialize database
+# 初始化数据库
 pnpm run prisma:dev
 
-# Start development server
+# 启动开发服务器
 pnpm run dev
 ```
 
-Visit `http://localhost:3000` to see your gallery!
+访问 `http://localhost:3000` 查看你的画廊！
 
-### Minimal Environment Variables
+### 最小环境变量配置
 
 ```env
-# Database (SQLite for local development)
+# 数据库（本地开发使用 SQLite）
 DATABASE_URL="file:./dev.db"
 DIRECT_URL="file:./dev.db"
 
-# JWT Secret (change in production!)
+# JWT 密钥（生产环境请修改！）
 JWT_SECRET="your-secret-key"
 
-# Admin credentials (for initial seed)
+# 管理员凭据（用于初始化）
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD="admin123"
 ```
 
 ---
 
-## ⚙️ Environment Variables
+## ⚙️ 环境变量
 
-### Required
+### 必需
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `DATABASE_URL` | Database connection URL | `file:./dev.db` or PostgreSQL URL |
-| `DIRECT_URL` | Direct database URL (for migrations) | Same as DATABASE_URL |
-| `JWT_SECRET` | Secret key for JWT tokens | `your-secret-key` |
+| 变量 | 描述 | 示例 |
+|------|------|------|
+| `DATABASE_URL` | 数据库连接 URL | `file:./dev.db` 或 PostgreSQL URL |
+| `DIRECT_URL` | 直接数据库 URL（用于迁移） | 与 DATABASE_URL 相同 |
+| `JWT_SECRET` | JWT 令牌密钥 | `your-secret-key` |
 
-### Optional
+### 可选
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `ADMIN_USERNAME` | Admin username for seed | `admin` |
-| `ADMIN_PASSWORD` | Admin password for seed | `admin123` |
-| `NEXT_PUBLIC_ADMIN_LOGIN_URL` | Hidden admin login path | - |
-| `SITE_TITLE` | Site title | `MO GALLERY` |
-| `CDN_DOMAIN` | CDN domain for assets | - |
+| 变量 | 描述 | 默认值 |
+|------|------|--------|
+| `ADMIN_USERNAME` | 管理员用户名 | `admin` |
+| `ADMIN_PASSWORD` | 管理员密码 | `admin123` |
+| `NEXT_PUBLIC_ADMIN_LOGIN_URL` | 隐藏的管理员登录路径 | - |
+| `SITE_TITLE` | 站点标题 | `MO GALLERY` |
+| `CDN_DOMAIN` | CDN 域名 | - |
 
-### Linux DO OAuth (Optional)
+### Linux DO OAuth（可选）
 
-| Variable | Description |
-|----------|-------------|
-| `LINUXDO_CLIENT_ID` | OAuth Client ID |
-| `LINUXDO_CLIENT_SECRET` | OAuth Client Secret |
-| `LINUXDO_REDIRECT_URI` | Callback URL (e.g., `https://your-domain.com/login/callback`) |
-| `LINUXDO_COMMENTS_ONLY` | Restrict comments to Linux DO users (`true`/`false`) |
+| 变量 | 描述 |
+|------|------|
+| `LINUXDO_CLIENT_ID` | OAuth 客户端 ID |
+| `LINUXDO_CLIENT_SECRET` | OAuth 客户端密钥 |
+| `LINUXDO_REDIRECT_URI` | 回调 URL（如 `https://your-domain.com/login/callback`） |
+| `LINUXDO_COMMENTS_ONLY` | 仅限 Linux DO 用户评论（`true`/`false`） |
 
 ---
 
-## 🐳 Docker Deployment
+## 🐳 Docker 部署
 
-### Using Docker Compose (Recommended)
+### 使用 Docker Compose（推荐）
 
 ```bash
-# Start with PostgreSQL
+# 启动（包含 PostgreSQL）
 docker-compose up -d
 
-# View logs
+# 查看日志
 docker-compose logs -f
 ```
 
-### Manual Docker Build
+### 手动 Docker 构建
 
 ```bash
-# Build image
+# 构建镜像
 docker build -t mo-gallery .
 
-# Run container
+# 运行容器
 docker run -p 3000:3000 --env-file .env mo-gallery
 ```
 
 ---
 
-## ▲ Vercel Deployment
+## ▲ Vercel 部署
 
-1. **Fork** this repository
-2. **Import** the project in Vercel
-3. **Configure** environment variables (see `.env.example`)
-4. **Set** build command to `pnpm run build:vercel`
-5. **Use** Neon or Supabase as your database
+1. **Fork** 此仓库
+2. 在 Vercel 中 **导入** 项目
+3. **配置** 环境变量（参见 `.env.example`）
+4. **设置** 构建命令为 `pnpm run build:vercel`
+5. **使用** Neon 或 Supabase 作为数据库
 
-> ⚠️ **Note**: Local storage is not supported on Vercel. Use GitHub or R2 storage instead.
+> ⚠️ **注意**: Vercel 不支持本地存储。请使用 GitHub 或 R2 存储。
 
-### Database Options for Vercel
+### Vercel 数据库选项
 
-- **[Neon](https://neon.tech/)** - Serverless PostgreSQL (recommended)
-- **[Supabase](https://supabase.com/)** - PostgreSQL with additional features
-- **[PlanetScale](https://planetscale.com/)** - MySQL-compatible serverless database
+- **[Neon](https://neon.tech/)** - 无服务器 PostgreSQL（推荐）
+- **[Supabase](https://supabase.com/)** - PostgreSQL 及附加功能
+- **[PlanetScale](https://planetscale.com/)** - MySQL 兼容的无服务器数据库
 
 ---
 
-## 📁 Project Structure
+## 📁 项目结构
 
 ```
 mo-gallery-web/
-├── prisma/                  # Database schema and migrations
-│   ├── schema.prisma        # Prisma model definitions
-│   ├── seed.ts              # Database seeding script
-│   └── migrations/          # Migration history
-├── server/lib/              # Server-side utilities
-│   ├── db.ts                # Prisma client singleton
-│   ├── jwt.ts               # JWT utilities
-│   ├── exif.ts              # EXIF extraction
-│   ├── colors.ts            # Dominant color extraction
-│   └── storage/             # Storage abstraction layer
-│       ├── types.ts         # Interface definitions
-│       ├── factory.ts       # Factory function
-│       ├── local.ts         # Local storage implementation
-│       ├── github.ts        # GitHub storage implementation
-│       └── r2.ts            # R2 storage implementation
-├── hono/                    # API routes (Hono.js)
-│   ├── index.ts             # Route aggregation
-│   ├── auth.ts              # Authentication & Linux DO OAuth
-│   ├── photos.ts            # Photo management with pagination
-│   ├── albums.ts            # Album management
-│   ├── stories.ts           # Stories/Narratives
-│   ├── blogs.ts             # Blog posts
-│   ├── comments.ts          # Comments with user info
-│   ├── friends.ts           # Friend links management
-│   ├── settings.ts          # System settings
-│   └── middleware/          # Auth middleware
+├── prisma/                  # 数据库模式和迁移
+│   ├── schema.prisma        # Prisma 模型定义
+│   ├── seed.ts              # 数据库初始化脚本
+│   └── migrations/          # 迁移历史
+├── server/lib/              # 服务端工具
+│   ├── db.ts                # Prisma 客户端单例
+│   ├── jwt.ts               # JWT 工具
+│   ├── exif.ts              # EXIF 提取
+│   ├── colors.ts            # 主色调提取
+│   └── storage/             # 存储抽象层
+│       ├── types.ts         # 接口定义
+│       ├── factory.ts       # 工厂函数
+│       ├── local.ts         # 本地存储实现
+│       ├── github.ts        # GitHub 存储实现
+│       └── r2.ts            # R2 存储实现
+├── hono/                    # API 路由 (Hono.js)
+│   ├── index.ts             # 路由聚合
+│   ├── auth.ts              # 认证 & Linux DO OAuth
+│   ├── photos.ts            # 照片管理（含分页）
+│   ├── albums.ts            # 相册管理
+│   ├── stories.ts           # 故事/叙事
+│   ├── blogs.ts             # 博客文章
+│   ├── comments.ts          # 评论（含用户信息）
+│   ├── friends.ts           # 友链管理
+│   ├── settings.ts          # 系统设置
+│   └── middleware/          # 认证中间件
 ├── src/
 │   ├── app/                 # Next.js App Router
-│   │   ├── api/             # API entry point (Hono integration)
-│   │   ├── admin/           # Admin dashboard pages
-│   │   │   ├── photos/      # Photo management
-│   │   │   ├── albums/      # Album management
-│   │   │   ├── friends/     # Friend links management
-│   │   │   ├── settings/    # System settings
-│   │   │   └── logs/        # Activity logs
-│   │   ├── gallery/         # Public gallery page
-│   │   ├── story/           # Story pages
-│   │   ├── blog/            # Blog pages
-│   │   ├── they/            # Friend links page
-│   │   └── login/           # Login pages (admin & OAuth callback)
-│   ├── components/          # React components
-│   │   ├── admin/           # Admin-specific components
-│   │   │   ├── PhotoSelectorModal.tsx  # Reusable photo selector
-│   │   │   ├── PhotoDetailPanel.tsx    # Photo detail editing
-│   │   │   └── AdminSidebar.tsx        # Admin navigation
-│   │   ├── gallery/         # Gallery view components
+│   │   ├── api/             # API 入口（Hono 集成）
+│   │   ├── admin/           # 后台管理页面
+│   │   │   ├── photos/      # 照片管理
+│   │   │   ├── albums/      # 相册管理
+│   │   │   ├── friends/     # 友链管理
+│   │   │   ├── settings/    # 系统设置
+│   │   │   └── logs/        # 操作日志
+│   │   ├── gallery/         # 公开画廊页面
+│   │   ├── story/           # 故事页面
+│   │   ├── blog/            # 博客页面
+│   │   ├── they/            # 友链页面
+│   │   └── login/           # 登录页面（管理员 & OAuth 回调）
+│   ├── components/          # React 组件
+│   │   ├── MilkdownEditor.tsx    # 所见即所得 Markdown 编辑器
+│   │   ├── MilkdownViewer.tsx    # 只读 Markdown 渲染器
+│   │   ├── admin/           # 后台专用组件
+│   │   │   ├── PhotoSelectorModal.tsx  # 可复用照片选择器
+│   │   │   ├── PhotoDetailPanel.tsx    # 照片详情编辑
+│   │   │   └── AdminSidebar.tsx        # 后台导航
+│   │   ├── gallery/         # 画廊视图组件
 │   │   │   ├── GridView.tsx
 │   │   │   ├── MasonryView.tsx
 │   │   │   └── TimelineView.tsx
-│   │   └── ui/              # Common UI components
-│   ├── contexts/            # React Context providers
-│   │   ├── AuthContext.tsx          # Authentication state
-│   │   ├── ThemeContext.tsx         # Theme management
-│   │   ├── LanguageContext.tsx      # i18n state
-│   │   ├── SettingsContext.tsx      # Site settings
-│   │   └── UploadQueueContext.tsx   # Upload queue management
-│   └── lib/                 # Frontend utilities
-│       ├── api.ts           # API client with auth
-│       ├── i18n.ts          # Internationalization strings
-│       └── utils.ts         # Helper functions
-└── public/                  # Static assets
+│   │   └── ui/              # 通用 UI 组件
+│   ├── contexts/            # React Context 提供者
+│   │   ├── AuthContext.tsx          # 认证状态
+│   │   ├── ThemeContext.tsx         # 主题管理
+│   │   ├── LanguageContext.tsx      # 国际化状态
+│   │   ├── SettingsContext.tsx      # 站点设置
+│   │   └── UploadQueueContext.tsx   # 上传队列管理
+│   └── lib/                 # 前端工具
+│       ├── api.ts           # API 客户端（含认证）
+│       ├── i18n.ts          # 国际化字符串
+│       └── utils.ts         # 辅助函数
+└── public/                  # 静态资源
 ```
 
 ---
 
-## 📝 Development Commands
+## 📝 开发命令
 
 ```bash
-# Development
-pnpm run dev           # Start development server
-pnpm run build         # Build for production
-pnpm run start         # Start production server
-pnpm run lint          # Run ESLint
+# 开发
+pnpm run dev           # 启动开发服务器
+pnpm run build         # 生产构建
+pnpm run start         # 启动生产服务器
+pnpm run lint          # 运行 ESLint
 
-# Database
-pnpm run prisma:dev      # Create and apply migrations (development)
-pnpm run prisma:deploy   # Apply migrations (production)
-pnpm run prisma:generate # Generate Prisma client
-pnpm run prisma:seed     # Initialize admin account
-pnpm run prisma:studio   # Open Prisma Studio
+# 数据库
+pnpm run prisma:dev      # 创建并应用迁移（开发）
+pnpm run prisma:deploy   # 应用迁移（生产）
+pnpm run prisma:generate # 生成 Prisma 客户端
+pnpm run prisma:seed     # 初始化管理员账户
+pnpm run prisma:studio   # 打开 Prisma Studio
 ```
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
-
-## 🔄 Recent Updates
+## 🔄 最近更新
 
 ### 2026-01-01
-- ✨ **Friend Links** - Added friend links management and public display page (`/they`)
-- 🔐 **Linux DO OAuth** - Integrated Linux DO account binding and authentication
-- 📸 **Photo Management** - Added pagination, album selection during upload
-- 🎨 **Photo Selector Modal** - Reusable component for selecting photos across the app
-- 🏠 **Homepage Enhancement** - Dynamic particle effects, auto carousel, random hero images
-- 🌐 **i18n Updates** - Comprehensive internationalization for all new features
-- 🐛 **Bug Fixes** - Fixed mobile menu state, login page Suspense wrapper
+- ✨ **Milkdown 编辑器** - 集成所见即所得 Markdown 编辑器，支持 Slash 命令、拖拽手柄、工具栏
+- 📖 **MilkdownViewer** - 新增只读 Markdown 渲染组件，展示页面样式与编辑器一致
+- 📸 **照片选择器** - 可复用的照片选择模态框，支持筛选和相册过滤
+- 🖼️ **照片管理增强** - 上传时可选择相册，照片网格 UI 优化
+- 📄 **照片分页** - 高效的分页加载，故事照片管理改进
+- 👥 **友链功能** - 新增友链管理和公开展示页面 (`/they`)
+- 🔐 **Linux DO OAuth** - 集成 Linux DO 账号绑定和认证
+- 🏠 **首页增强** - 动态粒子效果、自动轮播、随机英雄图片
+- 🌐 **国际化更新** - 所有新功能的全面国际化支持
+- 🐛 **Bug 修复** - 修复移动端菜单状态、登录页 Suspense 包装
 
 ---
 
-## 📄 License
+## 🤝 贡献
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+欢迎贡献！请随时提交 Pull Request。
+
+1. Fork 此仓库
+2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 打开 Pull Request
+
+---
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件。
 
 ---
 
@@ -408,6 +357,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ by MO Gallery Contributors**
 
-[Report Bug](https://github.com/yourusername/mo-gallery/issues) · [Request Feature](https://github.com/yourusername/mo-gallery/issues)
+[报告 Bug](https://github.com/yourusername/mo-gallery/issues) · [功能请求](https://github.com/yourusername/mo-gallery/issues)
 
 </div>

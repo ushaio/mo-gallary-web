@@ -12,6 +12,7 @@ export default function Home() {
   const { settings } = useSettings()
   const { t } = useLanguage()
   const siteTitle = settings?.site_title || 'MO GALLERY'
+  const siteAuthor = process.env.NEXT_PUBLIC_SITE_AUTHOR || 'MO'
 
   const [featuredImages, setFeaturedImages] = useState<PhotoDto[]>([])
   const [heroImage, setHeroImage] = useState<PhotoDto | null>(null)
@@ -181,7 +182,7 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.4 }}
             >
               <span className="block bg-gradient-to-r from-white via-white/90 to-white/80 bg-clip-text text-transparent">
-                {t('home.hero_vis') || 'YOUR MOMENTS'}
+                {(t('home.hero_vis') || 'YOUR MOMENTS').replace('{SITE_AUTHOR}', siteAuthor)}
               </span>
             </motion.h1>
             

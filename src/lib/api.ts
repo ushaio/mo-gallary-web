@@ -184,6 +184,7 @@ export interface CommentDto {
 export interface PublicCommentDto {
   id: string
   author: string
+  avatarUrl?: string  // User avatar URL (from OAuth provider)
   content: string
   createdAt: string
   photoId?: string

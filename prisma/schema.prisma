@@ -116,6 +116,7 @@ model Comment {
   photoId   String
   author    String
   email     String?
+  avatarUrl String?  // User avatar URL (from OAuth provider)
   content   String
   status    String   @default("pending") // pending, approved, rejected
   ip        String?

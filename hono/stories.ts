@@ -127,6 +127,7 @@ stories.get('/stories/:id/comments', async (c) => {
       select: {
         id: true,
         author: true,
+        avatarUrl: true,
         content: true,
         createdAt: true,
         photoId: true,

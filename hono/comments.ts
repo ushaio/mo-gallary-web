@@ -41,6 +41,7 @@ comments.get('/photos/:photoId/comments', async (c) => {
     select: {
       id: true,
       author: true,
+      avatarUrl: true,
       content: true,
       createdAt: true,
     },
@@ -55,6 +56,8 @@ comments.post('/photos/:photoId/comments', async (c) => {
   const body = await c.req.json()
   const validated = CreateCommentSchema.parse(body)
 
+  let avatarUrl: string | undefined = undefined
+
   // Check if Linux DO only mode is enabled
   if (LINUXDO_COMMENTS_ONLY) {
     const authHeader = c.req.header('Authorization')
@@ -67,8 +70,21 @@ comments.post('/photos/:photoId/comments', async (c) => {
       if (payload.oauthProvider !== 'linuxdo') {
         return c.json({ error: 'Linux DO account required to comment' }, 403)
       }
+      // Get avatar URL from token payload or fetch from user record
+      avatarUrl = payload.avatarUrl
     } catch {
       return c.json({ error: 'Invalid token' }, 401)
+    }
+  } else {
+    // For non-Linux DO mode, check if user is logged in and get avatar
+    const authHeader = c.req.header('Authorization')
+    if (authHeader?.startsWith('Bearer ')) {
+      try {
+        const payload = verifyToken(authHeader.substring(7))
+        avatarUrl = payload.avatarUrl
+      } catch {
+        // Ignore token errors for non-required auth
+      }
     }
   }
 
@@ -89,6 +105,7 @@ comments.post('/photos/:photoId/comments', async (c) => {
       photoId,
       author: validated.author,
       email: validated.email,
+      avatarUrl,
       content: validated.content,
       status: requiresModeration ? 'pending' : 'approved',
       ip,
@@ -100,6 +117,7 @@ comments.post('/photos/:photoId/comments', async (c) => {
     data: {
       id: comment.id,
       author: comment.author,
+      avatarUrl: comment.avatarUrl,
       content: comment.content,
       createdAt: comment.createdAt.toISOString(),
       status: comment.status,
