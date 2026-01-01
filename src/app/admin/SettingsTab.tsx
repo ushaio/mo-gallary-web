@@ -777,6 +777,22 @@ export function SettingsTab({
                             className="p-6 border border-border hover:border-primary transition-all bg-card/30"
                           >
                             <div className="flex items-start justify-between gap-4">
+                              {/* Avatar */}
+                              <div className="flex-shrink-0">
+                                {comment.avatarUrl ? (
+                                  <img
+                                    src={comment.avatarUrl}
+                                    alt={comment.author}
+                                    className="w-10 h-10 rounded-full object-cover border border-border"
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center border border-border">
+                                    <span className="text-sm font-bold text-muted-foreground">
+                                      {comment.author.charAt(0).toUpperCase()}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
                               <div className="space-y-2 flex-1">
                                 <div className="flex items-center gap-3">
                                   <span className="text-xs font-bold uppercase tracking-wider">

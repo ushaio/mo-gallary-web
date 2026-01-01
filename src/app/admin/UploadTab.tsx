@@ -57,9 +57,12 @@ export function UploadTab({
   const [stories, setStories] = useState<StoryDto[]>([])
   const [loadingStories, setLoadingStories] = useState(false)
 
-  const [uploadAlbumId, setUploadAlbumId] = useState<string>('')
+  const [uploadAlbumIds, setUploadAlbumIds] = useState<string[]>([])
   const [albums, setAlbums] = useState<AlbumDto[]>([])
   const [loadingAlbums, setLoadingAlbums] = useState(false)
+  const [albumInput, setAlbumInput] = useState('')
+  const [isAlbumDropdownOpen, setIsAlbumDropdownOpen] = useState(false)
+  const albumContainerRef = useRef<HTMLDivElement>(null)
 
   const [uploadError, setUploadError] = useState('')
 
@@ -124,6 +127,14 @@ export function UploadTab({
     )
   }, [categories, categoryInput, uploadCategories])
 
+  const filteredAlbums = useMemo(() => {
+    return albums.filter(
+      (album) =>
+        album.name.toLowerCase().includes(albumInput.toLowerCase()) &&
+        !uploadAlbumIds.includes(album.id)
+    )
+  }, [albums, albumInput, uploadAlbumIds])
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node
@@ -134,10 +145,17 @@ export function UploadTab({
       ) {
         setIsCategoryDropdownOpen(false)
       }
+      if (
+        isAlbumDropdownOpen &&
+        albumContainerRef.current &&
+        !albumContainerRef.current.contains(target)
+      ) {
+        setIsAlbumDropdownOpen(false)
+      }
     }
     document.addEventListener('click', handleClickOutside, true)
     return () => document.removeEventListener('click', handleClickOutside, true)
-  }, [isCategoryDropdownOpen])
+  }, [isCategoryDropdownOpen, isAlbumDropdownOpen])
 
   const addCategory = (cat: string) => {
     const trimmed = cat.trim()
@@ -149,6 +167,17 @@ export function UploadTab({
 
   const removeCategory = (cat: string) => {
     setUploadCategories(uploadCategories.filter((c) => c !== cat))
+  }
+
+  const addAlbum = (albumId: string) => {
+    if (albumId && !uploadAlbumIds.includes(albumId)) {
+      setUploadAlbumIds([...uploadAlbumIds, albumId])
+    }
+    setAlbumInput('')
+  }
+
+  const removeAlbum = (albumId: string) => {
+    setUploadAlbumIds(uploadAlbumIds.filter((id) => id !== albumId))
   }
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -225,7 +254,7 @@ export function UploadTab({
       storageProvider: uploadSource || undefined,
       storagePath: uploadPath.trim() || undefined,
       storyId: uploadStoryId || undefined,
-      albumId: uploadAlbumId || undefined,
+      albumIds: uploadAlbumIds.length > 0 ? uploadAlbumIds : undefined,
       token,
     })
 
@@ -234,7 +263,7 @@ export function UploadTab({
     setSelectedUploadIds(new Set())
     setUploadTitle('')
     setUploadStoryId('')
-    setUploadAlbumId('')
+    setUploadAlbumIds([])
 
     notify(t('admin.upload_started'), 'info')
   }
@@ -387,30 +416,94 @@ export function UploadTab({
               )}
             </div>
 
-            {/* Album Selection */}
-            <div>
+            {/* Album Selection - Multi-select */}
+            <div ref={albumContainerRef} className="relative">
               <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 flex items-center gap-2">
                 <FolderOpen className="w-3 h-3" />
                 {t('admin.album_select')} ({t('common.optional')})
               </label>
-              <CustomSelect
-                value={uploadAlbumId}
-                onChange={setUploadAlbumId}
-                disabled={loadingAlbums}
-                placeholder={t('ui.no_association')}
-                options={[
-                  { value: '', label: t('ui.no_association') },
-                  ...albums.map((album) => ({
-                    value: album.id,
-                    label: album.name,
-                    suffix: !album.isPublished ? `(${t('admin.draft')})` : undefined,
-                  })),
-                ]}
-              />
-              {loadingAlbums && (
-                <p className="mt-2 text-[10px] text-muted-foreground">
-                  {t('common.loading')}
-                </p>
+              <div
+                className="min-h-12 p-2 bg-background border-b border-border flex flex-wrap gap-2 cursor-text items-center transition-colors focus-within:border-primary"
+                onClick={() => {
+                  setIsAlbumDropdownOpen(true)
+                  albumContainerRef.current?.querySelector('input')?.focus()
+                }}
+              >
+                {uploadAlbumIds.map((albumId) => {
+                  const album = albums.find((a) => a.id === albumId)
+                  return (
+                    <span
+                      key={albumId}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider"
+                    >
+                      {album?.name || albumId}
+                      {album && !album.isPublished && (
+                        <span className="text-muted-foreground">({t('admin.draft')})</span>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          removeAlbum(albumId)
+                        }}
+                        className="hover:text-primary/70"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )
+                })}
+                <input
+                  type="text"
+                  value={albumInput}
+                  onChange={(e) => {
+                    setAlbumInput(e.target.value)
+                    setIsAlbumDropdownOpen(true)
+                  }}
+                  onKeyDown={(e) => {
+                    if (
+                      e.key === 'Backspace' &&
+                      !albumInput &&
+                      uploadAlbumIds.length > 0
+                    ) {
+                      removeAlbum(uploadAlbumIds[uploadAlbumIds.length - 1])
+                    }
+                  }}
+                  className="flex-1 min-w-[80px] outline-none bg-transparent text-sm font-mono"
+                  placeholder={
+                    uploadAlbumIds.length === 0 ? t('admin.search_album') : ''
+                  }
+                  disabled={loadingAlbums}
+                />
+              </div>
+              {isAlbumDropdownOpen && (
+                <div className="absolute z-10 w-full mt-1 bg-background border border-border shadow-2xl max-h-48 overflow-y-auto">
+                  {filteredAlbums.length > 0 ? (
+                    filteredAlbums.map((album) => (
+                      <button
+                        key={album.id}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          addAlbum(album.id)
+                        }}
+                        className="w-full text-left px-4 py-3 text-xs font-bold uppercase tracking-wider hover:bg-primary hover:text-primary-foreground flex items-center justify-between group transition-colors"
+                      >
+                        <span>
+                          {album.name}
+                          {!album.isPublished && (
+                            <span className="ml-2 text-muted-foreground group-hover:text-primary-foreground/70">
+                              ({t('admin.draft')})
+                            </span>
+                          )}
+                        </span>
+                        <Check className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-[10px] text-muted-foreground uppercase tracking-widest text-center">
+                      {loadingAlbums ? t('common.loading') : t('admin.no_albums_found')}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 

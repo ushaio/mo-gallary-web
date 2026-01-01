@@ -120,6 +120,35 @@ albums.get('/albums/:id', async (c) => {
 // Protected admin endpoints
 albums.use('/admin/*', authMiddleware)
 
+// Batch reorder albums - MUST be before :id routes
+albums.patch('/admin/albums/reorder', async (c) => {
+  try {
+    const body = await c.req.json()
+    const { items } = z.object({
+      items: z.array(z.object({
+        id: z.string().uuid(),
+        sortOrder: z.number().int(),
+      })),
+    }).parse(body)
+
+    await db.$transaction(
+      items.map((item) =>
+        db.album.updateMany({
+          where: { id: item.id },
+          data: { sortOrder: item.sortOrder },
+        })
+      )
+    )
+
+    return c.json({
+      success: true,
+      message: 'Albums reordered successfully',
+    })
+  } catch (error) {
+    return handlePrismaError(c, error, 'Album')
+  }
+})
+
 albums.get('/admin/albums', async (c) => {
   try {
     const albumsList = await db.album.findMany({
@@ -247,35 +276,6 @@ albums.delete('/admin/albums/:id', async (c) => {
     return c.json({
       success: true,
       message: 'Album deleted successfully',
-    })
-  } catch (error) {
-    return handlePrismaError(c, error, 'Album')
-  }
-})
-
-// Batch reorder albums
-albums.patch('/admin/albums/reorder', async (c) => {
-  try {
-    const body = await c.req.json()
-    const { items } = z.object({
-      items: z.array(z.object({
-        id: z.string().uuid(),
-        sortOrder: z.number().int(),
-      })),
-    }).parse(body)
-
-    await db.$transaction(
-      items.map((item) =>
-        db.album.updateMany({
-          where: { id: item.id },
-          data: { sortOrder: item.sortOrder },
-        })
-      )
-    )
-
-    return c.json({
-      success: true,
-      message: 'Albums reordered successfully',
     })
   } catch (error) {
     return handlePrismaError(c, error, 'Album')

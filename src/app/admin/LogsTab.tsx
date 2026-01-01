@@ -17,23 +17,12 @@ interface LogsTabProps {
 }
 
 export function LogsTab({ token, photos, settings, t, notify, initialTab, editStoryId }: LogsTabProps) {
-  const [activeSubTab, setActiveSubTab] = useState<'blog' | 'stories'>(initialTab || 'blog')
+  const [activeSubTab, setActiveSubTab] = useState<'blog' | 'stories'>(initialTab || 'stories')
 
   return (
     <div className="h-full flex flex-col">
       {/* Sub-tab Navigation */}
       <div className="flex space-x-1 border-b border-border flex-shrink-0">
-        <button
-          onClick={() => setActiveSubTab('blog')}
-          className={`flex items-center gap-2 px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] border-b-2 transition-colors ${
-            activeSubTab === 'blog'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <BookText className="w-4 h-4" />
-          博客
-        </button>
         <button
           onClick={() => setActiveSubTab('stories')}
           className={`flex items-center gap-2 px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] border-b-2 transition-colors ${
@@ -44,6 +33,17 @@ export function LogsTab({ token, photos, settings, t, notify, initialTab, editSt
         >
           <BookOpen className="w-4 h-4" />
           叙事
+        </button>
+        <button
+          onClick={() => setActiveSubTab('blog')}
+          className={`flex items-center gap-2 px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] border-b-2 transition-colors ${
+            activeSubTab === 'blog'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <BookText className="w-4 h-4" />
+          博客
         </button>
       </div>
 

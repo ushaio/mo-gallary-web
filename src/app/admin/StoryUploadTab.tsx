@@ -17,9 +17,10 @@ import {
   Minimize2,
 } from 'lucide-react'
 import imageCompression from 'browser-image-compression'
-import { AdminSettingsDto, uploadPhoto, createStory, addPhotosToStory } from '@/lib/api'
+import { AdminSettingsDto, uploadPhoto, createStory } from '@/lib/api'
 import { formatFileSize } from '@/lib/utils'
 import { CustomInput } from '@/components/ui/CustomInput'
+import { useUploadQueue } from '@/contexts/UploadQueueContext'
 
 interface StoryUploadFile {
   id: string
@@ -47,6 +48,8 @@ export function StoryUploadTab({
   notify,
   onStoryCreated,
 }: StoryUploadTabProps) {
+  const { addTasks } = useUploadQueue()
+
   // Story fields
   const [storyTitle, setStoryTitle] = useState('')
   const [storyDescription, setStoryDescription] = useState('')
@@ -72,8 +75,6 @@ export function StoryUploadTab({
   const [uploadPath, setUploadPath] = useState('')
 
   // Upload state
-  const [uploading, setUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 })
   const [uploadError, setUploadError] = useState('')
 
   // Compression settings
@@ -81,13 +82,6 @@ export function StoryUploadTab({
   const [maxSizeMB, setMaxSizeMB] = useState(4)
   const [compressing, setCompressing] = useState(false)
   const [compressionProgress, setCompressionProgress] = useState({ current: 0, total: 0 })
-
-  // Result state (for partial success)
-  const [uploadResult, setUploadResult] = useState<{
-    storyId: string
-    successCount: number
-    failedCount: number
-  } | null>(null)
 
   // Initialize defaults from settings
   useEffect(() => {
@@ -227,28 +221,33 @@ export function StoryUploadTab({
     }
 
     setUploadError('')
-    setUploadResult(null)
 
-    // Filter only pending files (for retry scenario)
-    let pendingFiles = uploadFiles.filter(f => f.status === 'pending' || f.status === 'failed')
+    // Filter only pending files
+    let filesToUpload = uploadFiles.filter(f => f.status === 'pending')
 
     // Compress images if enabled
     if (compressionEnabled) {
       setCompressing(true)
-      setCompressionProgress({ current: 0, total: pendingFiles.length })
+      setCompressionProgress({ current: 0, total: filesToUpload.length })
 
       const compressedFiles: StoryUploadFile[] = []
-      for (let i = 0; i < pendingFiles.length; i++) {
-        const item = pendingFiles[i]
+      for (let i = 0; i < filesToUpload.length; i++) {
+        const item = filesToUpload[i]
         try {
           // Only compress if file is larger than target size
           if (item.file.size > maxSizeMB * 1024 * 1024) {
-            const compressedFile = await imageCompression(item.file, {
+            const compressedBlob = await imageCompression(item.file, {
               maxSizeMB: maxSizeMB,
               maxWidthOrHeight: 4096,
               useWebWorker: true,
               preserveExif: true,
             })
+            // Ensure the compressed result is a File with the original name
+            const compressedFile = new File(
+              [compressedBlob],
+              item.file.name,
+              { type: compressedBlob.type, lastModified: Date.now() }
+            )
             compressedFiles.push({ ...item, file: compressedFile })
           } else {
             compressedFiles.push(item)
@@ -257,116 +256,48 @@ export function StoryUploadTab({
           console.error(`Failed to compress ${item.file.name}:`, err)
           compressedFiles.push(item) // Use original if compression fails
         }
-        setCompressionProgress({ current: i + 1, total: pendingFiles.length })
+        setCompressionProgress({ current: i + 1, total: filesToUpload.length })
       }
-      pendingFiles = compressedFiles
+      filesToUpload = compressedFiles
       setCompressing(false)
     }
 
-    setUploading(true)
-    setUploadProgress({ current: 0, total: pendingFiles.length })
-
-    const CONCURRENCY = 4
-    let completed = 0
-    const uploadedPhotoIds: string[] = []
-    let failedCount = 0
-
-    const processTask = async (item: StoryUploadFile) => {
-      // Mark as uploading
-      setUploadFiles((prev) =>
-        prev.map((f) => (f.id === item.id ? { ...f, status: 'uploading' as const } : f))
-      )
-
-      try {
-        const photoTitle = batchPhotoTitle.trim() || item.title
-        const photo = await uploadPhoto({
-          token,
-          file: item.file,
-          title: photoTitle,
-          category: uploadCategories,
-          storage_provider: uploadSource || undefined,
-          storage_path: uploadPath.trim() || undefined,
-        })
-
-        // Mark as success
-        setUploadFiles((prev) =>
-          prev.map((f) =>
-            f.id === item.id
-              ? { ...f, status: 'success' as const, uploadedPhotoId: photo.id }
-              : f
-          )
-        )
-        uploadedPhotoIds.push(photo.id)
-      } catch (err) {
-        console.error(`Failed to upload ${item.title}:`, err)
-        // Mark as failed
-        setUploadFiles((prev) =>
-          prev.map((f) => (f.id === item.id ? { ...f, status: 'failed' as const } : f))
-        )
-        failedCount++
-      } finally {
-        completed++
-        setUploadProgress({ current: completed, total: pendingFiles.length })
-      }
-    }
-
-    // Execute with concurrency limit
-    const executing: Promise<void>[] = []
-    for (const item of pendingFiles) {
-      const p = processTask(item)
-      executing.push(p)
-
-      if (executing.length >= CONCURRENCY) {
-        await Promise.race(executing)
-        for (let i = executing.length - 1; i >= 0; i--) {
-          const status = await Promise.race([
-            executing[i].then(() => 'fulfilled').catch(() => 'rejected'),
-            Promise.resolve('pending'),
-          ])
-          if (status !== 'pending') {
-            executing.splice(i, 1)
-          }
-        }
-      }
-    }
-
-    // Wait for remaining uploads
-    await Promise.allSettled(executing)
-
-    // Create story (always create, even if some failed)
+    // First create the story (without photos)
     try {
       const story = await createStory(token, {
         title: storyTitle.trim(),
         content: storyDescription.trim() || '',
         isPublished: false,
-        photoIds: uploadedPhotoIds,
+        photoIds: [],
       })
 
-      const successCount = uploadedPhotoIds.length
+      // Add tasks to the upload queue with storyId
+      // The queue will handle the upload and associate photos with the story
+      await addTasks({
+        files: filesToUpload.map(item => ({ id: item.id, file: item.file })),
+        title: batchPhotoTitle.trim() || '', // Will use filename if empty
+        categories: uploadCategories,
+        storageProvider: uploadSource || undefined,
+        storagePath: uploadPath.trim() || undefined,
+        storyId: story.id,
+        albumId: undefined,
+        token,
+      })
 
-      if (failedCount === 0) {
-        // All success - navigate to editor
-        notify(`${t('admin.story_created')}，${successCount} ${t('admin.photos')}`)
-        onStoryCreated(story.id)
-      } else {
-        // Partial success - show result panel
-        setUploadResult({
-          storyId: story.id,
-          successCount,
-          failedCount,
-        })
-        notify(
-          `${successCount}${t('admin.story_partial_success')}${failedCount}${t('admin.story_partial_failed')}`,
-          'info'
-        )
-      }
+      // Clear the form
+      setUploadFiles([])
+      setSelectedUploadIds(new Set())
+      setStoryTitle('')
+      setStoryDescription('')
+
+      notify(t('admin.upload_started'), 'info')
+
+      // Navigate to story editor
+      onStoryCreated(story.id)
     } catch (err) {
       console.error('Failed to create story:', err)
       setUploadError(err instanceof Error ? err.message : t('common.error'))
       notify(t('common.error'), 'error')
-    } finally {
-      setUploading(false)
-      setUploadProgress({ current: 0, total: 0 })
     }
   }
 
@@ -408,16 +339,7 @@ export function StoryUploadTab({
     )
   }
 
-  const handleRetryFailed = () => {
-    // Reset failed items to pending
-    setUploadFiles((prev) =>
-      prev.map((f) => (f.status === 'failed' ? { ...f, status: 'pending' as const } : f))
-    )
-    setUploadResult(null)
-  }
-
-  const pendingCount = uploadFiles.filter(f => f.status === 'pending' || f.status === 'failed').length
-  const hasFailedFiles = uploadFiles.some(f => f.status === 'failed')
+  const pendingCount = uploadFiles.filter(f => f.status === 'pending').length
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -535,7 +457,7 @@ export function StoryUploadTab({
                       }}
                       className="w-full text-left px-4 py-3 text-xs font-bold uppercase tracking-wider hover:bg-primary hover:text-primary-foreground text-primary flex items-center justify-between transition-colors"
                     >
-                      <span>Create "{categoryInput}"</span>
+                      <span>Create &ldquo;{categoryInput}&rdquo;</span>
                       <Plus className="w-3 h-3" />
                     </button>
                   ) : (
@@ -638,62 +560,26 @@ export function StoryUploadTab({
 
           {/* Upload Button */}
           <div className="pt-4">
-            {uploadResult ? (
-              <div className="space-y-4">
-                <div className="p-4 bg-amber-500/10 border border-amber-500/30 text-amber-600 text-xs">
-                  <p className="font-bold uppercase tracking-widest mb-2">
-                    {uploadResult.successCount}{t('admin.story_partial_success')}
-                    {uploadResult.failedCount}{t('admin.story_partial_failed')}
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  {hasFailedFiles && (
-                    <button
-                      onClick={handleRetryFailed}
-                      className="flex-1 py-3 border border-border text-xs font-bold uppercase tracking-widest hover:bg-muted transition-colors"
-                    >
-                      {t('admin.continue_upload')}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => onStoryCreated(uploadResult.storyId)}
-                    className="flex-1 py-3 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-2"
-                  >
-                    {t('admin.go_to_editor')}
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button
-                onClick={handleUpload}
-                disabled={uploading || compressing || pendingCount === 0}
-                className="w-full py-4 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] hover:bg-primary hover:text-primary-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2"
-              >
-                {compressing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>
-                      {t('admin.compressing')} ({compressionProgress.current}/
-                      {compressionProgress.total})
-                    </span>
-                  </>
-                ) : uploading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>
-                      {t('admin.uploading')} ({uploadProgress.current}/
-                      {uploadProgress.total})
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    <span>{t('admin.create_story_upload')}</span>
-                  </>
-                )}
-              </button>
-            )}
+            <button
+              onClick={handleUpload}
+              disabled={compressing || pendingCount === 0}
+              className="w-full py-4 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] hover:bg-primary hover:text-primary-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2"
+            >
+              {compressing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>
+                    {t('admin.compressing')} ({compressionProgress.current}/
+                    {compressionProgress.total})
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>{t('admin.create_story_upload')}</span>
+                </>
+              )}
+            </button>
             {uploadError && (
               <p className="mt-4 text-[10px] text-destructive text-center font-bold uppercase tracking-widest">
                 {uploadError}
@@ -731,7 +617,6 @@ export function StoryUploadTab({
                         selectedUploadIds.size === uploadFiles.length
                       }
                       onChange={handleSelectAllUploads}
-                      disabled={uploading}
                       className="w-4 h-4 accent-primary cursor-pointer"
                     />
                     <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
@@ -740,7 +625,7 @@ export function StoryUploadTab({
                         : `${uploadFiles.length} ${t('admin.items')}`}
                     </span>
                   </div>
-                  {selectedUploadIds.size > 0 && !uploading && (
+                  {selectedUploadIds.size > 0 && (
                     <button
                       onClick={handleBulkRemoveUploads}
                       className="p-1.5 text-destructive hover:bg-destructive/10 transition-colors rounded"
@@ -773,31 +658,26 @@ export function StoryUploadTab({
                       <LayoutGrid className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  {!uploading && (
-                    <>
-                      <button
-                        onClick={() => {
-                          setUploadFiles([])
-                          setUploadResult(null)
-                        }}
-                        className="flex items-center gap-2 text-destructive hover:opacity-80 transition-opacity text-[10px] font-bold uppercase tracking-widest"
-                      >
-                        Clear
-                      </button>
-                      <div className="h-4 w-[1px] bg-border"></div>
-                      <label className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors text-[10px] font-bold uppercase tracking-widest">
-                        <Plus className="w-3.5 h-3.5" />
-                        {t('admin.add_more')}
-                        <input
-                          type="file"
-                          multiple
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleFileSelect}
-                        />
-                      </label>
-                    </>
-                  )}
+                  <button
+                    onClick={() => {
+                      setUploadFiles([])
+                    }}
+                    className="flex items-center gap-2 text-destructive hover:opacity-80 transition-opacity text-[10px] font-bold uppercase tracking-widest"
+                  >
+                    Clear
+                  </button>
+                  <div className="h-4 w-[1px] bg-border"></div>
+                  <label className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors text-[10px] font-bold uppercase tracking-widest">
+                    <Plus className="w-3.5 h-3.5" />
+                    {t('admin.add_more')}
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileSelect}
+                    />
+                  </label>
                 </div>
               </div>
 
@@ -816,7 +696,7 @@ export function StoryUploadTab({
                       item={item}
                       viewMode={uploadViewMode}
                       selected={selectedUploadIds.has(item.id)}
-                      uploading={uploading}
+                      uploading={false}
                       onSelect={handleSelectUploadToggle}
                       onRemove={handleRemoveUpload}
                       onTitleChange={handleTitleChange}
@@ -847,30 +727,6 @@ export function StoryUploadTab({
             </div>
           )}
 
-          {/* Upload Overlay */}
-          {uploading && (
-            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-50">
-              <div className="bg-background border border-border p-8 shadow-2xl flex flex-col items-center max-w-sm w-full mx-4">
-                <Loader2 className="w-12 h-12 text-primary animate-spin mb-6" />
-                <h3 className="font-serif text-xl mb-2">
-                  {t('admin.processing')}
-                </h3>
-                <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
-                  {uploadProgress.current} / {uploadProgress.total}
-                </p>
-                <div className="w-full h-1 bg-muted mt-6 overflow-hidden">
-                  <div
-                    className="h-full bg-primary transition-all duration-300 ease-out"
-                    style={{
-                      width: `${
-                        (uploadProgress.current / uploadProgress.total) * 100
-                      }%`,
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

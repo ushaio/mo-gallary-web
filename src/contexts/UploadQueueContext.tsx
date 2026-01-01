@@ -20,7 +20,7 @@ export interface UploadTask {
   storageProvider?: string
   storagePath?: string
   storyId?: string
-  albumId?: string
+  albumIds?: string[]
   batchId: string // Unique batch identifier
   // Result
   photoId?: string
@@ -37,7 +37,7 @@ interface UploadQueueContextType {
     storageProvider?: string
     storagePath?: string
     storyId?: string
-    albumId?: string
+    albumIds?: string[]
     token: string
   }) => void
   retryTask: (taskId: string, token: string) => void
@@ -63,7 +63,7 @@ export function UploadQueueProvider({
   onUploadComplete,
 }: {
   children: React.ReactNode
-  onUploadComplete?: (photoIds: string[], storyId?: string, albumId?: string) => void
+  onUploadComplete?: (photoIds: string[], storyId?: string, albumIds?: string[]) => void
 }) {
   const [tasks, setTasks] = useState<UploadTask[]>([])
   const [isMinimized, setIsMinimized] = useState(false)
@@ -95,24 +95,26 @@ export function UploadQueueProvider({
     )
   }, [])
 
-  const notifyBatchComplete = useCallback(async (batchId: string, storyId: string | undefined, albumId: string | undefined, photoIds: string[]) => {
+  const notifyBatchComplete = useCallback(async (batchId: string, storyId: string | undefined, albumIds: string[] | undefined, photoIds: string[]) => {
     // Double-check we haven't already notified for this batch
     if (notifiedBatchesRef.current.has(batchId)) {
       return
     }
     notifiedBatchesRef.current.add(batchId)
 
-    // If albumId is provided, add photos to album
-    if (albumId && photoIds.length > 0 && tokenRef.current) {
-      try {
-        await addPhotosToAlbum(tokenRef.current, albumId, photoIds)
-      } catch (err) {
-        console.error('Failed to add photos to album:', err)
+    // If albumIds are provided, add photos to each album
+    if (albumIds && albumIds.length > 0 && photoIds.length > 0 && tokenRef.current) {
+      for (const albumId of albumIds) {
+        try {
+          await addPhotosToAlbum(tokenRef.current, albumId, photoIds)
+        } catch (err) {
+          console.error(`Failed to add photos to album ${albumId}:`, err)
+        }
       }
     }
 
     if (photoIds.length > 0 && onUploadCompleteRef.current) {
-      onUploadCompleteRef.current(photoIds, storyId, albumId)
+      onUploadCompleteRef.current(photoIds, storyId, albumIds)
     }
   }, [])
 
@@ -178,7 +180,7 @@ export function UploadQueueProvider({
 
           // Schedule notification outside of setState
           setTimeout(() => {
-            notifyBatchComplete(task.batchId, task.storyId, task.albumId, photoIds)
+            notifyBatchComplete(task.batchId, task.storyId, task.albumIds, photoIds)
           }, 0)
         }
 
@@ -208,7 +210,7 @@ export function UploadQueueProvider({
 
           if (photoIds.length > 0) {
             setTimeout(() => {
-              notifyBatchComplete(task.batchId, task.storyId, task.albumId, photoIds)
+              notifyBatchComplete(task.batchId, task.storyId, task.albumIds, photoIds)
             }, 0)
           }
         }
@@ -231,7 +233,7 @@ export function UploadQueueProvider({
       storageProvider?: string
       storagePath?: string
       storyId?: string
-      albumId?: string
+      albumIds?: string[]
       token: string
     }) => {
       tokenRef.current = params.token
@@ -259,7 +261,7 @@ export function UploadQueueProvider({
             storageProvider: params.storageProvider,
             storagePath: params.storagePath,
             storyId: params.storyId,
-            albumId: params.albumId,
+            albumIds: params.albumIds,
             batchId,
           }
         })

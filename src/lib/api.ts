@@ -179,6 +179,7 @@ export interface CommentDto {
   createdAt: string
   ip?: string
   email?: string
+  avatarUrl?: string  // User avatar URL (from OAuth provider)
 }
 
 export interface PublicCommentDto {

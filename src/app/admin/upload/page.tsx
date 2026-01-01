@@ -28,8 +28,8 @@ export default function UploadPage() {
 
   return (
     <div className="space-y-8">
-      {/* Tab Switcher */}
-      <div className="flex space-x-1 border-b border-border">
+      {/* Tab Switcher - temporarily hidden, only showing photos tab */}
+      {/* <div className="flex space-x-1 border-b border-border">
         <button
           onClick={() => setUploadMode('photos')}
           className={`flex items-center gap-2 px-6 py-4 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors ${
@@ -52,34 +52,23 @@ export default function UploadPage() {
           <BookOpen className="w-4 h-4" />
           {t('admin.upload_tab_story')}
         </button>
-      </div>
+      </div> */}
 
-      {/* Tab Content */}
-      {uploadMode === 'photos' ? (
-        <UploadTab
-          token={token}
-          categories={categories}
-          settings={settings}
-          t={t}
-          notify={notify}
-          onUploadSuccess={() => {
-            refreshPhotos()
-          }}
-          onPreview={(item) => {
-            const url = URL.createObjectURL(item.file)
-            window.open(url, '_blank')
-          }}
-        />
-      ) : (
-        <StoryUploadTab
-          token={token}
-          categories={categories}
-          settings={settings}
-          t={t}
-          notify={notify}
-          onStoryCreated={handleStoryCreated}
-        />
-      )}
+      {/* Tab Content - only showing photos upload for now */}
+      <UploadTab
+        token={token}
+        categories={categories}
+        settings={settings}
+        t={t}
+        notify={notify}
+        onUploadSuccess={() => {
+          refreshPhotos()
+        }}
+        onPreview={(item) => {
+          const url = URL.createObjectURL(item.file)
+          window.open(url, '_blank')
+        }}
+      />
     </div>
   )
 }
