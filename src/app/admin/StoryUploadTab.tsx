@@ -280,7 +280,7 @@ export function StoryUploadTab({
         storageProvider: uploadSource || undefined,
         storagePath: uploadPath.trim() || undefined,
         storyId: story.id,
-        albumId: undefined,
+        albumIds: undefined,
         token,
       })
 
