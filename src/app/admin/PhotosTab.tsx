@@ -4,7 +4,6 @@ import React, { useState, useMemo, useEffect } from 'react'
 import {
   LayoutGrid,
   List as ListIcon,
-  Plus,
   Trash2,
   RefreshCw,
   X,
@@ -29,7 +28,6 @@ interface PhotosTabProps {
   onDelete: (id?: string) => void
   onRefresh: () => void
   onToggleFeatured: (photo: PhotoDto) => void
-  onAdd: () => void
   onPreview: (photo: PhotoDto) => void
   t: (key: string) => string
   settings: PublicSettingsDto | null
@@ -50,7 +48,6 @@ export function PhotosTab({
   onDelete,
   onRefresh,
   onToggleFeatured,
-  onAdd,
   onPreview,
   t,
   settings,
@@ -227,7 +224,7 @@ export function PhotosTab({
               }`}
             >
               <SlidersHorizontal className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('ui.category_filter') || 'Filters'}</span>
+              <span className="hidden sm:inline">{t('admin.filter') || 'Filter'}</span>
               {activeFilterCount > 0 && (
                 <span className="flex items-center justify-center w-5 h-5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full">
                   {activeFilterCount}
@@ -268,15 +265,6 @@ export function PhotosTab({
               title={t('common.refresh')}
             >
               <RefreshCw className="w-4 h-4" />
-            </button>
-
-            {/* Add New */}
-            <button
-              onClick={onAdd}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider rounded-md hover:bg-primary/90 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('admin.add_new')}</span>
             </button>
           </div>
         </div>

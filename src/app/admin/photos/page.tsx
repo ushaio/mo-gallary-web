@@ -1,11 +1,9 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useAdmin } from '../layout'
 import { PhotosTab } from '../PhotosTab'
 
 export default function PhotosPage() {
-  const router = useRouter()
   const {
     photos,
     categories,
@@ -38,7 +36,6 @@ export default function PhotosPage() {
       onDelete={handleDelete}
       onRefresh={refreshPhotos}
       onToggleFeatured={handleToggleFeatured}
-      onAdd={() => router.push('/admin/upload')}
       onPreview={setSelectedPhoto}
       t={t}
       settings={settings}

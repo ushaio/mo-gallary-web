@@ -298,7 +298,7 @@ export function PhotoSelectorModal({
                 }`}
               >
                 <SlidersHorizontal className="w-4 h-4" />
-                <span className="hidden sm:inline">{t('ui.category_filter') || 'Filters'}</span>
+                <span className="hidden sm:inline">{t('admin.filter') || 'Filter'}</span>
                 {activeFilterCount > 0 && (
                   <span className="flex items-center justify-center w-5 h-5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full">
                     {activeFilterCount}
