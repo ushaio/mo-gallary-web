@@ -10,3 +10,66 @@
   padding-left: 48px; /* Space for drag handle */
   min-height: 350px;
 }
+
+/* Dark mode support for Milkdown editor */
+/* The frame-dark.css uses .dark class on html element */
+/* We need to ensure the editor container inherits the theme */
+
+.milkdown-dark .milkdown {
+  --crepe-color-background: hsl(var(--background));
+  --crepe-color-foreground: hsl(var(--foreground));
+  --crepe-color-surface: hsl(var(--card));
+  --crepe-color-surface-low: hsl(var(--muted));
+  --crepe-color-border: hsl(var(--border));
+  --crepe-color-primary: hsl(var(--primary));
+  --crepe-color-primary-foreground: hsl(var(--primary-foreground));
+}
+
+/* Ensure proper background in dark mode */
+.milkdown-dark .ProseMirror {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* Light mode explicit styles */
+.milkdown-light .milkdown {
+  --crepe-color-background: hsl(var(--background));
+  --crepe-color-foreground: hsl(var(--foreground));
+  --crepe-color-surface: hsl(var(--card));
+  --crepe-color-surface-low: hsl(var(--muted));
+  --crepe-color-border: hsl(var(--border));
+  --crepe-color-primary: hsl(var(--primary));
+  --crepe-color-primary-foreground: hsl(var(--primary-foreground));
+}
+
+.milkdown-light .ProseMirror {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* Toolbar and menu styling for dark mode */
+.milkdown-dark .milkdown-toolbar,
+.milkdown-dark [data-milkdown-toolbar],
+.milkdown-dark .crepe-toolbar {
+  background-color: hsl(var(--card));
+  border-color: hsl(var(--border));
+}
+
+/* Code block styling */
+.milkdown-dark .cm-editor {
+  background-color: hsl(var(--muted));
+}
+
+.milkdown-dark .cm-editor .cm-gutters {
+  background-color: hsl(var(--muted));
+  border-color: hsl(var(--border));
+}
+
+/* Selection styling */
+.milkdown-dark .ProseMirror ::selection {
+  background-color: hsl(var(--primary) / 0.3);
+}
+
+.milkdown-light .ProseMirror ::selection {
+  background-color: hsl(var(--primary) / 0.2);
+}

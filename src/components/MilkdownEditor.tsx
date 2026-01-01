@@ -1,10 +1,12 @@
 'use client'
 
-import React, { useRef, useLayoutEffect, forwardRef, useImperativeHandle, useEffect } from 'react'
+import React, { useRef, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Crepe } from '@milkdown/crepe'
 import { Milkdown, MilkdownProvider, useEditor } from '@milkdown/react'
+import { useTheme } from '@/contexts/ThemeContext'
 import '@milkdown/crepe/theme/common/style.css'
 import '@milkdown/crepe/theme/frame.css'
+import '@milkdown/crepe/theme/frame-dark.css'
 import './milkdown-editor.css'
 
 interface MilkdownEditorProps {
@@ -96,8 +98,10 @@ export const MilkdownEditor = forwardRef<MilkdownEditorHandle, MilkdownEditorPro
       },
     }))
 
+    const { resolvedTheme } = useTheme()
+
     return (
-      <div className="milkdown-crepe-editor h-full">
+      <div className={`milkdown-crepe-editor h-full ${resolvedTheme === 'dark' ? 'milkdown-dark' : 'milkdown-light'}`} data-theme={resolvedTheme}>
         <MilkdownProvider>
           <CrepeEditorInner
             defaultValue={value}
