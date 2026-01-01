@@ -4,12 +4,27 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { BookOpen, MessageSquare, ChevronLeft, ChevronRight, CornerDownRight, Send, LogIn } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import dynamic from 'next/dynamic'
 import { getPhotoStory, type StoryDto, getPhotoComments, getStoryComments, submitPhotoComment, getCommentSettings, type PublicCommentDto, type PhotoDto, resolveAssetUrl } from '@/lib/api'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useSettings } from '@/contexts/SettingsContext'
 import { useAuth } from '@/contexts/AuthContext'
-import ReactMarkdown from 'react-markdown'
 import { Toast, type Notification } from '@/components/Toast'
+
+// Dynamically import MilkdownViewer to avoid SSR issues
+const MilkdownViewer = dynamic(
+  () => import('@/components/MilkdownViewer'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="animate-pulse space-y-4">
+        <div className="h-4 bg-muted rounded w-full"></div>
+        <div className="h-4 bg-muted rounded w-5/6"></div>
+        <div className="h-4 bg-muted rounded w-4/6"></div>
+      </div>
+    )
+  }
+)
 
 interface StoryTabProps {
   photoId: string
@@ -337,26 +352,8 @@ export function StoryTab({ photoId, currentPhoto, onPhotoChange }: StoryTabProps
           )}
 
           {/* Story Content */}
-          <div className="prose prose-stone dark:prose-invert max-w-none prose-p:font-serif prose-p:text-base prose-p:leading-relaxed prose-p:text-foreground/80">
-            <ReactMarkdown
-              components={{
-                h1: ({ children }) => <h1 className="font-serif text-2xl mb-6 tracking-tight">{children}</h1>,
-                h2: ({ children }) => <h2 className="font-serif text-xl mb-4 tracking-tight">{children}</h2>,
-                blockquote: ({ children }) => (
-                  <blockquote className="border-l-2 border-primary/30 pl-6 italic font-serif text-muted-foreground my-8">
-                    {children}
-                  </blockquote>
-                ),
-                p: ({ children }) => <p className="mb-6">{children}</p>,
-                a: ({ href, children }) => (
-                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline underline-offset-4">
-                    {children}
-                  </a>
-                ),
-              }}
-            >
-              {story.content}
-            </ReactMarkdown>
+          <div className="milkdown-article-compact">
+            <MilkdownViewer content={story.content} />
           </div>
         </div>
       )}

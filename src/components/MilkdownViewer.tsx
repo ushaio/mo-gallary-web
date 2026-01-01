@@ -1,10 +1,13 @@
 'use client'
 
-import React, { useRef, useEffect } from 'react'
+import React, { useRef } from 'react'
 import { Crepe } from '@milkdown/crepe'
 import { Milkdown, MilkdownProvider, useEditor } from '@milkdown/react'
+import { useTheme } from '@/contexts/ThemeContext'
 import '@milkdown/crepe/theme/common/style.css'
 import '@milkdown/crepe/theme/frame.css'
+import '@milkdown/crepe/theme/frame-dark.css'
+import './milkdown-editor.css'
 
 interface MilkdownViewerProps {
   content: string
@@ -53,8 +56,13 @@ const CrepeViewerInner: React.FC<{
 }
 
 export const MilkdownViewer: React.FC<MilkdownViewerProps> = ({ content, className }) => {
+  const { resolvedTheme } = useTheme()
+  
   return (
-    <div className={`milkdown-viewer ${className || ''}`}>
+    <div
+      className={`milkdown-viewer ${resolvedTheme === 'dark' ? 'milkdown-dark' : 'milkdown-light'} ${className || ''}`}
+      data-theme={resolvedTheme}
+    >
       <MilkdownProvider>
         <CrepeViewerInner content={content} />
       </MilkdownProvider>
