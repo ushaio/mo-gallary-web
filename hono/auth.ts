@@ -68,33 +68,51 @@ auth.post('/linuxdo/callback', async (c) => {
   }
 
   // Exchange code for access token
-  const tokenResponse = await fetch(LINUXDO_TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: LINUXDO_REDIRECT_URI,
-      client_id: LINUXDO_CLIENT_ID,
-      client_secret: LINUXDO_CLIENT_SECRET,
-    }),
-  })
+  let tokenResponse: Response
+  try {
+    tokenResponse = await fetch(LINUXDO_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: LINUXDO_REDIRECT_URI,
+        client_id: LINUXDO_CLIENT_ID,
+        client_secret: LINUXDO_CLIENT_SECRET,
+      }),
+    })
+  } catch (err) {
+    console.error('Linux DO token exchange network error:', err)
+    return c.json({ error: 'Network error during token exchange' }, 500)
+  }
 
   if (!tokenResponse.ok) {
+    const errorText = await tokenResponse.text()
+    console.error('Linux DO token exchange failed:', tokenResponse.status, errorText)
     return c.json({ error: 'Failed to exchange authorization code' }, 400)
   }
 
-  const { access_token } = await tokenResponse.json() as { access_token: string }
+  const tokenData = await tokenResponse.json() as { access_token?: string }
+  const access_token = tokenData.access_token
   if (!access_token) {
+    console.error('Linux DO token response missing access_token:', tokenData)
     return c.json({ error: 'No access token received' }, 400)
   }
 
   // Get user info from Linux DO
-  const userResponse = await fetch(LINUXDO_USER_URL, {
-    headers: { Authorization: `Bearer ${access_token}` },
-  })
+  let userResponse: Response
+  try {
+    userResponse = await fetch(LINUXDO_USER_URL, {
+      headers: { Authorization: `Bearer ${access_token}` },
+    })
+  } catch (err) {
+    console.error('Linux DO user info network error:', err)
+    return c.json({ error: 'Network error fetching user info' }, 500)
+  }
 
   if (!userResponse.ok) {
+    const errorText = await userResponse.text()
+    console.error('Linux DO user info failed:', userResponse.status, errorText)
     return c.json({ error: 'Failed to get user info' }, 400)
   }
 
@@ -218,33 +236,51 @@ auth.post('/linuxdo/bind', authMiddleware, async (c) => {
   }
 
   // Exchange code for access token
-  const tokenResponse = await fetch(LINUXDO_TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: LINUXDO_REDIRECT_URI,
-      client_id: LINUXDO_CLIENT_ID,
-      client_secret: LINUXDO_CLIENT_SECRET,
-    }),
-  })
+  let tokenResponse: Response
+  try {
+    tokenResponse = await fetch(LINUXDO_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: LINUXDO_REDIRECT_URI,
+        client_id: LINUXDO_CLIENT_ID,
+        client_secret: LINUXDO_CLIENT_SECRET,
+      }),
+    })
+  } catch (err) {
+    console.error('Linux DO bind token exchange network error:', err)
+    return c.json({ error: 'Network error during token exchange' }, 500)
+  }
 
   if (!tokenResponse.ok) {
+    const errorText = await tokenResponse.text()
+    console.error('Linux DO bind token exchange failed:', tokenResponse.status, errorText)
     return c.json({ error: 'Failed to exchange authorization code' }, 400)
   }
 
-  const { access_token } = await tokenResponse.json() as { access_token: string }
+  const tokenData = await tokenResponse.json() as { access_token?: string }
+  const access_token = tokenData.access_token
   if (!access_token) {
+    console.error('Linux DO bind token response missing access_token:', tokenData)
     return c.json({ error: 'No access token received' }, 400)
   }
 
   // Get user info from Linux DO
-  const userResponse = await fetch(LINUXDO_USER_URL, {
-    headers: { Authorization: `Bearer ${access_token}` },
-  })
+  let userResponse: Response
+  try {
+    userResponse = await fetch(LINUXDO_USER_URL, {
+      headers: { Authorization: `Bearer ${access_token}` },
+    })
+  } catch (err) {
+    console.error('Linux DO bind user info network error:', err)
+    return c.json({ error: 'Network error fetching user info' }, 500)
+  }
 
   if (!userResponse.ok) {
+    const errorText = await userResponse.text()
+    console.error('Linux DO bind user info failed:', userResponse.status, errorText)
     return c.json({ error: 'Failed to get user info' }, 400)
   }
 

@@ -149,24 +149,25 @@ export default function Navbar() {
                   </AnimatePresence>
                 </button>
 
+                {isAuthenticated && user?.isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="font-sans text-xs font-medium tracking-[0.2em] hover:text-primary transition-colors duration-300 uppercase"
+                  >
+                    {t('nav.admin')}
+                  </Link>
+                )}
+
                 {isAuthenticated ? (
-                  <>
-                    <Link
-                      href="/admin"
-                      className="font-sans text-xs font-medium tracking-[0.2em] hover:text-primary transition-colors duration-300 uppercase"
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center space-x-2 font-sans text-xs font-medium tracking-[0.2em] hover:text-destructive transition-colors duration-300 uppercase"
                     >
-                      {t('nav.admin')}
-                    </Link>
-                    <div className="flex items-center space-x-4">
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center space-x-2 font-sans text-xs font-medium tracking-[0.2em] hover:text-destructive transition-colors duration-300 uppercase"
-                      >
-                        <span>{t('nav.logout')}</span>
-                        <LogOut className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </>
+                      <span>{t('nav.logout')}</span>
+                      <LogOut className="w-3 h-3" />
+                    </button>
+                  </div>
                 ) : (
                   <Link
                     href="/login"
@@ -257,12 +258,14 @@ export default function Navbar() {
                 {/* Auth Actions */}
                 {isAuthenticated ? (
                   <div className="flex flex-col space-y-4">
-                    <Link
-                      href="/admin"
-                      className="font-sans text-sm font-medium tracking-[0.2em] text-primary hover:text-primary/80 transition-colors uppercase"
-                    >
-                      {t('nav.admin')}
-                    </Link>
+                    {user?.isAdmin && (
+                      <Link
+                        href="/admin"
+                        className="font-sans text-sm font-medium tracking-[0.2em] text-primary hover:text-primary/80 transition-colors uppercase"
+                      >
+                        {t('nav.admin')}
+                      </Link>
+                    )}
                     <button
                       onClick={handleLogout}
                       className="flex items-center gap-2 font-sans text-sm font-medium tracking-[0.2em] text-muted-foreground hover:text-destructive transition-colors uppercase"

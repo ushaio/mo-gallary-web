@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { loginWithLinuxDo, bindLinuxDoAccount } from '@/lib/api'
@@ -12,6 +12,7 @@ function OAuthCallbackContent() {
   const [error, setError] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
   const [isBindFlow, setIsBindFlow] = useState(false)
+  const hasProcessed = useRef(false)
   const { login, token, isReady } = useAuth()
   const { t } = useLanguage()
   const router = useRouter()
@@ -20,6 +21,10 @@ function OAuthCallbackContent() {
   useEffect(() => {
     // Wait for auth context to be ready before processing
     if (!isReady) return
+
+    // Prevent duplicate processing
+    if (hasProcessed.current) return
+    hasProcessed.current = true
 
     const handleCallback = async () => {
       const code = searchParams.get('code')

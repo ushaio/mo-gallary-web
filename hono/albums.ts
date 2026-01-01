@@ -3,6 +3,7 @@ import { Hono } from 'hono'
 import { db } from '~/server/lib/db'
 import { authMiddleware, AuthVariables } from './middleware/auth'
 import { z } from 'zod'
+import { Prisma } from '@prisma/client'
 
 const albums = new Hono<{ Variables: AuthVariables }>()
 
@@ -27,6 +28,20 @@ const UpdateAlbumSchema = z.object({
 const AddPhotosSchema = z.object({
   photoIds: z.array(z.string().uuid()).min(1),
 })
+
+// Helper to handle Prisma errors
+const handlePrismaError = (c: any, error: unknown, entityName = 'Record') => {
+  console.error(`${entityName} operation error:`, error)
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === 'P2025') {
+      return c.json({ error: `${entityName} not found or dependency missing` }, 404)
+    }
+  }
+  if (error instanceof z.ZodError) {
+    return c.json({ error: 'Validation error', details: error.issues }, 400)
+  }
+  return c.json({ error: 'Internal server error' }, 500)
+}
 
 // Public endpoints
 albums.get('/albums', async (c) => {
@@ -180,11 +195,7 @@ albums.post('/admin/albums', async (c) => {
       data,
     })
   } catch (error) {
-    console.error('Create album error:', error)
-    if (error instanceof z.ZodError) {
-      return c.json({ error: 'Validation error', details: error.issues }, 400)
-    }
-    return c.json({ error: 'Internal server error' }, 500)
+    return handlePrismaError(c, error, 'Album or Photo')
   }
 })
 
@@ -221,11 +232,7 @@ albums.patch('/admin/albums/:id', async (c) => {
       data,
     })
   } catch (error) {
-    console.error('Update album error:', error)
-    if (error instanceof z.ZodError) {
-      return c.json({ error: 'Validation error', details: error.issues }, 400)
-    }
-    return c.json({ error: 'Internal server error' }, 500)
+    return handlePrismaError(c, error, 'Album')
   }
 })
 
@@ -242,8 +249,36 @@ albums.delete('/admin/albums/:id', async (c) => {
       message: 'Album deleted successfully',
     })
   } catch (error) {
-    console.error('Delete album error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
+    return handlePrismaError(c, error, 'Album')
+  }
+})
+
+// Batch reorder albums
+albums.patch('/admin/albums/reorder', async (c) => {
+  try {
+    const body = await c.req.json()
+    const { items } = z.object({
+      items: z.array(z.object({
+        id: z.string().uuid(),
+        sortOrder: z.number().int(),
+      })),
+    }).parse(body)
+
+    await db.$transaction(
+      items.map((item) =>
+        db.album.updateMany({
+          where: { id: item.id },
+          data: { sortOrder: item.sortOrder },
+        })
+      )
+    )
+
+    return c.json({
+      success: true,
+      message: 'Albums reordered successfully',
+    })
+  } catch (error) {
+    return handlePrismaError(c, error, 'Album')
   }
 })
 
@@ -285,11 +320,7 @@ albums.post('/admin/albums/:id/photos', async (c) => {
       data,
     })
   } catch (error) {
-    console.error('Add photos to album error:', error)
-    if (error instanceof z.ZodError) {
-      return c.json({ error: 'Validation error', details: error.issues }, 400)
-    }
-    return c.json({ error: 'Internal server error' }, 500)
+    return handlePrismaError(c, error, 'Album or Photo')
   }
 })
 
@@ -330,8 +361,7 @@ albums.delete('/admin/albums/:albumId/photos/:photoId', async (c) => {
       data,
     })
   } catch (error) {
-    console.error('Remove photo from album error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
+    return handlePrismaError(c, error, 'Album or Photo')
   }
 })
 
@@ -381,8 +411,7 @@ albums.patch('/admin/albums/:id/cover', async (c) => {
       data,
     })
   } catch (error) {
-    console.error('Set album cover error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
+    return handlePrismaError(c, error, 'Album')
   }
 })
 

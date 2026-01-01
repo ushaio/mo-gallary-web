@@ -801,6 +801,20 @@ export async function deleteAlbum(token: string, id: string): Promise<void> {
   )
 }
 
+export async function reorderAlbums(
+  token: string,
+  items: { id: string; sortOrder: number }[]
+): Promise<void> {
+  await apiRequest(
+    '/api/admin/albums/reorder',
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ items }),
+    },
+    token
+  )
+}
+
 export async function addPhotosToAlbum(
   token: string,
   albumId: string,

@@ -745,7 +745,7 @@ function UploadProgressPopupWrapper({ t, token }: { t: (key: string) => string; 
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requireAdmin>
       <AdminLayoutContent>{children}</AdminLayoutContent>
     </ProtectedRoute>
   )
