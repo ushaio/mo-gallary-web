@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
   LayoutGrid,
   List as ListIcon,
@@ -14,7 +14,7 @@ import {
   SlidersHorizontal,
   ChevronDown,
 } from 'lucide-react'
-import { PhotoDto, resolveAssetUrl, PublicSettingsDto } from '@/lib/api'
+import { PhotoDto, resolveAssetUrl, PublicSettingsDto, AlbumDto, getAlbums } from '@/lib/api'
 
 interface PhotosTabProps {
   photos: PhotoDto[]
@@ -58,20 +58,44 @@ export function PhotosTab({
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [channelFilter, setChannelFilter] = useState('all')
+  const [albumFilter, setAlbumFilter] = useState('all')
   const [onlyFeatured, setOnlyFeatured] = useState(false)
   const [sortBy, setSortBy] = useState<SortOption>('upload-desc')
   const [showFilters, setShowFilters] = useState(false)
+  const [albums, setAlbums] = useState<AlbumDto[]>([])
 
   const resolvedCdnDomain = settings?.cdn_domain?.trim() || undefined
+
+  // Load albums on mount
+  useEffect(() => {
+    async function loadAlbums() {
+      try {
+        const data = await getAlbums()
+        setAlbums(data)
+      } catch (err) {
+        console.error('Failed to load albums:', err)
+      }
+    }
+    loadAlbums()
+  }, [])
 
   // Count active filters
   const activeFilterCount = useMemo(() => {
     let count = 0
     if (categoryFilter !== 'all') count++
     if (channelFilter !== 'all') count++
+    if (albumFilter !== 'all') count++
     if (onlyFeatured) count++
     return count
-  }, [categoryFilter, channelFilter, onlyFeatured])
+  }, [categoryFilter, channelFilter, albumFilter, onlyFeatured])
+
+  // Get album photo IDs for filtering
+  const albumPhotoIds = useMemo(() => {
+    if (albumFilter === 'all') return null
+    const album = albums.find(a => a.id === albumFilter)
+    if (!album) return null
+    return new Set(album.photos.map(p => p.id))
+  }, [albumFilter, albums])
 
   const filteredPhotos = useMemo(() => {
     const filtered = photos.filter((p) => {
@@ -85,9 +109,12 @@ export function PhotosTab({
       const matchesChannel =
         channelFilter === 'all' || p.storageProvider === channelFilter
 
+      const matchesAlbum =
+        albumPhotoIds === null || albumPhotoIds.has(p.id)
+
       const matchesFeatured = !onlyFeatured || p.isFeatured
 
-      return matchesSearch && matchesCategory && matchesChannel && matchesFeatured
+      return matchesSearch && matchesCategory && matchesChannel && matchesAlbum && matchesFeatured
     })
 
     // Apply sorting
@@ -111,11 +138,12 @@ export function PhotosTab({
           return 0
       }
     })
-  }, [photos, search, categoryFilter, channelFilter, onlyFeatured, sortBy])
+  }, [photos, search, categoryFilter, channelFilter, albumPhotoIds, onlyFeatured, sortBy])
 
   const clearAllFilters = () => {
     setCategoryFilter('all')
     setChannelFilter('all')
+    setAlbumFilter('all')
     setOnlyFeatured(false)
     setSearch('')
   }
@@ -320,6 +348,28 @@ export function PhotosTab({
                 </div>
               </div>
 
+              {/* Album Filter */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">{t('admin.album') || 'Album'}:</span>
+                <div className="relative">
+                  <select
+                    value={albumFilter}
+                    onChange={(e) => setAlbumFilter(e.target.value)}
+                    className={`appearance-none h-8 pl-3 pr-8 border rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer ${
+                      albumFilter !== 'all'
+                        ? 'bg-primary/10 border-primary/30 text-primary'
+                        : 'bg-background border-border'
+                    }`}
+                  >
+                    <option value="all">{t('gallery.all')}</option>
+                    {albums.map((album) => (
+                      <option key={album.id} value={album.id}>{album.name} ({album.photoCount})</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+
               {/* Featured Toggle */}
               <label className={`flex items-center gap-2 px-3 py-1.5 border rounded-md cursor-pointer transition-colors ${
                 onlyFeatured 
@@ -373,6 +423,14 @@ export function PhotosTab({
                 </button>
               </span>
             )}
+            {albumFilter !== 'all' && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-md">
+                {albums.find(a => a.id === albumFilter)?.name || albumFilter}
+                <button onClick={() => setAlbumFilter('all')} className="hover:text-primary/70">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
             {onlyFeatured && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-500/10 text-amber-600 text-xs rounded-md">
                 <Star className="w-3 h-3 fill-current" />
@@ -400,7 +458,7 @@ export function PhotosTab({
       )}
 
       {/* Photo Grid/List */}
-      <div className="overflow-y-auto custom-scrollbar">
+      <div>
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {[...Array(12)].map((_, i) => (
@@ -419,14 +477,14 @@ export function PhotosTab({
               viewMode === 'grid' ? (
                 <div
                   key={photo.id}
-                  className={`group relative cursor-pointer bg-muted rounded-lg overflow-hidden border-2 transition-all ${
+                  className={`group relative cursor-pointer bg-muted rounded-lg overflow-hidden border-2 transition-all w-full ${
                     selectedIds.has(photo.id)
                       ? 'border-primary ring-2 ring-primary/20'
                       : 'border-transparent hover:border-border'
                   }`}
                   onClick={() => onPreview(photo)}
                 >
-                  <div className="aspect-[4/5]">
+                  <div className="relative w-full aspect-[4/5]">
                     <img
                       src={resolveAssetUrl(
                         photo.thumbnailUrl || photo.url,

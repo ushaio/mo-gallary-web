@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import {
   BookOpen,
   Plus,
@@ -33,6 +33,7 @@ import {
 } from '@/lib/api'
 import { CustomInput } from '@/components/ui/CustomInput'
 import { useSettings } from '@/contexts/SettingsContext'
+import { PhotoSelectorModal } from '@/components/admin/PhotoSelectorModal'
 
 interface StoriesTabProps {
   token: string | null
@@ -53,8 +54,6 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
   // Photo management
   const [allPhotos, setAllPhotos] = useState<PhotoDto[]>([])
   const [showPhotoSelector, setShowPhotoSelector] = useState(false)
-  const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(new Set())
-  const [photosLoading, setPhotosLoading] = useState(false)
   
   // Drag and drop state
   const [draggedPhotoId, setDraggedPhotoId] = useState<string | null>(null)
@@ -99,13 +98,10 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
 
   async function loadAllPhotos() {
     try {
-      setPhotosLoading(true)
       const data = await getPhotos({ all: true })
       setAllPhotos(data)
     } catch (err) {
       console.error('Failed to load photos:', err)
-    } finally {
-      setPhotosLoading(false)
     }
   }
 
@@ -197,31 +193,57 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
     }
   }
 
-  async function handleAddPhotos() {
-    if (!token || !currentStory || selectedPhotoIds.size === 0) return
+  async function handleUpdatePhotos(selectedPhotoIds: string[]) {
+    if (!token || !currentStory) return
     
     const isNew = !stories.find((s) => s.id === currentStory.id)
     
+    // Get the photos in the selected order
+    const selectedPhotos = selectedPhotoIds
+      .map(id => allPhotos.find(p => p.id === id))
+      .filter((p): p is PhotoDto => p !== undefined)
+    
     if (isNew) {
-      // For new stories, just add to local state
-      const photosToAdd = allPhotos.filter(p => selectedPhotoIds.has(p.id))
+      // For new stories, just update local state with the new selection
       setCurrentStory(prev => ({
         ...prev!,
-        photos: [...(prev?.photos || []), ...photosToAdd]
+        photos: selectedPhotos
       }))
     } else {
-      // For existing stories, call API
+      // For existing stories, we need to sync with the server
+      const currentPhotoIds = currentStory.photos?.map(p => p.id) || []
+      const photosToAdd = selectedPhotoIds.filter(id => !currentPhotoIds.includes(id))
+      const photosToRemove = currentPhotoIds.filter(id => !selectedPhotoIds.includes(id))
+      
       try {
-        const updated = await addPhotosToStory(token, currentStory.id, Array.from(selectedPhotoIds))
-        setCurrentStory(updated)
-        notify(t('admin.photos_added'), 'success')
+        // Remove photos that are no longer selected
+        for (const photoId of photosToRemove) {
+          await removePhotoFromStory(token, currentStory.id, photoId)
+        }
+        
+        // Add new photos
+        if (photosToAdd.length > 0) {
+          await addPhotosToStory(token, currentStory.id, photosToAdd)
+        }
+        
+        // Reorder if needed
+        if (selectedPhotoIds.length > 0) {
+          await reorderStoryPhotos(token, currentStory.id, selectedPhotoIds)
+        }
+        
+        // Update local state
+        setCurrentStory(prev => ({
+          ...prev!,
+          photos: selectedPhotos
+        }))
+        
+        notify(t('admin.photos_updated'), 'success')
       } catch (err) {
-        console.error('Failed to add photos:', err)
+        console.error('Failed to update photos:', err)
         notify(t('common.error'), 'error')
       }
     }
     
-    setSelectedPhotoIds(new Set())
     setShowPhotoSelector(false)
   }
 
@@ -342,10 +364,8 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
     }
   }
 
-  // Get available photos (not already in story)
-  const availablePhotos = allPhotos.filter(
-    p => !currentStory?.photos?.some(sp => sp.id === p.id)
-  )
+  // Get current photo IDs (for initial selection in modal)
+  const currentPhotoIds = currentStory?.photos?.map(p => p.id) || []
 
   if (loading) {
     return (
@@ -468,7 +488,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
         </div>
       ) : (
         <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-          {/* Header */}
+          {/* Header - Back button and Save button */}
           <div className="flex items-center justify-between border-b border-border pb-4 flex-shrink-0">
             <button
               onClick={() => {
@@ -479,108 +499,108 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
             >
               <ChevronLeft className="w-4 h-4" /> {t('admin.back_list')}
             </button>
-            <div className="flex items-center gap-4">
-              <div className="flex bg-muted p-1 border border-border rounded-md">
-                <button
-                  onClick={() => setStoryPreviewActive(false)}
-                  className={`p-1.5 transition-all text-[10px] font-black uppercase px-3 rounded ${
-                    !storyPreviewActive
-                      ? 'bg-background text-primary shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {t('ui.edit')}
-                </button>
-                <button
-                  onClick={() => setStoryPreviewActive(true)}
-                  className={`p-1.5 transition-all text-[10px] font-black uppercase px-3 rounded ${
-                    storyPreviewActive
-                      ? 'bg-background text-primary shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {t('admin.preview')}
-                </button>
-              </div>
-              <button
-                onClick={handleSaveStory}
-                disabled={saving}
-                className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-50 rounded-md"
-              >
-                <Save className="w-4 h-4" />
-                <span>{saving ? t('ui.saving') : t('admin.save')}</span>
-              </button>
-            </div>
+            <button
+              onClick={handleSaveStory}
+              disabled={saving}
+              className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-50 rounded-md"
+            >
+              <Save className="w-4 h-4" />
+              <span>{saving ? t('ui.saving') : t('admin.save')}</span>
+            </button>
           </div>
 
           {/* Main Content - Left/Right Layout */}
           <div className="flex-1 flex gap-4 overflow-hidden">
             {/* Left: Editor (70%) */}
             <div className="flex-[7] flex flex-col gap-4 overflow-hidden">
+              {/* Title Input */}
+              <CustomInput
+                variant="config"
+                type="text"
+                value={currentStory?.title || ''}
+                onChange={(e) =>
+                  setCurrentStory((prev) => ({
+                    ...prev!,
+                    title: e.target.value,
+                  }))
+                }
+                placeholder={t('story.title_placeholder')}
+                className="text-xl md:text-2xl font-serif p-4 md:p-6"
+              />
+              
+              {/* Publish Checkbox and Preview Toggle - Same Row */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-2">
+                {/* Left: Publish Checkbox and Character Count */}
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={currentStory?.isPublished || false}
+                      onChange={(e) =>
+                        setCurrentStory((prev) => ({
+                          ...prev!,
+                          isPublished: e.target.checked,
+                        }))
+                      }
+                      className="w-4 h-4 accent-primary cursor-pointer rounded"
+                    />
+                    <span className="text-xs font-bold uppercase tracking-widest">
+                      {t('ui.publish_now')}
+                    </span>
+                  </label>
+                  <span className="text-xs text-muted-foreground">
+                    {currentStory?.content?.length || 0} {t('admin.characters')}
+                  </span>
+                </div>
+                
+                {/* Right: Preview Toggle - aligned to the right */}
+                <div className="flex items-center sm:ml-auto">
+                  <div className="flex bg-muted p-1 border border-border rounded-md">
+                    <button
+                      onClick={() => setStoryPreviewActive(false)}
+                      className={`p-1.5 transition-all text-[10px] font-black uppercase px-3 rounded ${
+                        !storyPreviewActive
+                          ? 'bg-background text-primary shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {t('ui.edit')}
+                    </button>
+                    <button
+                      onClick={() => setStoryPreviewActive(true)}
+                      className={`p-1.5 transition-all text-[10px] font-black uppercase px-3 rounded ${
+                        storyPreviewActive
+                          ? 'bg-background text-primary shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {t('admin.preview')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Content Area - Editor or Preview */}
               {storyPreviewActive ? (
-                <div className="flex-1 overflow-y-auto custom-scrollbar border border-border bg-background rounded-lg p-8 md:p-12 prose prose-invert max-w-none prose-gold prose-serif">
-                  <h1 className="font-serif text-4xl md:text-5xl mb-8 border-b border-border pb-6">
-                    {currentStory?.title || t('story.untitled')}
-                  </h1>
+                <div className="flex-1 overflow-y-auto custom-scrollbar border border-border bg-card/30 rounded-lg p-6 md:p-8 prose prose-invert max-w-none prose-gold prose-serif">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {currentStory?.content || ''}
                   </ReactMarkdown>
                 </div>
               ) : (
-                <>
-                  {/* Title Input */}
-                  <CustomInput
-                    variant="config"
-                    type="text"
-                    value={currentStory?.title || ''}
+                <div className="flex-1 relative border border-border bg-card/30 rounded-lg overflow-hidden">
+                  <textarea
+                    value={currentStory?.content || ''}
                     onChange={(e) =>
                       setCurrentStory((prev) => ({
                         ...prev!,
-                        title: e.target.value,
+                        content: e.target.value,
                       }))
                     }
-                    placeholder={t('story.title_placeholder')}
-                    className="text-xl md:text-2xl font-serif p-4 md:p-6"
+                    placeholder={t('ui.markdown_placeholder')}
+                    className="w-full h-full p-6 md:p-8 bg-transparent outline-none resize-none font-mono text-sm leading-relaxed custom-scrollbar"
                   />
-                  
-                  {/* Publish Checkbox */}
-                  <div className="flex items-center gap-3 px-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={currentStory?.isPublished || false}
-                        onChange={(e) =>
-                          setCurrentStory((prev) => ({
-                            ...prev!,
-                            isPublished: e.target.checked,
-                          }))
-                        }
-                        className="w-4 h-4 accent-primary cursor-pointer rounded"
-                      />
-                      <span className="text-xs font-bold uppercase tracking-widest">
-                        {t('ui.publish_now')}
-                      </span>
-                    </label>
-                    <span className="text-xs text-muted-foreground">
-                      {currentStory?.content?.length || 0} {t('admin.characters')}
-                    </span>
-                  </div>
-                  
-                  {/* Markdown Editor */}
-                  <div className="flex-1 relative border border-border bg-card/30 rounded-lg overflow-hidden">
-                    <textarea
-                      value={currentStory?.content || ''}
-                      onChange={(e) =>
-                        setCurrentStory((prev) => ({
-                          ...prev!,
-                          content: e.target.value,
-                        }))
-                      }
-                      placeholder={t('ui.markdown_placeholder')}
-                      className="w-full h-full p-6 md:p-8 bg-transparent outline-none resize-none font-mono text-sm leading-relaxed custom-scrollbar"
-                    />
-                  </div>
-                </>
+                </div>
               )}
             </div>
 
@@ -699,113 +719,13 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
       )}
 
       {/* Photo Selector Modal */}
-      {showPhotoSelector && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => {
-              setShowPhotoSelector(false)
-              setSelectedPhotoIds(new Set())
-            }}
-          />
-          <div className="relative bg-background border border-border rounded-lg shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <div className="flex items-center gap-3">
-                <ImageIcon className="w-5 h-5 text-primary" />
-                <h3 className="font-bold">{t('admin.select_photos')}</h3>
-                {selectedPhotoIds.size > 0 && (
-                  <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded">
-                    {selectedPhotoIds.size} {t('admin.selected')}
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={() => {
-                  setShowPhotoSelector(false)
-                  setSelectedPhotoIds(new Set())
-                }}
-                className="p-2 hover:bg-muted rounded-md transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="flex-1 overflow-y-auto p-4">
-              {photosLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                </div>
-              ) : availablePhotos.length > 0 ? (
-                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
-                  {availablePhotos.map((photo) => (
-                    <div
-                      key={photo.id}
-                      onClick={() => {
-                        setSelectedPhotoIds(prev => {
-                          const next = new Set(prev)
-                          if (next.has(photo.id)) {
-                            next.delete(photo.id)
-                          } else {
-                            next.add(photo.id)
-                          }
-                          return next
-                        })
-                      }}
-                      className={`relative aspect-square cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
-                        selectedPhotoIds.has(photo.id)
-                          ? 'border-primary ring-2 ring-primary/20'
-                          : 'border-transparent hover:border-border'
-                      }`}
-                    >
-                      <img
-                        src={resolveAssetUrl(photo.thumbnailUrl || photo.url, settings?.cdn_domain)}
-                        alt={photo.title}
-                        className="w-full h-full object-cover"
-                      />
-                      {selectedPhotoIds.has(photo.id) && (
-                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                          <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <ImageIcon className="w-12 h-12 mb-3 opacity-20" />
-                  <p className="text-sm">{t('admin.no_photos_available')}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
-              <button
-                onClick={() => {
-                  setShowPhotoSelector(false)
-                  setSelectedPhotoIds(new Set())
-                }}
-                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                onClick={handleAddPhotos}
-                disabled={selectedPhotoIds.size === 0}
-                className="px-4 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-md hover:opacity-90 disabled:opacity-50 transition-all"
-              >
-                {t('admin.add')} ({selectedPhotoIds.size})
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <PhotoSelectorModal
+        isOpen={showPhotoSelector}
+        onClose={() => setShowPhotoSelector(false)}
+        onConfirm={handleUpdatePhotos}
+        initialSelectedPhotoIds={currentPhotoIds}
+        t={t}
+      />
     </div>
   )
 }

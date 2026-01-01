@@ -208,6 +208,7 @@ photos.post('/admin/photos', async (c) => {
         const [metadata, thumbnailBuffer] = await Promise.all([
           sharpInstance.metadata(),
           sharp(buffer)
+            .rotate() // Auto-rotate based on EXIF orientation
             .resize(800, 800, {
               fit: 'inside',
               withoutEnlargement: true,

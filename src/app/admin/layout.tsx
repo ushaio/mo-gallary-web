@@ -611,10 +611,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          <div className="p-8 flex-1 overflow-hidden flex flex-col">
-            <div className="h-full overflow-hidden">
-              {children}
-            </div>
+          <div className="p-8 flex-1 overflow-y-auto">
+            {children}
           </div>
         </main>
 
