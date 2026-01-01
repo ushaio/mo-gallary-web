@@ -88,7 +88,7 @@ export function BlogTab({ photos, settings, t, notify }: BlogTabProps) {
     setCurrentBlog({
       title: '',
       content: '',
-      category: '未分类',
+      category: t('blog.uncategorized'),
       tags: '',
       isPublished: false,
     })
@@ -101,7 +101,7 @@ export function BlogTab({ photos, settings, t, notify }: BlogTabProps) {
       id: blog.id,
       title: blog.title,
       content: blog.content,
-      category: blog.category || '未分类',
+      category: blog.category || t('blog.uncategorized'),
       tags: blog.tags || '',
       isPublished: blog.isPublished,
     })
@@ -130,11 +130,11 @@ export function BlogTab({ photos, settings, t, notify }: BlogTabProps) {
   const handleSaveBlog = async () => {
     if (!currentBlog || !token) return
     if (!currentBlog.title.trim()) {
-      notify('请输入标题', 'error')
+      notify(t('blog.enter_title'), 'error')
       return
     }
     if (!currentBlog.content.trim()) {
-      notify('请输入内容', 'error')
+      notify(t('blog.enter_content'), 'error')
       return
     }
 
@@ -205,7 +205,7 @@ export function BlogTab({ photos, settings, t, notify }: BlogTabProps) {
             <div className="flex items-center gap-4">
               <BookText className="w-6 h-6 text-primary" />
               <h3 className="font-serif text-2xl uppercase tracking-tight">
-                博客
+                {t('nav.logs')}
               </h3>
             </div>
             <button
@@ -213,7 +213,7 @@ export function BlogTab({ photos, settings, t, notify }: BlogTabProps) {
               className="flex items-center px-6 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all"
             >
               <Plus className="w-4 h-4 mr-2" />
-              创建新博客
+              {t('ui.create_blog')}
             </button>
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -273,7 +273,7 @@ export function BlogTab({ photos, settings, t, notify }: BlogTabProps) {
                 <div className="py-24 text-center border border-dashed border-border">
                   <BookText className="w-12 h-12 mx-auto mb-4 opacity-10" />
                   <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                    暂无文章
+                    {t('ui.no_blog')}
                   </p>
                 </div>
               )}
@@ -299,7 +299,7 @@ export function BlogTab({ photos, settings, t, notify }: BlogTabProps) {
                       : 'text-muted-foreground'
                   }`}
                 >
-                  编辑
+                  {t('ui.edit')}
                 </button>
                 <button
                   onClick={() => setPreviewActive(true)}
@@ -324,7 +324,7 @@ export function BlogTab({ photos, settings, t, notify }: BlogTabProps) {
                   }
                   className="w-4 h-4"
                 />
-                <span className="font-bold uppercase tracking-widest">发布</span>
+                <span className="font-bold uppercase tracking-widest">{t('admin.publish')}</span>
               </label>
               <button
                 onClick={handleSaveBlog}
@@ -361,7 +361,7 @@ export function BlogTab({ photos, settings, t, notify }: BlogTabProps) {
                       title: e.target.value,
                     }))
                   }
-                  placeholder="博客标题"
+                  placeholder={t('blog.title_placeholder')}
                   className="w-full p-6 bg-transparent border border-border focus:border-primary outline-none text-2xl font-serif rounded-none"
                 />
                 <div className="flex gap-4">
@@ -374,7 +374,7 @@ export function BlogTab({ photos, settings, t, notify }: BlogTabProps) {
                         category: e.target.value,
                       }))
                     }
-                    placeholder="分类（如：摄影技巧、器材评测）"
+                    placeholder={t('ui.category_filter')}
                     className="flex-1 p-3 bg-transparent border border-border focus:border-primary outline-none text-sm rounded-none"
                   />
                   <input
@@ -386,7 +386,7 @@ export function BlogTab({ photos, settings, t, notify }: BlogTabProps) {
                         tags: e.target.value,
                       }))
                     }
-                    placeholder="标签（用逗号分隔）"
+                    placeholder="Tags"
                     className="flex-1 p-3 bg-transparent border border-border focus:border-primary outline-none text-sm rounded-none"
                   />
                 </div>
@@ -399,13 +399,13 @@ export function BlogTab({ photos, settings, t, notify }: BlogTabProps) {
                         content: e.target.value,
                       }))
                     }
-                    placeholder="博客内容（支持 Markdown）"
+                    placeholder={t('ui.markdown_placeholder')}
                     className="w-full h-full p-8 bg-transparent outline-none resize-none font-mono text-sm leading-relaxed custom-scrollbar"
                   />
                   <button
                     onClick={() => setIsInsertingPhoto(true)}
                     className="absolute bottom-6 right-6 p-4 bg-background border border-border hover:border-primary text-primary transition-all shadow-2xl z-10"
-                    title="插入照片"
+                    title={t('blog.insert_photo')}
                   >
                     <ImageIcon className="w-6 h-6" />
                   </button>
@@ -422,7 +422,7 @@ export function BlogTab({ photos, settings, t, notify }: BlogTabProps) {
           <div className="w-full h-full max-w-6xl bg-background border border-border flex flex-col overflow-hidden shadow-2xl">
             <div className="p-6 border-b border-border flex items-center justify-between">
               <h3 className="font-serif text-2xl uppercase tracking-tight">
-                插入照片
+                {t('blog.insert_photo')}
               </h3>
               <button
                 onClick={() => setIsInsertingPhoto(false)}

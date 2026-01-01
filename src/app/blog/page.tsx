@@ -11,7 +11,7 @@ export default function BlogListPage() {
   const { t } = useLanguage()
   const [blogs, setBlogs] = useState<BlogDto[]>([])
   const [categories, setCategories] = useState<string[]>([])
-  const [activeCategory, setActiveCategory] = useState<string>('全部')
+  const [activeCategory, setActiveCategory] = useState<string>('all')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export default function BlogListPage() {
           getBlogCategories()
         ])
         setBlogs(blogsData)
-        setCategories(['全部', ...categoriesData])
+        setCategories(['all', ...categoriesData])
       } catch (error) {
         console.error('Failed to fetch blog data:', error)
       } finally {
@@ -34,7 +34,7 @@ export default function BlogListPage() {
 
   // Filter blogs by category
   const filteredBlogs = useMemo(() => {
-    if (activeCategory === '全部') return blogs
+    if (activeCategory === 'all') return blogs
     return blogs.filter(blog => blog.category === activeCategory)
   }, [blogs, activeCategory])
 
@@ -105,7 +105,7 @@ export default function BlogListPage() {
                     transition={{ delay: 0.1 }}
                     className="text-4xl md:text-5xl lg:text-7xl font-serif font-light tracking-tighter leading-none"
                   >
-                    {activeCategory === '全部' ? t('nav.blog') : activeCategory}
+                    {activeCategory === 'all' ? t('nav.logs') : activeCategory}
                   </motion.h1>
                 </div>
 
@@ -115,7 +115,7 @@ export default function BlogListPage() {
                   transition={{ delay: 0.2 }}
                   className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest"
                 >
-                  {filteredBlogs.length} {t('blog.count_suffix') || '篇文章'}
+                  {filteredBlogs.length} {t('blog.count_suffix')}
                 </motion.div>
               </div>
 
@@ -138,7 +138,7 @@ export default function BlogListPage() {
                             : 'border-border text-muted-foreground hover:border-foreground hover:text-foreground'
                         }`}
                       >
-                        {category === '全部' ? t('gallery.all') : category}
+                        {category === 'all' ? t('gallery.all') : category}
                       </button>
                     ))}
                   </div>
@@ -159,7 +159,7 @@ export default function BlogListPage() {
               className="text-center py-20 border border-dashed border-border"
             >
               <BookText className="w-16 h-16 mx-auto mb-4 opacity-20" />
-              <p className="text-muted-foreground">{t('blog.empty') || '暂无博客文章'}</p>
+              <p className="text-muted-foreground">{t('blog.empty')}</p>
             </motion.div>
           ) : (
             <div className="space-y-16">
@@ -228,7 +228,7 @@ export default function BlogListPage() {
                                           day: 'numeric',
                                         })}
                                       </div>
-                                      {blog.category && blog.category !== '未分类' && (
+                                      {blog.category && blog.category !== t('blog.uncategorized') && (
                                         <div className="flex items-center gap-1">
                                           <Tag className="w-3 h-3" />
                                           {blog.category}
@@ -243,7 +243,7 @@ export default function BlogListPage() {
 
                                     {/* Read More */}
                                     <div className="flex items-center gap-2 text-[10px] text-primary font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                                      {t('blog.read_more') || '阅读全文'}
+                                      {t('blog.read_more')}
                                       <ArrowRight className="w-3 h-3" />
                                     </div>
                                   </Link>
@@ -269,7 +269,7 @@ export default function BlogListPage() {
               href="/gallery"
               className="inline-block px-8 py-3 border border-border hover:border-primary hover:text-primary transition-all text-xs font-bold uppercase tracking-widest"
             >
-              {t('blog.back_to_gallery') || '返回画廊'}
+              {t('blog.back_to_gallery')}
             </Link>
           </motion.div>
         </div>

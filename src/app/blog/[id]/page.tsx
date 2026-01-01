@@ -8,10 +8,12 @@ import { useParams } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { getBlog, type BlogDto } from '@/lib/api'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function BlogDetailPage() {
   const params = useParams()
   const id = params.id as string
+  const { t, locale } = useLanguage()
   const [blog, setBlog] = useState<BlogDto | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -23,7 +25,7 @@ export default function BlogDetailPage() {
         setBlog(data)
       } catch (err) {
         console.error('Failed to fetch blog:', err)
-        setError('博客文章未找到')
+        setError(t('blog.not_found'))
       } finally {
         setLoading(false)
       }
@@ -31,7 +33,7 @@ export default function BlogDetailPage() {
     if (id) {
       fetchBlog()
     }
-  }, [id])
+  }, [id, t])
 
   if (loading) {
     return (
@@ -57,12 +59,12 @@ export default function BlogDetailPage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-20">
             <BookText className="w-16 h-16 mx-auto mb-4 opacity-20" />
-            <p className="text-muted-foreground mb-8">{error || '博客文章未找到'}</p>
+            <p className="text-muted-foreground mb-8">{error || t('blog.not_found')}</p>
             <Link
               href="/blog"
               className="inline-block px-8 py-3 border border-border hover:border-primary hover:text-primary transition-all text-xs font-bold uppercase tracking-widest"
             >
-              返回博客列表
+              {t('story.back_to_list')}
             </Link>
           </div>
         </div>
@@ -84,7 +86,7 @@ export default function BlogDetailPage() {
             className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            返回博客列表
+            {t('story.back_to_list')}
           </Link>
         </motion.div>
 
@@ -115,7 +117,7 @@ export default function BlogDetailPage() {
             className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase tracking-widest"
           >
             <Calendar className="w-3 h-3" />
-            {new Date(blog.createdAt).toLocaleDateString('zh-CN', {
+            {new Date(blog.createdAt).toLocaleDateString(locale === 'zh' ? 'zh-CN' : 'en-US', {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
@@ -146,13 +148,13 @@ export default function BlogDetailPage() {
             href="/blog"
             className="inline-block px-8 py-3 border border-border hover:border-primary hover:text-primary transition-all text-xs font-bold uppercase tracking-widest text-center"
           >
-            返回博客列表
+            {t('story.back_to_list')}
           </Link>
           <Link
             href="/gallery"
             className="inline-block px-8 py-3 border border-border hover:border-primary hover:text-primary transition-all text-xs font-bold uppercase tracking-widest text-center"
           >
-            返回画廊
+            {t('blog.back_to_gallery')}
           </Link>
         </motion.footer>
       </div>

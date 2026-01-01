@@ -96,7 +96,7 @@ export function UploadTab({
   const filteredCategories = useMemo(() => {
     return categories.filter(
       (c) =>
-        c !== '全部' &&
+        c !== 'all' &&
         c.toLowerCase().includes(categoryInput.toLowerCase()) &&
         !uploadCategories.includes(c)
     )
@@ -365,25 +365,25 @@ export function UploadTab({
             <div>
               <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 flex items-center gap-2">
                 <BookOpen className="w-3 h-3" />
-                照片叙事 (可选)
+                {t('ui.photo_story')} ({t('common.cancel')})
               </label>
               <CustomSelect
                 value={uploadStoryId}
                 onChange={setUploadStoryId}
                 disabled={loadingStories}
-                placeholder="不关联叙事"
+                placeholder={t('ui.no_association')}
                 options={[
-                  { value: '', label: '不关联叙事' },
+                  { value: '', label: t('ui.no_association') },
                   ...stories.map((story) => ({
                     value: story.id,
                     label: story.title,
-                    suffix: !story.isPublished ? '(草稿)' : undefined,
+                    suffix: !story.isPublished ? `(${t('admin.draft')})` : undefined,
                   })),
                 ]}
               />
               {loadingStories && (
                 <p className="mt-2 text-[10px] text-muted-foreground">
-                  加载叙事列表...
+                  {t('common.loading')}
                 </p>
               )}
             </div>

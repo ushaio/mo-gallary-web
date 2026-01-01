@@ -63,7 +63,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
       setStories(data)
     } catch (err) {
       console.error('Failed to load stories:', err)
-      notify('加载叙事失败', 'error')
+      notify(t('story.load_failed'), 'error')
     } finally {
       setLoading(false)
     }
@@ -95,18 +95,18 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
 
     try {
       await deleteStory(token, id)
-      notify('叙事已删除', 'success')
+      notify(t('story.deleted'), 'success')
       await loadStories()
     } catch (err) {
       console.error('Failed to delete story:', err)
-      notify('删除失败', 'error')
+      notify(t('story.delete_failed'), 'error')
     }
   }
 
   async function handleSaveStory() {
     if (!token || !currentStory) return
     if (!currentStory.title.trim() || !currentStory.content.trim()) {
-      notify('请填写标题和内容', 'error')
+      notify(t('story.fill_title_content'), 'error')
       return
     }
 
@@ -121,14 +121,14 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
           isPublished: currentStory.isPublished,
           photoIds: [],
         })
-        notify('叙事已创建', 'success')
+        notify(t('story.created'), 'success')
       } else {
         await updateStory(token, currentStory.id, {
           title: currentStory.title,
           content: currentStory.content,
           isPublished: currentStory.isPublished,
         })
-        notify('叙事已更新', 'success')
+        notify(t('story.updated'), 'success')
       }
 
       setStoryEditMode('list')
@@ -136,7 +136,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
       await loadStories()
     } catch (err) {
       console.error('Failed to save story:', err)
-      notify('保存失败', 'error')
+      notify(t('story.save_failed'), 'error')
     } finally {
       setSaving(false)
     }
@@ -149,11 +149,11 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
       await updateStory(token, story.id, {
         isPublished: !story.isPublished,
       })
-      notify(story.isPublished ? '已取消发布' : '已发布', 'success')
+      notify(story.isPublished ? t('story.unpublished') : t('story.published'), 'success')
       await loadStories()
     } catch (err) {
       console.error('Failed to toggle publish:', err)
-      notify('操作失败', 'error')
+      notify(t('story.operation_failed'), 'error')
     }
   }
 
@@ -162,7 +162,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
       <div className="flex items-center justify-center py-20">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-sm text-muted-foreground">加载中...</p>
+          <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
         </div>
       </div>
     )
@@ -176,7 +176,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
             <div className="flex items-center gap-4">
               <BookOpen className="w-6 h-6 text-primary" />
               <h3 className="font-serif text-2xl uppercase tracking-tight">
-                照片叙事
+                {t('ui.photo_story')}
               </h3>
             </div>
             <button
@@ -184,7 +184,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
               className="flex items-center px-6 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all"
             >
               <Plus className="w-4 h-4 mr-2" />
-              创建叙事
+              {t('ui.create_story')}
             </button>
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -201,7 +201,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
                   >
                     <div className="flex items-center gap-3 mb-1">
                       <h4 className="font-serif text-xl group-hover:text-primary transition-colors">
-                        {story.title || '未命名叙事'}
+                        {story.title || t('story.untitled')}
                       </h4>
                       <span
                         className={`text-[8px] font-black uppercase px-1.5 py-0.5 border ${
@@ -224,7 +224,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
                       </span>
                       {story.photos && story.photos.length > 0 && (
                         <span className="flex items-center gap-1">
-                          📷 {story.photos.length} 张照片
+                          📷 {story.photos.length} {t('ui.photos_count')}
                         </span>
                       )}
                     </div>
@@ -236,7 +236,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
                         handleTogglePublish(story)
                       }}
                       className="p-2 text-muted-foreground hover:text-primary transition-colors"
-                      title={story.isPublished ? '取消发布' : '发布'}
+                      title={story.isPublished ? t('story.unpublish') : t('story.publish')}
                     >
                       {story.isPublished ? (
                         <EyeOff className="w-4 h-4" />
@@ -269,7 +269,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
                 <div className="py-24 text-center border border-dashed border-border">
                   <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-10" />
                   <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                    暂无叙事
+                    {t('ui.no_story')}
                   </p>
                 </div>
               )}
@@ -298,7 +298,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
                       : 'text-muted-foreground'
                   }`}
                 >
-                  编辑
+                  {t('ui.edit')}
                 </button>
                 <button
                   onClick={() => setStoryPreviewActive(true)}
@@ -317,7 +317,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
                 className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-50"
               >
                 <Save className="w-4 h-4" />
-                <span>{saving ? '保存中...' : t('admin.save')}</span>
+                <span>{saving ? t('ui.saving') : t('admin.save')}</span>
               </button>
             </div>
           </div>
@@ -325,7 +325,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
             {storyPreviewActive ? (
               <div className="flex-1 overflow-y-auto custom-scrollbar border border-border bg-background p-12 prose prose-invert max-w-none prose-gold prose-serif">
                 <h1 className="font-serif text-5xl mb-12 border-b border-border pb-6">
-                  {currentStory?.title || '未命名叙事'}
+                  {currentStory?.title || t('story.untitled')}
                 </h1>
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {currentStory?.content || ''}
@@ -343,7 +343,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
                       title: e.target.value,
                     }))
                   }
-                  placeholder="叙事标题"
+                  placeholder={t('story.title_placeholder')}
                   className="text-2xl font-serif p-6"
                 />
                 <div className="flex items-center gap-3 px-6">
@@ -363,7 +363,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
                     htmlFor="isPublished"
                     className="text-xs font-bold uppercase tracking-widest cursor-pointer"
                   >
-                    立即发布
+                    {t('ui.publish_now')}
                   </label>
                 </div>
                 <div className="flex-1 relative border border-border bg-card/30">
@@ -375,14 +375,7 @@ export function StoriesTab({ token, t, notify, editStoryId }: StoriesTabProps) {
                         content: e.target.value,
                       }))
                     }
-                    placeholder="使用 Markdown 格式编写叙事内容...
-
-支持：
-# 标题
-**粗体** *斜体*
-- 列表
-> 引用
-[链接](url)"
+                    placeholder={t('ui.markdown_placeholder')}
                     className="w-full h-full p-8 bg-transparent outline-none resize-none font-mono text-sm leading-relaxed custom-scrollbar"
                   />
                 </div>

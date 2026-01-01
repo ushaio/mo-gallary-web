@@ -42,7 +42,7 @@ export function GalleryHeader({
               transition={{ delay: 0.1 }}
               className="text-5xl md:text-7xl lg:text-8xl font-serif font-light tracking-tighter leading-[0.9]"
             >
-              {activeCategory === '全部' ? t('gallery.title') : activeCategory}
+              {activeCategory === 'all' ? t('gallery.title') : activeCategory}
             </motion.h1>
           </div>
 
@@ -79,7 +79,7 @@ export function GalleryHeader({
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {cat === '全部' ? t('gallery.all') : cat}
+                {cat === 'all' ? t('gallery.all') : cat}
                 {/* Active Indicator */}
                 {activeCategory === cat && (
                   <motion.div

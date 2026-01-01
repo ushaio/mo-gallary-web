@@ -54,24 +54,24 @@ export function PhotosTab({
   settings,
 }: PhotosTabProps) {
   const [search, setSearch] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('全部')
-  const [channelFilter, setChannelFilter] = useState('全部')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [channelFilter, setChannelFilter] = useState('all')
   const [onlyFeatured, setOnlyFeatured] = useState(false)
   const [sortBy, setSortBy] = useState<'upload-desc' | 'upload-asc' | 'taken-desc' | 'taken-asc'>('upload-desc')
 
   const resolvedCdnDomain = settings?.cdn_domain?.trim() || undefined
 
   const filteredPhotos = useMemo(() => {
-    let filtered = photos.filter((p) => {
+    const filtered = photos.filter((p) => {
       const matchesSearch =
         p.title.toLowerCase().includes(search.toLowerCase()) ||
         p.category.toLowerCase().includes(search.toLowerCase())
 
       const matchesCategory =
-        categoryFilter === '全部' || p.category.includes(categoryFilter)
+        categoryFilter === 'all' || p.category.includes(categoryFilter)
 
       const matchesChannel =
-        channelFilter === '全部' || p.storageProvider === channelFilter
+        channelFilter === 'all' || p.storageProvider === channelFilter
 
       const matchesFeatured = !onlyFeatured || p.isFeatured
 
@@ -162,8 +162,8 @@ export function PhotosTab({
               value={categoryFilter}
               onChange={setCategoryFilter}
               options={[
-                { value: '全部', label: `分类: ${t('gallery.all')}` },
-                ...categories.filter(c => c !== '全部').map(cat => ({
+                { value: 'all', label: `${t('ui.category_filter')}: ${t('gallery.all')}` },
+                ...categories.filter(c => c !== 'all').map(cat => ({
                   value: cat,
                   label: cat,
                 })),
@@ -175,7 +175,7 @@ export function PhotosTab({
               value={channelFilter}
               onChange={setChannelFilter}
               options={[
-                { value: '全部', label: '渠道: 全部' },
+                { value: 'all', label: `${t('ui.channel_filter')}: ${t('gallery.all')}` },
                 { value: 'local', label: 'Local' },
                 { value: 'r2', label: 'Cloudflare R2' },
                 { value: 'github', label: 'GitHub' },

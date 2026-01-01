@@ -16,7 +16,7 @@ export default function GalleryPage() {
   const { settings } = useSettings()
   const [photos, setPhotos] = useState<PhotoDto[]>([])
   const [categories, setCategories] = useState<string[]>([])
-  const [activeCategory, setActiveCategory] = useState('全部')
+  const [activeCategory, setActiveCategory] = useState('all')
   const [search, setSearch] = useState('')
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoDto | null>(null)
   const [loading, setLoading] = useState(true)
@@ -32,7 +32,7 @@ export default function GalleryPage() {
           getCategories()
         ])
         setPhotos(photosData)
-        setCategories(['全部', ...categoriesData.filter(c => c !== '全部')])
+        setCategories(['all', ...categoriesData.filter(c => c !== 'all')])
       } catch (error) {
         console.error('Failed to fetch gallery data:', error)
       } finally {
@@ -58,7 +58,7 @@ export default function GalleryPage() {
     let filtered = photos
 
     // Filter by category
-    if (activeCategory !== '全部') {
+    if (activeCategory !== 'all') {
       filtered = filtered.filter(p => p.category.includes(activeCategory))
     }
 
