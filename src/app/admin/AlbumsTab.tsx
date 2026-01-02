@@ -66,8 +66,15 @@ export function AlbumsTab({ token, photos, t, notify, onUnauthorized }: AlbumsTa
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => { loadAlbums() }, [token])
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0
+    if (filterStatus !== 'all') count++
+    return count
+  }, [filterStatus])
 
   const filteredAlbums = useMemo(() => {
     return albums.filter(album => {
@@ -77,6 +84,11 @@ export function AlbumsTab({ token, photos, t, notify, onUnauthorized }: AlbumsTa
       return true
     })
   }, [albums, filterStatus, searchQuery])
+
+  const clearAllFilters = () => {
+    setFilterStatus('all')
+    setSearchQuery('')
+  }
 
   async function handleDragStart(e: React.DragEvent, id: string) {
     e.dataTransfer.effectAllowed = 'move'
@@ -249,43 +261,144 @@ export function AlbumsTab({ token, photos, t, notify, onUnauthorized }: AlbumsTa
           </button>
         </div>
 
-        {/* Toolbar */}
-        <div className="flex items-center gap-4 pb-4 border-b border-border/50">
-          {/* Search */}
-          <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder={t('admin.search') || 'Search...'}
-              className="w-full pl-10 pr-4 py-2 bg-muted/30 border-b border-border text-sm outline-none focus:border-primary transition-colors"
-            />
-          </div>
-
-          {/* Filter */}
-          <div className="flex items-center gap-1 bg-muted/30 p-1">
-            <Filter className="w-4 h-4 text-muted-foreground mx-2" />
-            {(['all', 'published', 'draft'] as FilterStatus[]).map(status => (
+        {/* Main Toolbar */}
+        <div className="bg-muted/30 border border-border rounded-lg p-4">
+          {/* Top Row: Search, Actions */}
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            {/* Left: Info */}
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-sm font-medium text-foreground">
+                <span className="text-muted-foreground">{filteredAlbums.length} {t('admin.albums') || 'Albums'}</span>
+              </span>
+            </div>
+  
+            {/* Center: Search */}
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder={t('common.search')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full h-9 pl-9 pr-4 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+  
+            {/* Right: Actions */}
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Filter Toggle */}
               <button
-                key={status}
-                onClick={() => setFilterStatus(status)}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${filterStatus === status ? 'bg-background text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 px-3 py-2 text-xs font-medium border rounded-md transition-all ${
+                  showFilters || activeFilterCount > 0
+                    ? 'bg-primary/10 border-primary/30 text-primary'
+                    : 'bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
+                }`}
               >
-                {status === 'all' ? t('common.all') || 'All' : status === 'published' ? t('admin.published') || 'Published' : t('admin.draft') || 'Draft'}
+                <Filter className="w-4 h-4" />
+                <span className="hidden sm:inline">{t('admin.filter') || 'Filter'}</span>
+                {activeFilterCount > 0 && (
+                  <span className="flex items-center justify-center w-5 h-5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full">
+                    {activeFilterCount}
+                  </span>
+                )}
               </button>
-            ))}
+  
+              {/* View Mode Toggle */}
+              <div className="flex bg-background border border-border rounded-md overflow-hidden">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 transition-colors ${
+                    viewMode === 'grid'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  }`}
+                  title="Grid view"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 transition-colors ${
+                    viewMode === 'list'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  }`}
+                  title="List view"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
-
-          {/* View Toggle */}
-          <div className="flex bg-muted/30 p-1">
-            <button onClick={() => setViewMode('grid')} className={`p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-background text-foreground' : 'text-muted-foreground'}`}>
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button onClick={() => setViewMode('list')} className={`p-1.5 transition-colors ${viewMode === 'list' ? 'bg-background text-foreground' : 'text-muted-foreground'}`}>
-              <List className="w-4 h-4" />
-            </button>
-          </div>
+  
+          {/* Filter Row - Collapsible */}
+          {showFilters && (
+            <div className="mt-4 pt-4 border-t border-border">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Status Filter */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">{t('admin.status') || 'Status'}:</span>
+                  <div className="flex bg-background border border-border rounded-md overflow-hidden">
+                    {(['all', 'published', 'draft'] as FilterStatus[]).map(status => (
+                      <button
+                        key={status}
+                        onClick={() => setFilterStatus(status)}
+                        className={`px-3 py-1.5 text-xs font-medium transition-colors ${filterStatus === status ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+                      >
+                        {status === 'all' ? t('common.all') || 'All' : status === 'published' ? t('admin.published') || 'Published' : t('admin.draft') || 'Draft'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+  
+                {/* Clear Filters */}
+                {activeFilterCount > 0 && (
+                  <>
+                    <div className="h-5 w-px bg-border my-auto" />
+                    <button
+                      onClick={clearAllFilters}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      <span>Clear all</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+  
+          {/* Active Filters Tags */}
+          {activeFilterCount > 0 && !showFilters && (
+            <div className="mt-3 pt-3 border-t border-border flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground">Active filters:</span>
+              {filterStatus !== 'all' && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-md">
+                  {filterStatus === 'published' ? t('admin.published') : t('admin.draft')}
+                  <button onClick={() => setFilterStatus('all')} className="hover:text-primary/70">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              <button
+                onClick={clearAllFilters}
+                className="text-xs text-muted-foreground hover:text-foreground underline"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Content */}

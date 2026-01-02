@@ -290,8 +290,8 @@ export function UploadTab({
     return () => { cancelled = true }
   }, [token])
 
-  const filteredCategories = useMemo(() => 
-    categories.filter(c => c !== 'all' && c.toLowerCase().includes(categoryInput.toLowerCase()) && !uploadCategories.includes(c)),
+  const filteredCategories = useMemo(() =>
+    categories.filter(c => c !== 'all' && c !== '全部' && c.toLowerCase().includes(categoryInput.toLowerCase()) && !uploadCategories.includes(c)),
     [categories, categoryInput, uploadCategories]
   )
 
