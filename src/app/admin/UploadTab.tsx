@@ -1,26 +1,28 @@
+
 'use client'
 
-import React, { useState, useRef, useMemo, useEffect } from 'react'
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react'
 import {
   Upload,
-  Save,
   Loader2,
   Check,
   X,
   Trash2,
-  List as ListIcon,
-  LayoutGrid,
   Plus,
   BookOpen,
   Minimize2,
   FolderOpen,
+  GripVertical,
+  Eye,
+  Settings2,
+  CloudUpload,
 } from 'lucide-react'
 import imageCompression from 'browser-image-compression'
 import { AdminSettingsDto, getAdminStories, getAdminAlbums, type StoryDto, type AlbumDto } from '@/lib/api'
-import { UploadFileItem } from '@/components/admin/UploadFileItem'
 import { useUploadQueue } from '@/contexts/UploadQueueContext'
 import { CustomSelect } from '@/components/ui/CustomSelect'
 import { CustomInput } from '@/components/ui/CustomInput'
+import { formatFileSize } from '@/lib/utils'
 
 interface UploadTabProps {
   token: string | null
@@ -30,6 +32,193 @@ interface UploadTabProps {
   notify: (message: string, type?: 'success' | 'error' | 'info') => void
   onUploadSuccess: () => void
   onPreview: (file: { id: string, file: File }) => void
+}
+
+interface UploadFile {
+  id: string
+  file: File
+  preview?: string
+}
+
+// Confirmation Modal Component
+function ConfirmModal({ 
+  open, 
+  onClose, 
+  onConfirm, 
+  fileCount, 
+  categories, 
+  albumNames, 
+  storyName,
+  storageProvider,
+  compressionEnabled,
+  t 
+}: {
+  open: boolean
+  onClose: () => void
+  onConfirm: () => void
+  fileCount: number
+  categories: string[]
+  albumNames: string[]
+  storyName?: string
+  storageProvider: string
+  compressionEnabled: boolean
+  t: (key: string) => string
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-background border border-border w-full max-w-md mx-4 p-8 shadow-2xl">
+        <h3 className="text-lg font-light tracking-wide mb-6">{t('admin.confirm_upload')}</h3>
+        
+        <div className="space-y-4 mb-8">
+          <div className="flex justify-between py-3 border-b border-border/50">
+            <span className="text-muted-foreground text-sm">{t('admin.files')}</span>
+            <span className="font-medium">{fileCount}</span>
+          </div>
+          <div className="flex justify-between py-3 border-b border-border/50">
+            <span className="text-muted-foreground text-sm">{t('admin.categories')}</span>
+            <span className="font-medium">{categories.join(', ')}</span>
+          </div>
+          {albumNames.length > 0 && (
+            <div className="flex justify-between py-3 border-b border-border/50">
+              <span className="text-muted-foreground text-sm">{t('admin.albums')}</span>
+              <span className="font-medium">{albumNames.join(', ')}</span>
+            </div>
+          )}
+          {storyName && (
+            <div className="flex justify-between py-3 border-b border-border/50">
+              <span className="text-muted-foreground text-sm">{t('ui.photo_story')}</span>
+              <span className="font-medium">{storyName}</span>
+            </div>
+          )}
+          <div className="flex justify-between py-3 border-b border-border/50">
+            <span className="text-muted-foreground text-sm">{t('admin.storage_provider')}</span>
+            <span className="font-medium capitalize">{storageProvider}</span>
+          </div>
+          <div className="flex justify-between py-3">
+            <span className="text-muted-foreground text-sm">{t('admin.image_compression')}</span>
+            <span className="font-medium">{compressionEnabled ? t('common.enabled') : t('common.disabled')}</span>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 border border-border text-sm font-medium hover:bg-muted transition-colors"
+          >
+            {t('common.cancel')}
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 py-3 bg-foreground text-background text-sm font-medium hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center gap-2"
+          >
+            <CloudUpload className="w-4 h-4" />
+            {t('admin.start_upload')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Draggable File Item
+function DraggableFileItem({
+  item,
+  index,
+  selected,
+  onSelect,
+  onRemove,
+  onPreview,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  isDragging,
+}: {
+  item: UploadFile
+  index: number
+  selected: boolean
+  onSelect: (id: string) => void
+  onRemove: (id: string) => void
+  onPreview: (item: UploadFile) => void
+  onDragStart: (e: React.DragEvent, index: number) => void
+  onDragOver: (e: React.DragEvent, index: number) => void
+  onDrop: (e: React.DragEvent) => void
+  isDragging: boolean
+}) {
+  const [preview, setPreview] = useState<string | null>(null)
+
+  useEffect(() => {
+    const url = URL.createObjectURL(item.file)
+    const img = new Image()
+    img.src = url
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const maxSize = 80
+      let w = img.width, h = img.height
+      if (w > h) { if (w > maxSize) { h *= maxSize / w; w = maxSize } }
+      else { if (h > maxSize) { w *= maxSize / h; h = maxSize } }
+      canvas.width = w
+      canvas.height = h
+      ctx?.drawImage(img, 0, 0, w, h)
+      setPreview(canvas.toDataURL('image/webp', 0.7))
+      URL.revokeObjectURL(url)
+    }
+    return () => URL.revokeObjectURL(url)
+  }, [item.file])
+
+  return (
+    <div
+      draggable
+      onDragStart={(e) => onDragStart(e, index)}
+      onDragOver={(e) => onDragOver(e, index)}
+      onDrop={onDrop}
+      className={`group flex items-center gap-4 p-4 bg-background border transition-all cursor-move ${
+        isDragging ? 'opacity-50 border-primary' : 'border-transparent hover:border-border'
+      } ${selected ? 'bg-primary/5' : ''}`}
+    >
+      <div className="text-muted-foreground/40 group-hover:text-muted-foreground transition-colors">
+        <GripVertical className="w-4 h-4" />
+      </div>
+      
+      <input
+        type="checkbox"
+        checked={selected}
+        onChange={() => onSelect(item.id)}
+        className="w-4 h-4 accent-primary cursor-pointer"
+      />
+
+      <div 
+        className="w-14 h-14 bg-muted/50 overflow-hidden flex-shrink-0 cursor-pointer group/img relative"
+        onClick={() => onPreview(item)}
+      >
+        {preview ? (
+          <img src={preview} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground/30" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
+          <Eye className="w-4 h-4 text-white" />
+        </div>
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{item.file.name}</p>
+        <p className="text-xs text-muted-foreground font-mono">{formatFileSize(item.file.size)}</p>
+      </div>
+
+      <button
+        onClick={() => onRemove(item.id)}
+        className="p-2 text-muted-foreground/50 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  )
 }
 
 export function UploadTab({
@@ -42,18 +231,19 @@ export function UploadTab({
 }: UploadTabProps) {
   const { addTasks } = useUploadQueue()
 
-  const [uploadFiles, setUploadFiles] = useState<{ id: string; file: File }[]>([])
-  const [uploadViewMode, setUploadViewMode] = useState<'list' | 'grid'>('list')
-  const [selectedUploadIds, setSelectedUploadIds] = useState<Set<string>>(new Set())
+  const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([])
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isDragging, setIsDragging] = useState(false)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   const [uploadTitle, setUploadTitle] = useState('')
   const [uploadCategories, setUploadCategories] = useState<string[]>([])
   const [categoryInput, setCategoryInput] = useState('')
-  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
-  const categoryContainerRef = useRef<HTMLDivElement>(null)
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false)
+  const categoryRef = useRef<HTMLDivElement>(null)
 
-  const [uploadStoryId, setUploadStoryId] = useState<string>('')
+  const [uploadStoryId, setUploadStoryId] = useState('')
   const [stories, setStories] = useState<StoryDto[]>([])
   const [loadingStories, setLoadingStories] = useState(false)
 
@@ -61,536 +251,336 @@ export function UploadTab({
   const [albums, setAlbums] = useState<AlbumDto[]>([])
   const [loadingAlbums, setLoadingAlbums] = useState(false)
   const [albumInput, setAlbumInput] = useState('')
-  const [isAlbumDropdownOpen, setIsAlbumDropdownOpen] = useState(false)
-  const albumContainerRef = useRef<HTMLDivElement>(null)
-
-  const [uploadError, setUploadError] = useState('')
+  const [isAlbumOpen, setIsAlbumOpen] = useState(false)
+  const albumRef = useRef<HTMLDivElement>(null)
 
   const [uploadSource, setUploadSource] = useState('local')
-  const [isInitialized, setIsInitialized] = useState(false)
   const [uploadPath, setUploadPath] = useState('')
+  const [isInitialized, setIsInitialized] = useState(false)
 
-  // Compression settings
   const [compressionEnabled, setCompressionEnabled] = useState(false)
   const [maxSizeMB, setMaxSizeMB] = useState(4)
   const [compressing, setCompressing] = useState(false)
   const [compressionProgress, setCompressionProgress] = useState({ current: 0, total: 0 })
 
-  // Initialize defaults from settings
+  const [uploadError, setUploadError] = useState('')
+
   useEffect(() => {
     if (settings?.storage_provider && !isInitialized) {
-      setUploadSource(settings.storage_provider)
-      setIsInitialized(true)
+      queueMicrotask(() => {
+        setUploadSource(settings.storage_provider)
+        setIsInitialized(true)
+      })
     }
   }, [settings, isInitialized])
 
-  // Load stories
   useEffect(() => {
-    async function loadStories() {
-      if (!token) return
-      try {
-        setLoadingStories(true)
-        const data = await getAdminStories(token)
-        setStories(data)
-      } catch (err) {
-        console.error('Failed to load stories:', err)
-      } finally {
-        setLoadingStories(false)
-      }
-    }
-    loadStories()
+    if (!token) return
+    let cancelled = false
+    queueMicrotask(() => !cancelled && setLoadingStories(true))
+    getAdminStories(token).then(data => !cancelled && setStories(data)).finally(() => !cancelled && setLoadingStories(false))
+    return () => { cancelled = true }
   }, [token])
 
-  // Load albums
   useEffect(() => {
-    async function loadAlbums() {
-      if (!token) return
-      try {
-        setLoadingAlbums(true)
-        const data = await getAdminAlbums(token)
-        setAlbums(data)
-      } catch (err) {
-        console.error('Failed to load albums:', err)
-      } finally {
-        setLoadingAlbums(false)
-      }
-    }
-    loadAlbums()
+    if (!token) return
+    let cancelled = false
+    queueMicrotask(() => !cancelled && setLoadingAlbums(true))
+    getAdminAlbums(token).then(data => !cancelled && setAlbums(data)).finally(() => !cancelled && setLoadingAlbums(false))
+    return () => { cancelled = true }
   }, [token])
 
-  const filteredCategories = useMemo(() => {
-    return categories.filter(
-      (c) =>
-        c !== 'all' &&
-        c.toLowerCase().includes(categoryInput.toLowerCase()) &&
-        !uploadCategories.includes(c)
-    )
-  }, [categories, categoryInput, uploadCategories])
+  const filteredCategories = useMemo(() => 
+    categories.filter(c => c !== 'all' && c.toLowerCase().includes(categoryInput.toLowerCase()) && !uploadCategories.includes(c)),
+    [categories, categoryInput, uploadCategories]
+  )
 
-  const filteredAlbums = useMemo(() => {
-    return albums.filter(
-      (album) =>
-        album.name.toLowerCase().includes(albumInput.toLowerCase()) &&
-        !uploadAlbumIds.includes(album.id)
-    )
-  }, [albums, albumInput, uploadAlbumIds])
+  const filteredAlbums = useMemo(() =>
+    albums.filter(a => a.name.toLowerCase().includes(albumInput.toLowerCase()) && !uploadAlbumIds.includes(a.id)),
+    [albums, albumInput, uploadAlbumIds]
+  )
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node
-      if (
-        isCategoryDropdownOpen &&
-        categoryContainerRef.current &&
-        !categoryContainerRef.current.contains(target)
-      ) {
-        setIsCategoryDropdownOpen(false)
-      }
-      if (
-        isAlbumDropdownOpen &&
-        albumContainerRef.current &&
-        !albumContainerRef.current.contains(target)
-      ) {
-        setIsAlbumDropdownOpen(false)
-      }
+    const handler = (e: MouseEvent) => {
+      if (isCategoryOpen && categoryRef.current && !categoryRef.current.contains(e.target as Node)) setIsCategoryOpen(false)
+      if (isAlbumOpen && albumRef.current && !albumRef.current.contains(e.target as Node)) setIsAlbumOpen(false)
     }
-    document.addEventListener('click', handleClickOutside, true)
-    return () => document.removeEventListener('click', handleClickOutside, true)
-  }, [isCategoryDropdownOpen, isAlbumDropdownOpen])
+    document.addEventListener('click', handler, true)
+    return () => document.removeEventListener('click', handler, true)
+  }, [isCategoryOpen, isAlbumOpen])
 
-  const addCategory = (cat: string) => {
-    const trimmed = cat.trim()
-    if (trimmed && !uploadCategories.includes(trimmed)) {
-      setUploadCategories([...uploadCategories, trimmed])
-    }
-    setCategoryInput('')
-  }
-
-  const removeCategory = (cat: string) => {
-    setUploadCategories(uploadCategories.filter((c) => c !== cat))
-  }
-
-  const addAlbum = (albumId: string) => {
-    if (albumId && !uploadAlbumIds.includes(albumId)) {
-      setUploadAlbumIds([...uploadAlbumIds, albumId])
-    }
-    setAlbumInput('')
-  }
-
-  const removeAlbum = (albumId: string) => {
-    setUploadAlbumIds(uploadAlbumIds.filter((id) => id !== albumId))
-  }
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
-    const files = Array.from(e.dataTransfer.files).filter((file) =>
-      file.type.startsWith('image/')
-    )
-    if (files.length > 0) {
-      const newFiles = files.map((f) => ({ id: crypto.randomUUID(), file: f }))
-      setUploadFiles((prev) => [...prev, ...newFiles])
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
+    if (files.length) {
+      setUploadFiles(prev => [...prev, ...files.map(f => ({ id: crypto.randomUUID(), file: f }))])
     }
   }
 
-  const handleUpload = async () => {
-    if (!token) return
-    if (uploadFiles.length === 0) {
-      setUploadError(t('admin.select_files'))
-      return
-    }
-    if (uploadFiles.length === 1 && !uploadTitle.trim()) {
-      setUploadError(t('admin.photo_title'))
-      return
-    }
-    if (uploadCategories.length === 0) {
-      setUploadError(t('admin.categories'))
-      return
-    }
-    setUploadError('')
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDragIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+  }
 
-    // Compress images if enabled
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    if (dragIndex === null || dragIndex === index) return
+    setUploadFiles(prev => {
+      const items = [...prev]
+      const [dragged] = items.splice(dragIndex, 1)
+      items.splice(index, 0, dragged)
+      return items
+    })
+    setDragIndex(index)
+  }
+
+  const handleDragEnd = () => setDragIndex(null)
+
+  const handleUploadClick = () => {
+    if (!token) return
+    if (!uploadFiles.length) { setUploadError(t('admin.select_files')); return }
+    if (uploadFiles.length === 1 && !uploadTitle.trim()) { setUploadError(t('admin.photo_title')); return }
+    if (!uploadCategories.length) { setUploadError(t('admin.categories')); return }
+    setUploadError('')
+    setShowConfirm(true)
+  }
+
+  const handleConfirmUpload = async () => {
+    setShowConfirm(false)
+    if (!token) return
+
     let filesToUpload = uploadFiles
     if (compressionEnabled) {
       setCompressing(true)
       setCompressionProgress({ current: 0, total: uploadFiles.length })
-
-      const compressedFiles: { id: string; file: File }[] = []
+      const compressed: UploadFile[] = []
       for (let i = 0; i < uploadFiles.length; i++) {
         const item = uploadFiles[i]
-        try {
-          // Only compress if file is larger than target size
-          if (item.file.size > maxSizeMB * 1024 * 1024) {
-            const compressedBlob = await imageCompression(item.file, {
-              maxSizeMB: maxSizeMB,
-              maxWidthOrHeight: 4096,
-              useWebWorker: true,
-              preserveExif: true,
-            })
-            // Ensure the compressed result is a File with the original name
-            const compressedFile = new File(
-              [compressedBlob],
-              item.file.name,
-              { type: compressedBlob.type, lastModified: Date.now() }
-            )
-            compressedFiles.push({ id: item.id, file: compressedFile })
-          } else {
-            compressedFiles.push(item)
-          }
-        } catch (err) {
-          console.error(`Failed to compress ${item.file.name}:`, err)
-          compressedFiles.push(item) // Use original if compression fails
-        }
+        if (item.file.size > maxSizeMB * 1024 * 1024) {
+          try {
+            const blob = await imageCompression(item.file, { maxSizeMB, maxWidthOrHeight: 4096, useWebWorker: true, preserveExif: true })
+            compressed.push({ id: item.id, file: new File([blob], item.file.name, { type: blob.type }) })
+          } catch { compressed.push(item) }
+        } else compressed.push(item)
         setCompressionProgress({ current: i + 1, total: uploadFiles.length })
       }
-      filesToUpload = compressedFiles
+      filesToUpload = compressed
       setCompressing(false)
     }
 
-    // Add tasks to the upload queue
     await addTasks({
       files: filesToUpload,
       title: uploadTitle.trim(),
       categories: uploadCategories,
-      storageProvider: uploadSource || undefined,
+      storageProvider: uploadSource,
       storagePath: uploadPath.trim() || undefined,
       storyId: uploadStoryId || undefined,
-      albumIds: uploadAlbumIds.length > 0 ? uploadAlbumIds : undefined,
+      albumIds: uploadAlbumIds.length ? uploadAlbumIds : undefined,
       token,
     })
 
-    // Clear the form
     setUploadFiles([])
-    setSelectedUploadIds(new Set())
+    setSelectedIds(new Set())
     setUploadTitle('')
     setUploadStoryId('')
     setUploadAlbumIds([])
-
     notify(t('admin.upload_started'), 'info')
   }
 
-  const handleRemoveUpload = (id: string) => {
-    setUploadFiles((prev) => prev.filter((item) => item.id !== id))
-    setSelectedUploadIds((prev) => {
-      const next = new Set(prev)
-      next.delete(id)
-      return next
-    })
-  }
-
-  const handleSelectUploadToggle = (id: string) => {
-    setSelectedUploadIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  const handleSelectAllUploads = () => {
-    if (selectedUploadIds.size === uploadFiles.length) {
-      setSelectedUploadIds(new Set())
-    } else {
-      setSelectedUploadIds(new Set(uploadFiles.map((f) => f.id)))
-    }
-  }
-
-  const handleBulkRemoveUploads = () => {
-    if (selectedUploadIds.size === 0) return
-    setUploadFiles((prev) => prev.filter((item) => !selectedUploadIds.has(item.id)))
-    setSelectedUploadIds(new Set())
-  }
+  const selectedAlbumNames = uploadAlbumIds.map(id => albums.find(a => a.id === id)?.name || '').filter(Boolean)
+  const selectedStoryName = stories.find(s => s.id === uploadStoryId)?.title
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-      <div className="lg:col-span-4 space-y-8">
-        <div className="border border-border p-8 space-y-8 bg-card/50">
-          <h3 className="font-serif text-xl font-light uppercase tracking-tight flex items-center gap-2">
-            <Upload className="w-5 h-5 text-primary" />
-            {t('admin.upload_params')}
-          </h3>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
-                {t('admin.photo_title')}
-              </label>
-              <CustomInput
-                variant="config"
-                value={uploadTitle}
-                onChange={(e) => setUploadTitle(e.target.value)}
-                disabled={uploadFiles.length > 1}
-                placeholder={
-                  uploadFiles.length > 1
-                    ? t('admin.title_hint_multi')
-                    : t('admin.title_hint_single')
-                }
-              />
-            </div>
-            <div ref={categoryContainerRef} className="relative">
-              <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
-                {t('admin.categories')}
-              </label>
-              <div
-                className="min-h-12 p-2 bg-background border-b border-border flex flex-wrap gap-2 cursor-text items-center transition-colors focus-within:border-primary"
-                onClick={() => {
-                  setIsCategoryDropdownOpen(true)
-                  categoryContainerRef.current?.querySelector('input')?.focus()
-                }}
-              >
-                {uploadCategories.map((cat) => (
-                  <span
-                    key={cat}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider"
-                  >
-                    {cat}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        removeCategory(cat)
-                      }}
-                      className="hover:text-primary/70"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
-                <input
-                  type="text"
-                  value={categoryInput}
-                  onChange={(e) => {
-                    setCategoryInput(e.target.value)
-                    setIsCategoryDropdownOpen(true)
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      if (categoryInput.trim()) addCategory(categoryInput)
-                    } else if (
-                      e.key === 'Backspace' &&
-                      !categoryInput &&
-                      uploadCategories.length > 0
-                    ) {
-                      removeCategory(uploadCategories[uploadCategories.length - 1])
-                    }
-                  }}
-                  className="flex-1 min-w-[80px] outline-none bg-transparent text-sm font-mono"
-                  placeholder={
-                    uploadCategories.length === 0 ? t('admin.search_create') : ''
-                  }
-                />
-              </div>
-              {isCategoryDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-background border border-border shadow-2xl max-h-48 overflow-y-auto">
-                  {filteredCategories.length > 0 ? (
-                    filteredCategories.map((cat) => (
-                      <button
-                        key={cat}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          addCategory(cat)
-                        }}
-                        className="w-full text-left px-4 py-3 text-xs font-bold uppercase tracking-wider hover:bg-primary hover:text-primary-foreground flex items-center justify-between group transition-colors"
-                      >
-                        <span>{cat}</span>
-                        <Check className="w-3 h-3 opacity-0 group-hover:opacity-100" />
-                      </button>
-                    ))
-                  ) : categoryInput.trim() ? (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        addCategory(categoryInput)
-                      }}
-                      className="w-full text-left px-4 py-3 text-xs font-bold uppercase tracking-wider hover:bg-primary hover:text-primary-foreground text-primary flex items-center justify-between transition-colors"
-                    >
-                      <span>
-                        Create &ldquo;{categoryInput}&rdquo;
-                      </span>
-                      <Plus className="w-3 h-3" />
-                    </button>
-                  ) : (
-                    <div className="px-4 py-3 text-[10px] text-muted-foreground uppercase tracking-widest text-center">
-                      Start typing...
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Album Selection - Multi-select */}
-            <div ref={albumContainerRef} className="relative">
-              <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 flex items-center gap-2">
-                <FolderOpen className="w-3 h-3" />
-                {t('admin.album_select')} ({t('common.optional')})
-              </label>
-              <div
-                className="min-h-12 p-2 bg-background border-b border-border flex flex-wrap gap-2 cursor-text items-center transition-colors focus-within:border-primary"
-                onClick={() => {
-                  setIsAlbumDropdownOpen(true)
-                  albumContainerRef.current?.querySelector('input')?.focus()
-                }}
-              >
-                {uploadAlbumIds.map((albumId) => {
-                  const album = albums.find((a) => a.id === albumId)
-                  return (
-                    <span
-                      key={albumId}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider"
-                    >
-                      {album?.name || albumId}
-                      {album && !album.isPublished && (
-                        <span className="text-muted-foreground">({t('admin.draft')})</span>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          removeAlbum(albumId)
-                        }}
-                        className="hover:text-primary/70"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  )
-                })}
-                <input
-                  type="text"
-                  value={albumInput}
-                  onChange={(e) => {
-                    setAlbumInput(e.target.value)
-                    setIsAlbumDropdownOpen(true)
-                  }}
-                  onKeyDown={(e) => {
-                    if (
-                      e.key === 'Backspace' &&
-                      !albumInput &&
-                      uploadAlbumIds.length > 0
-                    ) {
-                      removeAlbum(uploadAlbumIds[uploadAlbumIds.length - 1])
-                    }
-                  }}
-                  className="flex-1 min-w-[80px] outline-none bg-transparent text-sm font-mono"
-                  placeholder={
-                    uploadAlbumIds.length === 0 ? t('admin.search_album') : ''
-                  }
-                  disabled={loadingAlbums}
-                />
-              </div>
-              {isAlbumDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-background border border-border shadow-2xl max-h-48 overflow-y-auto">
-                  {filteredAlbums.length > 0 ? (
-                    filteredAlbums.map((album) => (
-                      <button
-                        key={album.id}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          addAlbum(album.id)
-                        }}
-                        className="w-full text-left px-4 py-3 text-xs font-bold uppercase tracking-wider hover:bg-primary hover:text-primary-foreground flex items-center justify-between group transition-colors"
-                      >
-                        <span>
-                          {album.name}
-                          {!album.isPublished && (
-                            <span className="ml-2 text-muted-foreground group-hover:text-primary-foreground/70">
-                              ({t('admin.draft')})
-                            </span>
-                          )}
-                        </span>
-                        <Check className="w-3 h-3 opacity-0 group-hover:opacity-100" />
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-4 py-3 text-[10px] text-muted-foreground uppercase tracking-widest text-center">
-                      {loadingAlbums ? t('common.loading') : t('admin.no_albums_found')}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Story Selection */}
-            <div>
-              <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 flex items-center gap-2">
-                <BookOpen className="w-3 h-3" />
-                {t('ui.photo_story')} ({t('common.optional')})
-              </label>
-              <CustomSelect
-                value={uploadStoryId}
-                onChange={setUploadStoryId}
-                disabled={loadingStories}
-                placeholder={t('ui.no_association')}
-                options={[
-                  { value: '', label: t('ui.no_association') },
-                  ...stories.map((story) => ({
-                    value: story.id,
-                    label: story.title,
-                    suffix: !story.isPublished ? `(${t('admin.draft')})` : undefined,
-                  })),
-                ]}
-              />
-              {loadingStories && (
-                <p className="mt-2 text-[10px] text-muted-foreground">
-                  {t('common.loading')}
-                </p>
-              )}
+    <>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+        {/* Left Panel - Settings */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="sticky top-6">
+            <div className="flex items-center gap-3 mb-8">
+              <Settings2 className="w-5 h-5 text-muted-foreground" />
+              <h2 className="text-sm font-medium tracking-wide uppercase text-muted-foreground">{t('admin.upload_params')}</h2>
             </div>
 
             <div className="space-y-6">
+              {/* Title */}
               <div>
-                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
-                  {t('admin.storage_provider')}
+                <label className="block text-xs text-muted-foreground mb-2">{t('admin.photo_title')}</label>
+                <CustomInput
+                  variant="config"
+                  value={uploadTitle}
+                  onChange={e => setUploadTitle(e.target.value)}
+                  disabled={uploadFiles.length > 1}
+                  placeholder={uploadFiles.length > 1 ? t('admin.title_hint_multi') : t('admin.title_hint_single')}
+                />
+              </div>
+
+              {/* Categories */}
+              <div ref={categoryRef} className="relative">
+                <label className="block text-xs text-muted-foreground mb-2">{t('admin.categories')}</label>
+                <div
+                  className="min-h-[48px] p-3 bg-muted/30 border-b border-border flex flex-wrap gap-2 cursor-text focus-within:border-primary transition-colors"
+                  onClick={() => { setIsCategoryOpen(true); categoryRef.current?.querySelector('input')?.focus() }}
+                >
+                  {uploadCategories.map(cat => (
+                    <span key={cat} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-foreground/10 text-xs font-medium">
+                      {cat}
+                      <button onClick={e => { e.stopPropagation(); setUploadCategories(prev => prev.filter(c => c !== cat)) }} className="hover:text-destructive">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                  <input
+                    type="text"
+                    value={categoryInput}
+                    onChange={e => { setCategoryInput(e.target.value); setIsCategoryOpen(true) }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && categoryInput.trim()) {
+                        e.preventDefault()
+                        if (!uploadCategories.includes(categoryInput.trim())) setUploadCategories(prev => [...prev, categoryInput.trim()])
+                        setCategoryInput('')
+                      } else if (e.key === 'Backspace' && !categoryInput && uploadCategories.length) {
+                        setUploadCategories(prev => prev.slice(0, -1))
+                      }
+                    }}
+                    className="flex-1 min-w-[60px] outline-none bg-transparent text-sm"
+                    placeholder={uploadCategories.length ? '' : t('admin.search_create')}
+                  />
+                </div>
+                {isCategoryOpen && (
+                  <div className="absolute z-20 w-full mt-1 bg-background border border-border shadow-xl max-h-40 overflow-y-auto">
+                    {filteredCategories.length ? filteredCategories.map(cat => (
+                      <button
+                        key={cat}
+                        onClick={e => { e.stopPropagation(); setUploadCategories(prev => [...prev, cat]); setCategoryInput('') }}
+                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted flex items-center justify-between"
+                      >
+                        {cat}
+                        <Check className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+                      </button>
+                    )) : categoryInput.trim() ? (
+                      <button
+                        onClick={e => { e.stopPropagation(); setUploadCategories(prev => [...prev, categoryInput.trim()]); setCategoryInput('') }}
+                        className="w-full text-left px-4 py-2.5 text-sm text-primary hover:bg-muted flex items-center gap-2"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Create &ldquo;{categoryInput}&rdquo;
+                      </button>
+                    ) : (
+                      <div className="px-4 py-3 text-xs text-muted-foreground text-center">Start typing...</div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Albums */}
+              <div ref={albumRef} className="relative">
+                <label className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                  <FolderOpen className="w-3 h-3" />
+                  {t('admin.album_select')}
+                  <span className="text-muted-foreground/50">({t('common.optional')})</span>
+                </label>
+                <div
+                  className="min-h-[48px] p-3 bg-muted/30 border-b border-border flex flex-wrap gap-2 cursor-text focus-within:border-primary transition-colors"
+                  onClick={() => { setIsAlbumOpen(true); albumRef.current?.querySelector('input')?.focus() }}
+                >
+                  {uploadAlbumIds.map(id => {
+                    const album = albums.find(a => a.id === id)
+                    return (
+                      <span key={id} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-foreground/10 text-xs font-medium">
+                        {album?.name}
+                        <button onClick={e => { e.stopPropagation(); setUploadAlbumIds(prev => prev.filter(i => i !== id)) }} className="hover:text-destructive">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    )
+                  })}
+                  <input
+                    type="text"
+                    value={albumInput}
+                    onChange={e => { setAlbumInput(e.target.value); setIsAlbumOpen(true) }}
+                    onKeyDown={e => { if (e.key === 'Backspace' && !albumInput && uploadAlbumIds.length) setUploadAlbumIds(prev => prev.slice(0, -1)) }}
+                    className="flex-1 min-w-[60px] outline-none bg-transparent text-sm"
+                    placeholder={uploadAlbumIds.length ? '' : t('admin.search_album')}
+                    disabled={loadingAlbums}
+                  />
+                </div>
+                {isAlbumOpen && (
+                  <div className="absolute z-20 w-full mt-1 bg-background border border-border shadow-xl max-h-40 overflow-y-auto">
+                    {filteredAlbums.length ? filteredAlbums.map(album => (
+                      <button
+                        key={album.id}
+                        onClick={e => { e.stopPropagation(); setUploadAlbumIds(prev => [...prev, album.id]); setAlbumInput('') }}
+                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted"
+                      >
+                        {album.name}
+                        {!album.isPublished && <span className="ml-2 text-muted-foreground">({t('admin.draft')})</span>}
+                      </button>
+                    )) : (
+                      <div className="px-4 py-3 text-xs text-muted-foreground text-center">
+                        {loadingAlbums ? t('common.loading') : t('admin.no_albums_found')}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Story */}
+              <div>
+                <label className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                  <BookOpen className="w-3 h-3" />
+                  {t('ui.photo_story')}
+                  <span className="text-muted-foreground/50">({t('common.optional')})</span>
                 </label>
                 <CustomSelect
-                  value={uploadSource}
-                  onChange={setUploadSource}
+                  value={uploadStoryId}
+                  onChange={setUploadStoryId}
+                  disabled={loadingStories}
+                  placeholder={t('ui.no_association')}
                   options={[
-                    { value: 'local', label: 'Local Storage' },
-                    { value: 'r2', label: 'Cloudflare R2' },
-                    { value: 'github', label: 'GitHub' },
+                    { value: '', label: t('ui.no_association') },
+                    ...stories.map(s => ({ value: s.id, label: s.title, suffix: !s.isPublished ? `(${t('admin.draft')})` : undefined }))
                   ]}
                 />
               </div>
-              <div>
-                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
-                  {t('admin.path_prefix')}
-                </label>
-                <CustomInput
-                  variant="config"
-                  value={uploadPath}
-                  onChange={(e) => setUploadPath(e.target.value)}
-                  placeholder="e.g., 2025/vacation"
-                />
-              </div>
-            </div>
 
-            {/* Image Compression */}
-            <div className="border-t border-border pt-6">
-              <div className="flex items-center justify-between mb-4">
-                <label className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                  <Minimize2 className="w-3 h-3" />
-                  {t('admin.image_compression')}
-                </label>
-                <button
-                  onClick={() => setCompressionEnabled(!compressionEnabled)}
-                  className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                    compressionEnabled ? 'bg-primary' : 'bg-muted'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform ${
-                      compressionEnabled ? 'translate-x-5' : 'translate-x-1'
-                    }`}
+              {/* Storage */}
+              <div className="pt-4 border-t border-border/50 space-y-4">
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-2">{t('admin.storage_provider')}</label>
+                  <CustomSelect
+                    value={uploadSource}
+                    onChange={setUploadSource}
+                    options={[
+                      { value: 'local', label: 'Local Storage' },
+                      { value: 'r2', label: 'Cloudflare R2' },
+                      { value: 'github', label: 'GitHub' },
+                    ]}
                   />
-                </button>
+                </div>
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-2">{t('admin.path_prefix')}</label>
+                  <CustomInput variant="config" value={uploadPath} onChange={e => setUploadPath(e.target.value)} placeholder="e.g., 2025/vacation" />
+                </div>
               </div>
-              {compressionEnabled && (
-                <div className="space-y-3">
-                  <p className="text-[10px] text-muted-foreground">
-                    {t('admin.compression_hint')}
-                  </p>
+
+              {/* Compression */}
+              <div className="pt-4 border-t border-border/50">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Minimize2 className="w-3 h-3" />
+                    {t('admin.image_compression')}
+                  </label>
+                  <button
+                    onClick={() => setCompressionEnabled(!compressionEnabled)}
+                    className={`relative w-10 h-5 rounded-full transition-colors ${compressionEnabled ? 'bg-primary' : 'bg-muted'}`}
+                  >
+                    <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-background shadow transition-transform ${compressionEnabled ? 'left-5' : 'left-0.5'}`} />
+                  </button>
+                </div>
+                {compressionEnabled && (
                   <div className="flex items-center gap-3">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap">
-                      {t('admin.max_size_mb')}
-                    </label>
+                    <span className="text-xs text-muted-foreground">{t('admin.max_size_mb')}</span>
                     <CustomInput
                       variant="config"
                       type="number"
@@ -598,199 +588,150 @@ export function UploadTab({
                       max="10"
                       step="0.5"
                       value={maxSizeMB}
-                      onChange={(e) => setMaxSizeMB(parseFloat(e.target.value) || 4)}
+                      onChange={e => setMaxSizeMB(parseFloat(e.target.value) || 4)}
                       className="w-20 text-center"
                     />
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+
+              {/* Upload Button */}
+              <button
+                onClick={handleUploadClick}
+                disabled={compressing || !uploadFiles.length}
+                className="w-full py-4 mt-6 bg-foreground text-background text-sm font-medium tracking-wide hover:bg-primary hover:text-primary-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              >
+                {compressing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t('admin.compressing')} ({compressionProgress.current}/{compressionProgress.total})
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4" />
+                    {t('admin.start_upload')}
+                  </>
+                )}
+              </button>
+              {uploadError && <p className="text-xs text-destructive text-center mt-2">{uploadError}</p>}
             </div>
           </div>
-          <div className="pt-4">
-            <button
-              onClick={handleUpload}
-              disabled={compressing || uploadFiles.length === 0}
-              className="w-full py-4 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] hover:bg-primary hover:text-primary-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2"
-            >
-              {compressing ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>
-                    {t('admin.compressing')} ({compressionProgress.current}/
-                    {compressionProgress.total})
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  <span>{t('admin.start_upload')}</span>
-                </>
-              )}
-            </button>
-            {uploadError && (
-              <p className="mt-4 text-[10px] text-destructive text-center font-bold uppercase tracking-widest">
-                {uploadError}
-              </p>
-            )}
-          </div>
         </div>
-      </div>
-      <div className="lg:col-span-8 flex flex-col">
-        <div
-          onDragOver={(e) => {
-            e.preventDefault()
-            setIsDragging(true)
-          }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={handleDrop}
-          className={`h-[600px] border border-dashed transition-all flex flex-col relative ${
-            isDragging
-              ? 'border-primary bg-primary/5'
-              : 'border-border bg-muted/20'
-          }`}
-        >
-          {uploadFiles.length > 0 ? (
-            <div className="flex-1 flex flex-col p-6 overflow-hidden">
-              <div className="flex items-center justify-between mb-4 px-2">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 mr-2">
+
+        {/* Right Panel - Files */}
+        <div className="lg:col-span-8">
+          <div
+            onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            className={`min-h-[600px] border-2 border-dashed transition-all ${
+              isDragging ? 'border-primary bg-primary/5' : 'border-border/50 bg-muted/10'
+            }`}
+          >
+            {uploadFiles.length ? (
+              <div className="p-6">
+                {/* Toolbar */}
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/50">
+                  <div className="flex items-center gap-4">
                     <input
                       type="checkbox"
-                      checked={
-                        uploadFiles.length > 0 &&
-                        selectedUploadIds.size === uploadFiles.length
-                      }
-                      onChange={handleSelectAllUploads}
-                      disabled={uploadFiles.length === 0}
-                      className="w-4 h-4 accent-primary cursor-pointer"
+                      checked={uploadFiles.length > 0 && selectedIds.size === uploadFiles.length}
+                      onChange={() => setSelectedIds(selectedIds.size === uploadFiles.length ? new Set() : new Set(uploadFiles.map(f => f.id)))}
+                      className="w-4 h-4 accent-primary"
                     />
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                      {selectedUploadIds.size > 0
-                        ? `${selectedUploadIds.size} Selected`
-                        : `${uploadFiles.length} ${t('admin.items')}`}
+                    <span className="text-sm text-muted-foreground">
+                      {selectedIds.size ? `${selectedIds.size} selected` : `${uploadFiles.length} files`}
                     </span>
+                    {selectedIds.size > 0 && (
+                      <button
+                        onClick={() => { setUploadFiles(prev => prev.filter(f => !selectedIds.has(f.id))); setSelectedIds(new Set()) }}
+                        className="p-1.5 text-destructive hover:bg-destructive/10 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
-                  {selectedUploadIds.size > 0 && (
+                  <div className="flex items-center gap-3">
                     <button
-                      onClick={handleBulkRemoveUploads}
-                      className="p-1.5 text-destructive hover:bg-destructive/10 transition-colors rounded"
-                      title="Delete Selected"
+                      onClick={() => setUploadFiles([])}
+                      className="text-xs text-muted-foreground hover:text-destructive transition-colors"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      Clear all
                     </button>
-                  )}
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex bg-muted p-1 border border-border">
-                    <button
-                      onClick={() => setUploadViewMode('list')}
-                      className={`p-1.5 transition-all ${
-                        uploadViewMode === 'list'
-                          ? 'bg-background text-primary'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      <ListIcon className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => setUploadViewMode('grid')}
-                      className={`p-1.5 transition-all ${
-                        uploadViewMode === 'grid'
-                          ? 'bg-background text-primary'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      <LayoutGrid className="w-3.5 h-3.5" />
-                    </button>
+                    <label className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary cursor-pointer transition-colors">
+                      <Plus className="w-3.5 h-3.5" />
+                      {t('admin.add_more')}
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => {
+                          if (e.target.files) {
+                            setUploadFiles(prev => [...prev, ...Array.from(e.target.files!).map(f => ({ id: crypto.randomUUID(), file: f }))])
+                          }
+                        }}
+                      />
+                    </label>
                   </div>
-                  <button
-                    onClick={() => setUploadFiles([])}
-                    className="flex items-center gap-2 text-destructive hover:opacity-80 transition-opacity text-[10px] font-bold uppercase tracking-widest"
-                  >
-                    Clear
-                  </button>
-                  <div className="h-4 w-[1px] bg-border"></div>
-                  <label className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors text-[10px] font-bold uppercase tracking-widest">
-                    <Plus className="w-3.5 h-3.5" />
-                    {t('admin.add_more')}
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        if (e.target.files) {
-                          const newFiles = Array.from(e.target.files).map(
-                            (f) => ({
-                              id: crypto.randomUUID(),
-                              file: f,
-                            })
-                          )
-                          setUploadFiles((prev) => [...prev, ...newFiles])
-                        }
-                      }}
-                    />
-                  </label>
                 </div>
-              </div>
-              <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-                <div
-                  className={
-                    uploadViewMode === 'grid'
-                      ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4'
-                      : 'flex flex-col'
-                  }
-                >
-                  {uploadFiles.map((item) => (
-                    <UploadFileItem
+
+                {/* File List */}
+                <div className="space-y-1" onDragEnd={handleDragEnd}>
+                  {uploadFiles.map((item, index) => (
+                    <DraggableFileItem
                       key={item.id}
-                      id={item.id}
-                      file={item.file}
-                      onRemove={handleRemoveUpload}
-                      uploading={false}
-                      isUploaded={false}
-                      isCurrent={false}
-                      viewMode={uploadViewMode}
-                      selected={selectedUploadIds.has(item.id)}
-                      onSelect={handleSelectUploadToggle}
+                      item={item}
+                      index={index}
+                      selected={selectedIds.has(item.id)}
+                      onSelect={id => setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })}
+                      onRemove={id => { setUploadFiles(prev => prev.filter(f => f.id !== id)); setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next }) }}
                       onPreview={() => onPreview(item)}
-                      t={t}
+                      onDragStart={handleDragStart}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDragEnd}
+                      isDragging={dragIndex === index}
                     />
                   ))}
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-8">
-              <Upload className="w-16 h-16 mb-6 opacity-10" />
-              <p className="text-sm font-bold uppercase tracking-[0.2em] mb-4">
-                {t('admin.drop_here')}
-              </p>
-              <p className="text-[10px] font-mono opacity-50 mb-8">
-                {t('admin.support_types')}
-              </p>
-              <label className="px-8 py-3 border border-border hover:border-primary hover:text-primary transition-all cursor-pointer text-xs font-bold uppercase tracking-[0.2em]">
-                {t('admin.select_files')}
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files) {
-                      const newFiles = Array.from(e.target.files).map((f) => ({
-                        id: crypto.randomUUID(),
-                        file: f,
-                      }))
-                      setUploadFiles((prev) => [...prev, ...newFiles])
-                    }
-                  }}
-                />
-              </label>
-            </div>
-          )}
+            ) : (
+              <div className="h-full min-h-[600px] flex flex-col items-center justify-center text-muted-foreground p-8">
+                <Upload className="w-16 h-16 mb-6 opacity-10" />
+                <p className="text-sm font-medium mb-2">{t('admin.drop_here')}</p>
+                <p className="text-xs text-muted-foreground/60 mb-8">{t('admin.support_types')}</p>
+                <label className="px-6 py-3 border border-border hover:border-primary hover:text-primary transition-all cursor-pointer text-sm">
+                  {t('admin.select_files')}
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="hidden"
+                    onChange={e => {
+                      if (e.target.files) {
+                        setUploadFiles(prev => [...prev, ...Array.from(e.target.files!).map(f => ({ id: crypto.randomUUID(), file: f }))])
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      <ConfirmModal
+        open={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={handleConfirmUpload}
+        fileCount={uploadFiles.length}
+        categories={uploadCategories}
+        albumNames={selectedAlbumNames}
+        storyName={selectedStoryName}
+        storageProvider={uploadSource}
+        compressionEnabled={compressionEnabled}
+        t={t}
+      />
+    </>
   )
 }

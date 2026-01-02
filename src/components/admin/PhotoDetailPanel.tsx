@@ -299,7 +299,7 @@ export function PhotoDetailPanel({
             className="fixed top-0 right-0 h-full w-full max-w-xl z-[101] bg-background border-l border-border shadow-2xl overflow-hidden flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
+            <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-muted/30 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <FileText className="w-5 h-5 text-primary" />
                 <div>
@@ -319,8 +319,8 @@ export function PhotoDetailPanel({
               </button>
             </div>
 
-            {/* Image Preview */}
-            <div className="relative h-48 bg-muted flex-shrink-0">
+            {/* Image Preview - 50% height */}
+            <div className="relative flex-1 bg-muted min-h-0" style={{ flex: '1 1 50%' }}>
               <img
                 src={resolveAssetUrl(photo.thumbnailUrl || photo.url, cdnDomain)}
                 alt={photo.title}
@@ -341,7 +341,7 @@ export function PhotoDetailPanel({
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-border">
+            <div className="flex border-b border-border flex-shrink-0">
               <button
                 onClick={() => setActiveTab('info')}
                 className={`flex-1 px-4 py-3 text-xs font-bold uppercase tracking-widest transition-colors ${
@@ -364,8 +364,8 @@ export function PhotoDetailPanel({
               </button>
             </div>
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {/* Content - 50% height */}
+            <div className="overflow-y-auto custom-scrollbar min-h-0" style={{ flex: '1 1 50%' }}>
               {activeTab === 'info' ? (
                 <div className="p-6 space-y-6">
                   {/* Title */}
@@ -504,15 +504,6 @@ export function PhotoDetailPanel({
                             {storyData.isPublished ? t('admin.published') : t('admin.draft')}
                           </span>
                         </div>
-
-                        <button
-                          onClick={handleSaveStory}
-                          disabled={storySaving}
-                          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-all"
-                        >
-                          <Save className="w-4 h-4" />
-                          <span>{storySaving ? t('admin.saving') : (story ? t('admin.save') : t('admin.create_story_upload'))}</span>
-                        </button>
                       </div>
 
                       {/* Associated Photos */}
@@ -620,31 +611,35 @@ export function PhotoDetailPanel({
                           </div>
                         </div>
                       )}
+
                     </>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Footer - Only show for info tab */}
-            {activeTab === 'info' && (
-              <div className="flex gap-3 p-6 border-t border-border bg-muted/20">
-                <button
-                  onClick={onClose}
-                  className="flex-1 px-6 py-3 border border-border text-foreground text-xs font-bold uppercase tracking-widest hover:bg-muted transition-all"
-                >
-                  {t('common.cancel')}
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-all"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>{saving ? t('admin.saving') : t('admin.save')}</span>
-                </button>
-              </div>
-            )}
+            {/* Footer - Fixed at bottom */}
+            <div className="flex gap-3 p-6 border-t border-border bg-muted/20 flex-shrink-0">
+              <button
+                onClick={onClose}
+                className="flex-1 px-6 py-3 border border-border text-foreground text-xs font-bold uppercase tracking-widest hover:bg-muted transition-all"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={activeTab === 'info' ? handleSave : handleSaveStory}
+                disabled={activeTab === 'info' ? saving : storySaving}
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-all"
+              >
+                <Save className="w-4 h-4" />
+                <span>
+                  {activeTab === 'info'
+                    ? (saving ? t('admin.saving') : t('admin.save'))
+                    : (storySaving ? t('admin.saving') : (story ? t('admin.save') : t('admin.create_story_upload')))
+                  }
+                </span>
+              </button>
+            </div>
           </motion.div>
         </>
       )}

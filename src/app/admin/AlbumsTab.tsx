@@ -1,10 +1,10 @@
+
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
 import {
   FolderOpen,
   Plus,
-  Edit3,
   Trash2,
   ChevronLeft,
   Save,
@@ -16,6 +16,10 @@ import {
   Layout,
   Settings,
   GripVertical,
+  Search,
+  LayoutGrid,
+  List,
+  Filter,
 } from 'lucide-react'
 import {
   getAdminAlbums,
@@ -42,6 +46,9 @@ interface AlbumsTabProps {
   onUnauthorized: () => void
 }
 
+type ViewMode = 'grid' | 'list'
+type FilterStatus = 'all' | 'published' | 'draft'
+
 export function AlbumsTab({ token, photos, t, notify, onUnauthorized }: AlbumsTabProps) {
   const { settings } = useSettings()
   const cdnDomain = settings?.cdn_domain || ''
@@ -55,9 +62,21 @@ export function AlbumsTab({ token, photos, t, notify, onUnauthorized }: AlbumsTa
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(new Set())
   const [draggingId, setDraggingId] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadAlbums()
-  }, [token])
+  // New filter states
+  const [viewMode, setViewMode] = useState<ViewMode>('grid')
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+
+  useEffect(() => { loadAlbums() }, [token])
+
+  const filteredAlbums = useMemo(() => {
+    return albums.filter(album => {
+      if (filterStatus === 'published' && !album.isPublished) return false
+      if (filterStatus === 'draft' && album.isPublished) return false
+      if (searchQuery && !album.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
+      return true
+    })
+  }, [albums, filterStatus, searchQuery])
 
   async function handleDragStart(e: React.DragEvent, id: string) {
     e.dataTransfer.effectAllowed = 'move'
@@ -67,35 +86,22 @@ export function AlbumsTab({ token, photos, t, notify, onUnauthorized }: AlbumsTa
   function handleDragOver(e: React.DragEvent, targetId: string) {
     e.preventDefault()
     if (!draggingId || draggingId === targetId) return
-
-    const fromIndex = albums.findIndex((a) => a.id === draggingId)
-    const toIndex = albums.findIndex((a) => a.id === targetId)
-
+    const fromIndex = albums.findIndex(a => a.id === draggingId)
+    const toIndex = albums.findIndex(a => a.id === targetId)
     if (fromIndex === -1 || toIndex === -1) return
-
     const newAlbums = [...albums]
     const [moved] = newAlbums.splice(fromIndex, 1)
     newAlbums.splice(toIndex, 0, moved)
-
     setAlbums(newAlbums)
   }
 
   async function handleDragEnd() {
     setDraggingId(null)
     if (!token) return
-
-    // Update sort orders based on new index
-    const updates = albums.map((album, index) => ({
-      id: album.id,
-      sortOrder: index,
-    }))
-
     try {
-      await reorderAlbums(token, updates)
-    } catch (err) {
-      console.error('Failed to reorder albums:', err)
+      await reorderAlbums(token, albums.map((a, i) => ({ id: a.id, sortOrder: i })))
+    } catch {
       notify(t('common.error'), 'error')
-      // Revert on error
       await loadAlbums()
     }
   }
@@ -104,14 +110,9 @@ export function AlbumsTab({ token, photos, t, notify, onUnauthorized }: AlbumsTa
     if (!token) return
     try {
       setLoading(true)
-      const data = await getAdminAlbums(token)
-      setAlbums(data)
+      setAlbums(await getAdminAlbums(token))
     } catch (err) {
-      if (err instanceof ApiUnauthorizedError) {
-        onUnauthorized()
-        return
-      }
-      console.error('Failed to load albums:', err)
+      if (err instanceof ApiUnauthorizedError) { onUnauthorized(); return }
       notify(t('common.error'), 'error')
     } finally {
       setLoading(false)
@@ -119,88 +120,43 @@ export function AlbumsTab({ token, photos, t, notify, onUnauthorized }: AlbumsTa
   }
 
   function handleCreateAlbum() {
-    const newAlbum: AlbumDto = {
-      id: '',
-      name: '',
-      description: '',
-      coverUrl: '',
-      isPublished: false,
-      sortOrder: albums.length,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      photos: [],
-      photoCount: 0,
-    }
-    setCurrentAlbum(newAlbum)
+    setCurrentAlbum({
+      id: '', name: '', description: '', coverUrl: '', isPublished: false,
+      sortOrder: albums.length, createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(), photos: [], photoCount: 0,
+    })
     setActiveTab('overview')
-  }
-
-  function handleSelectAlbum(album: AlbumDto) {
-    setCurrentAlbum({ ...album })
-    setActiveTab('photos')
   }
 
   async function handleDeleteAlbum(id: string, e?: React.MouseEvent) {
     e?.stopPropagation()
-    if (!token) return
-    if (!window.confirm(t('common.confirm') + '?')) return
-
+    if (!token || !window.confirm(t('common.confirm') + '?')) return
     try {
       await deleteAlbum(token, id)
       notify(t('admin.notify_success'), 'success')
-      if (currentAlbum?.id === id) {
-        setCurrentAlbum(null)
-      }
+      if (currentAlbum?.id === id) setCurrentAlbum(null)
       await loadAlbums()
     } catch (err) {
-      if (err instanceof ApiUnauthorizedError) {
-        onUnauthorized()
-        return
-      }
-      console.error('Failed to delete album:', err)
+      if (err instanceof ApiUnauthorizedError) { onUnauthorized(); return }
       notify(t('common.error'), 'error')
     }
   }
 
   async function handleSaveAlbum() {
-    if (!token || !currentAlbum) return
-    if (!currentAlbum.name.trim()) {
+    if (!token || !currentAlbum || !currentAlbum.name.trim()) {
       notify(t('admin.album_name_required') || 'Please enter album name', 'error')
       return
     }
-
     try {
       setSaving(true)
       const isNew = !currentAlbum.id
-
-      if (isNew) {
-        const created = await createAlbum(token, {
-          name: currentAlbum.name,
-          description: currentAlbum.description || undefined,
-          coverUrl: currentAlbum.coverUrl || undefined,
-          isPublished: currentAlbum.isPublished,
-          sortOrder: currentAlbum.sortOrder,
-        })
-        notify(t('admin.album_created') || 'Album created', 'success')
-        setCurrentAlbum(created)
-      } else {
-        const updated = await updateAlbum(token, currentAlbum.id, {
-          name: currentAlbum.name,
-          description: currentAlbum.description || undefined,
-          coverUrl: currentAlbum.coverUrl || undefined,
-          isPublished: currentAlbum.isPublished,
-          sortOrder: currentAlbum.sortOrder,
-        })
-        notify(t('admin.album_updated') || 'Album updated', 'success')
-        setCurrentAlbum(updated)
-      }
+      const data = { name: currentAlbum.name, description: currentAlbum.description || undefined, coverUrl: currentAlbum.coverUrl || undefined, isPublished: currentAlbum.isPublished, sortOrder: currentAlbum.sortOrder }
+      const result = isNew ? await createAlbum(token, data) : await updateAlbum(token, currentAlbum.id, data)
+      notify(isNew ? (t('admin.album_created') || 'Album created') : (t('admin.album_updated') || 'Album updated'), 'success')
+      setCurrentAlbum(result)
       await loadAlbums()
     } catch (err) {
-      if (err instanceof ApiUnauthorizedError) {
-        onUnauthorized()
-        return
-      }
-      console.error('Failed to save album:', err)
+      if (err instanceof ApiUnauthorizedError) { onUnauthorized(); return }
       notify(t('common.error'), 'error')
     } finally {
       setSaving(false)
@@ -210,48 +166,31 @@ export function AlbumsTab({ token, photos, t, notify, onUnauthorized }: AlbumsTa
   async function handleTogglePublish(album: AlbumDto, e?: React.MouseEvent) {
     e?.stopPropagation()
     if (!token) return
-
     try {
-      const updated = await updateAlbum(token, album.id, {
-        isPublished: !album.isPublished,
-      })
+      const updated = await updateAlbum(token, album.id, { isPublished: !album.isPublished })
       notify(t('admin.notify_success'), 'success')
-      
       setAlbums(prev => prev.map(a => a.id === updated.id ? updated : a))
-      if (currentAlbum?.id === updated.id) {
-        setCurrentAlbum(updated)
-      }
+      if (currentAlbum?.id === updated.id) setCurrentAlbum(updated)
     } catch (err) {
-      if (err instanceof ApiUnauthorizedError) {
-        onUnauthorized()
-        return
-      }
-      console.error('Failed to toggle publish:', err)
+      if (err instanceof ApiUnauthorizedError) { onUnauthorized(); return }
       notify(t('common.error'), 'error')
     }
   }
 
   async function handleAddPhotos() {
     if (!token || !currentAlbum || selectedPhotoIds.size === 0) return
-
     try {
       setSaving(true)
       await addPhotosToAlbum(token, currentAlbum.id, Array.from(selectedPhotoIds))
       notify(t('admin.photos_added') || 'Photos added', 'success')
       setShowPhotoSelector(false)
       setSelectedPhotoIds(new Set())
-      
       const updatedAlbums = await getAdminAlbums(token)
       setAlbums(updatedAlbums)
-      
       const updatedCurrent = updatedAlbums.find(a => a.id === currentAlbum.id)
       if (updatedCurrent) setCurrentAlbum(updatedCurrent)
     } catch (err) {
-      if (err instanceof ApiUnauthorizedError) {
-        onUnauthorized()
-        return
-      }
-      console.error('Failed to add photos:', err)
+      if (err instanceof ApiUnauthorizedError) { onUnauthorized(); return }
       notify(t('common.error'), 'error')
     } finally {
       setSaving(false)
@@ -260,41 +199,30 @@ export function AlbumsTab({ token, photos, t, notify, onUnauthorized }: AlbumsTa
 
   async function handleRemovePhoto(photoId: string) {
     if (!token || !currentAlbum) return
-
     try {
       const updated = await removePhotoFromAlbum(token, currentAlbum.id, photoId)
       setCurrentAlbum(updated)
       setAlbums(prev => prev.map(a => a.id === updated.id ? updated : a))
       notify(t('admin.photo_removed') || 'Photo removed', 'success')
     } catch (err) {
-      if (err instanceof ApiUnauthorizedError) {
-        onUnauthorized()
-        return
-      }
-      console.error('Failed to remove photo:', err)
+      if (err instanceof ApiUnauthorizedError) { onUnauthorized(); return }
       notify(t('common.error'), 'error')
     }
   }
 
   async function handleSetCover(photoId: string) {
     if (!token || !currentAlbum) return
-
     try {
       const updated = await setAlbumCover(token, currentAlbum.id, photoId)
       setCurrentAlbum(updated)
       setAlbums(prev => prev.map(a => a.id === updated.id ? updated : a))
       notify(t('admin.cover_set') || 'Cover set', 'success')
     } catch (err) {
-      if (err instanceof ApiUnauthorizedError) {
-        onUnauthorized()
-        return
-      }
-      console.error('Failed to set cover:', err)
+      if (err instanceof ApiUnauthorizedError) { onUnauthorized(); return }
       notify(t('common.error'), 'error')
     }
   }
 
-  // Get photos not in current album
   const availablePhotos = useMemo(() => {
     if (!currentAlbum) return photos
     const albumPhotoIds = new Set(currentAlbum.photos.map(p => p.id))
@@ -302,135 +230,153 @@ export function AlbumsTab({ token, photos, t, notify, onUnauthorized }: AlbumsTa
   }, [photos, currentAlbum])
 
   if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-muted-foreground text-xs font-mono uppercase">
-        {t('common.loading')}
-      </div>
-    )
+    return <div className="flex-1 flex items-center justify-center text-muted-foreground text-xs font-mono uppercase">{t('common.loading')}</div>
   }
 
   // List View
   if (!currentAlbum) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-serif text-2xl">{t('admin.albums') || 'Albums'}</h2>
-            <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">
-              {albums.length} {t('admin.total') || 'total'}
-            </p>
+            <h2 className="text-xl font-light tracking-wide">{t('admin.albums') || 'Albums'}</h2>
+            <p className="text-xs text-muted-foreground mt-1">{filteredAlbums.length} of {albums.length}</p>
           </div>
-          <button
-            onClick={handleCreateAlbum}
-            className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-sm"
-          >
+          <button onClick={handleCreateAlbum} className="flex items-center gap-2 px-5 py-2.5 bg-foreground text-background text-xs font-medium hover:bg-primary hover:text-primary-foreground transition-colors">
             <Plus className="w-4 h-4" />
-            <span>{t('admin.new_album') || 'New Album'}</span>
+            {t('admin.new_album') || 'New Album'}
           </button>
         </div>
 
-        {albums.length === 0 ? (
-          <div className="py-24 text-center border border-dashed border-border/50 rounded-lg bg-muted/5">
-            <FolderOpen className="w-12 h-12 mx-auto mb-6 opacity-10" />
-            <p className="text-sm font-serif italic text-muted-foreground mb-6">
-              {t('admin.no_albums') || 'No albums yet'}
-            </p>
-            <button
-              onClick={handleCreateAlbum}
-              className="inline-flex items-center gap-2 px-6 py-3 border border-border text-xs font-bold uppercase tracking-widest hover:bg-muted transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{t('admin.create_first_album') || 'Create your first album'}</span>
+        {/* Toolbar */}
+        <div className="flex items-center gap-4 pb-4 border-b border-border/50">
+          {/* Search */}
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder={t('admin.search') || 'Search...'}
+              className="w-full pl-10 pr-4 py-2 bg-muted/30 border-b border-border text-sm outline-none focus:border-primary transition-colors"
+            />
+          </div>
+
+          {/* Filter */}
+          <div className="flex items-center gap-1 bg-muted/30 p-1">
+            <Filter className="w-4 h-4 text-muted-foreground mx-2" />
+            {(['all', 'published', 'draft'] as FilterStatus[]).map(status => (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${filterStatus === status ? 'bg-background text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                {status === 'all' ? t('common.all') || 'All' : status === 'published' ? t('admin.published') || 'Published' : t('admin.draft') || 'Draft'}
+              </button>
+            ))}
+          </div>
+
+          {/* View Toggle */}
+          <div className="flex bg-muted/30 p-1">
+            <button onClick={() => setViewMode('grid')} className={`p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-background text-foreground' : 'text-muted-foreground'}`}>
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button onClick={() => setViewMode('list')} className={`p-1.5 transition-colors ${viewMode === 'list' ? 'bg-background text-foreground' : 'text-muted-foreground'}`}>
+              <List className="w-4 h-4" />
             </button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {albums.map((album) => (
+        </div>
+
+        {/* Content */}
+        {filteredAlbums.length === 0 ? (
+          <div className="py-20 text-center border border-dashed border-border/50 bg-muted/5">
+            <FolderOpen className="w-12 h-12 mx-auto mb-4 opacity-10" />
+            <p className="text-sm text-muted-foreground mb-4">{searchQuery || filterStatus !== 'all' ? 'No albums match your filters' : (t('admin.no_albums') || 'No albums yet')}</p>
+            {!searchQuery && filterStatus === 'all' && (
+              <button onClick={handleCreateAlbum} className="inline-flex items-center gap-2 px-4 py-2 border border-border text-xs font-medium hover:bg-muted transition-colors">
+                <Plus className="w-4 h-4" />
+                {t('admin.create_first_album') || 'Create your first album'}
+              </button>
+            )}
+          </div>
+        ) : viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredAlbums.map(album => (
               <div
                 key={album.id}
                 draggable
-                onDragStart={(e) => handleDragStart(e, album.id)}
-                onDragOver={(e) => handleDragOver(e, album.id)}
+                onDragStart={e => handleDragStart(e, album.id)}
+                onDragOver={e => handleDragOver(e, album.id)}
                 onDragEnd={handleDragEnd}
-                onClick={() => handleSelectAlbum(album)}
-                className={`group cursor-pointer flex flex-col bg-card hover:shadow-lg transition-all duration-300 border border-border/50 ${
-                  draggingId === album.id ? 'opacity-50' : ''
-                }`}
+                onClick={() => { setCurrentAlbum({ ...album }); setActiveTab('photos') }}
+                className={`group cursor-pointer bg-card border border-border/50 hover:border-border transition-all ${draggingId === album.id ? 'opacity-50' : ''}`}
               >
-                {/* Cover */}
                 <div className="relative aspect-[4/3] bg-muted overflow-hidden">
-                  {/* Drag Handle */}
-                  <div
-                    className="absolute top-2 left-2 z-10 p-1.5 bg-black/40 text-white/70 hover:text-white rounded cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <div className="absolute top-2 left-2 z-10 p-1 bg-black/40 text-white/70 hover:text-white cursor-grab opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                     <GripVertical className="w-4 h-4" />
                   </div>
-
-                  {album.coverUrl ? (
-                    <img
-                      src={resolveAssetUrl(album.coverUrl, cdnDomain)}
-                      alt={album.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                  ) : album.photos.length > 0 ? (
-                    <img
-                      src={resolveAssetUrl(album.photos[0].thumbnailUrl || album.photos[0].url, cdnDomain)}
-                      alt={album.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
+                  {album.coverUrl || album.photos.length > 0 ? (
+                    <img src={resolveAssetUrl(album.coverUrl || album.photos[0]?.thumbnailUrl || album.photos[0]?.url, cdnDomain)} alt={album.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <FolderOpen className="w-12 h-12 opacity-10" />
-                    </div>
+                    <div className="w-full h-full flex items-center justify-center"><FolderOpen className="w-10 h-10 opacity-10" /></div>
                   )}
-                  
-                  {/* Overlay Gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  
-                  {/* Photo Count Badge */}
-                  <div className="absolute top-3 right-3 px-2 py-1 bg-black/40 backdrop-blur-sm text-white text-[9px] font-bold uppercase tracking-widest border border-white/10">
-                    {album.photoCount}
-                  </div>
-
-                  {/* Quick Actions (Hover) */}
-                  <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-                    <button
-                      onClick={(e) => handleTogglePublish(album, e)}
-                      className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-full transition-colors"
-                      title={album.isPublished ? t('admin.unpublish') : t('admin.publish')}
-                    >
+                  <div className="absolute top-2 right-2 px-2 py-0.5 bg-black/50 text-white text-[10px] font-medium">{album.photoCount}</div>
+                  <div className="absolute bottom-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={e => handleTogglePublish(album, e)} className="p-1.5 bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm transition-colors">
                       {album.isPublished ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                     </button>
-                    <button
-                      onClick={(e) => handleDeleteAlbum(album.id, e)}
-                      className="p-2 bg-red-500/80 hover:bg-red-500 text-white rounded-full transition-colors"
-                      title={t('admin.delete')}
-                    >
+                    <button onClick={e => handleDeleteAlbum(album.id, e)} className="p-1.5 bg-red-500/80 hover:bg-red-500 text-white transition-colors">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
-
-                {/* Info */}
-                <div className="p-5 flex flex-col flex-1 gap-3">
-                  <div className="flex items-start justify-between gap-4">
-                    <h3 className="font-serif text-lg leading-tight truncate">
-                      {album.name}
-                    </h3>
-                    <span className={`shrink-0 w-2 h-2 rounded-full mt-1.5 ${album.isPublished ? 'bg-primary' : 'bg-muted-foreground/30'}`} />
+                <div className="p-4">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <h3 className="font-medium truncate">{album.name}</h3>
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${album.isPublished ? 'bg-green-500' : 'bg-muted-foreground/30'}`} />
                   </div>
-                  
-                  {album.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                      {album.description}
-                    </p>
+                  {album.description && <p className="text-xs text-muted-foreground line-clamp-1">{album.description}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {filteredAlbums.map(album => (
+              <div
+                key={album.id}
+                draggable
+                onDragStart={e => handleDragStart(e, album.id)}
+                onDragOver={e => handleDragOver(e, album.id)}
+                onDragEnd={handleDragEnd}
+                onClick={() => { setCurrentAlbum({ ...album }); setActiveTab('photos') }}
+                className={`group flex items-center gap-4 p-4 bg-card border border-border/50 hover:border-border cursor-pointer transition-all ${draggingId === album.id ? 'opacity-50' : ''}`}
+              >
+                <div className="text-muted-foreground/40 group-hover:text-muted-foreground cursor-grab" onClick={e => e.stopPropagation()}>
+                  <GripVertical className="w-4 h-4" />
+                </div>
+                <div className="w-16 h-12 bg-muted overflow-hidden flex-shrink-0">
+                  {album.coverUrl || album.photos.length > 0 ? (
+                    <img src={resolveAssetUrl(album.coverUrl || album.photos[0]?.thumbnailUrl || album.photos[0]?.url, cdnDomain)} alt={album.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center"><FolderOpen className="w-5 h-5 opacity-20" /></div>
                   )}
-                  
-                  <div className="mt-auto pt-4 border-t border-border/50 flex items-center justify-between text-[10px] text-muted-foreground uppercase tracking-widest">
-                    <span>{new Date(album.updatedAt).toLocaleString()}</span>
-                    <span className="group-hover:text-primary transition-colors">Manage &rarr;</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-medium truncate">{album.name}</h3>
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${album.isPublished ? 'bg-green-500' : 'bg-muted-foreground/30'}`} />
                   </div>
+                  <p className="text-xs text-muted-foreground">{album.photoCount} photos</p>
+                </div>
+                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={e => handleTogglePublish(album, e)} className="p-2 hover:bg-muted transition-colors">
+                    {album.isPublished ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
+                  </button>
+                  <button onClick={e => handleDeleteAlbum(album.id, e)} className="p-2 text-destructive hover:bg-destructive/10 transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -442,268 +388,116 @@ export function AlbumsTab({ token, photos, t, notify, onUnauthorized }: AlbumsTa
 
   // Detail View
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
-      <div className="flex items-center justify-between pb-6 border-b border-border">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setCurrentAlbum(null)}
-            className="p-2 hover:bg-muted transition-colors rounded-full"
-          >
+    <div className="space-y-6">
+      <div className="flex items-center justify-between pb-4 border-b border-border">
+        <div className="flex items-center gap-3">
+          <button onClick={() => setCurrentAlbum(null)} className="p-2 hover:bg-muted transition-colors">
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div>
-            <h2 className="font-serif text-2xl">{currentAlbum.name || (t('admin.new_album') || 'New Album')}</h2>
-            <div className="flex items-center gap-3 mt-1">
-              <span className={`w-2 h-2 rounded-full ${currentAlbum.isPublished ? 'bg-primary' : 'bg-muted-foreground/30'}`} />
-              <p className="text-xs text-muted-foreground uppercase tracking-widest">
-                {currentAlbum.isPublished ? (t('admin.published') || 'Published') : (t('admin.draft') || 'Draft')}
-              </p>
-            </div>
+            <h2 className="text-lg font-medium">{currentAlbum.name || (t('admin.new_album') || 'New Album')}</h2>
+            <p className="text-xs text-muted-foreground">{currentAlbum.isPublished ? t('admin.published') : t('admin.draft')}</p>
           </div>
         </div>
-        
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {activeTab === 'overview' && (
-            <button
-              onClick={handleSaveAlbum}
-              disabled={saving}
-              className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-all"
-            >
+            <button onClick={handleSaveAlbum} disabled={saving} className="flex items-center gap-2 px-5 py-2 bg-foreground text-background text-xs font-medium hover:bg-primary hover:text-primary-foreground disabled:opacity-50 transition-colors">
               <Save className="w-4 h-4" />
-              <span>{saving ? t('common.loading') : t('admin.save')}</span>
+              {saving ? t('common.loading') : t('admin.save')}
             </button>
           )}
           {activeTab === 'photos' && (
-            <button
-              onClick={() => setShowPhotoSelector(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all"
-            >
+            <button onClick={() => setShowPhotoSelector(true)} className="flex items-center gap-2 px-5 py-2 bg-foreground text-background text-xs font-medium hover:bg-primary hover:text-primary-foreground transition-colors">
               <Plus className="w-4 h-4" />
-              <span>{t('admin.add_photos') || 'Add Photos'}</span>
+              {t('admin.add_photos') || 'Add Photos'}
             </button>
           )}
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex space-x-1 border-b border-border">
-        <button
-          onClick={() => setActiveTab('overview')}
-          className={`flex items-center gap-2 px-6 py-4 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors ${
-            activeTab === 'overview'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
-        >
+      <div className="flex gap-1 border-b border-border">
+        <button onClick={() => setActiveTab('overview')} className={`flex items-center gap-2 px-4 py-3 text-xs font-medium border-b-2 transition-colors ${activeTab === 'overview' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
           <Settings className="w-4 h-4" />
           {t('admin.overview') || 'Overview'}
         </button>
         {currentAlbum.id && (
-          <button
-            onClick={() => setActiveTab('photos')}
-            className={`flex items-center gap-2 px-6 py-4 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors ${
-              activeTab === 'photos'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
+          <button onClick={() => setActiveTab('photos')} className={`flex items-center gap-2 px-4 py-3 text-xs font-medium border-b-2 transition-colors ${activeTab === 'photos' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
             <Layout className="w-4 h-4" />
             {t('admin.photos') || 'Photos'}
-            <span className="ml-1 px-1.5 py-0.5 bg-muted text-[10px] rounded-full">
-              {currentAlbum.photos.length}
-            </span>
+            <span className="ml-1 px-1.5 py-0.5 bg-muted text-[10px]">{currentAlbum.photos.length}</span>
           </button>
         )}
       </div>
 
-      {/* Content */}
-      <div className="pt-4">
+      <div className="pt-2">
         {activeTab === 'overview' ? (
-          <div className="max-w-2xl space-y-8">
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                  {t('admin.album_name') || 'Album Name'}
-                </label>
-                <CustomInput
-                  variant="config"
-                  value={currentAlbum.name}
-                  onChange={(e) => setCurrentAlbum({ ...currentAlbum, name: e.target.value })}
-                  placeholder={t('admin.album_name_placeholder') || 'Enter album name'}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                  {t('admin.description') || 'Description'}
-                </label>
-                <textarea
-                  value={currentAlbum.description || ''}
-                  onChange={(e) => setCurrentAlbum({ ...currentAlbum, description: e.target.value })}
-                  placeholder={t('admin.description_placeholder') || 'Enter description (optional)'}
-                  className="w-full p-4 h-32 bg-transparent border border-border focus:border-primary outline-none text-sm transition-colors rounded-none resize-none font-serif placeholder:font-sans"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                    {t('admin.sort_order') || 'Sort Order'}
-                  </label>
-                  <CustomInput
-                    variant="config"
-                    type="number"
-                    value={currentAlbum.sortOrder}
-                    onChange={(e) => setCurrentAlbum({ ...currentAlbum, sortOrder: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                    {t('admin.status') || 'Status'}
-                  </label>
-                  <div className="flex items-center gap-3 p-3 border border-border bg-muted/5">
-                    <input
-                      type="checkbox"
-                      checked={currentAlbum.isPublished}
-                      onChange={(e) => setCurrentAlbum({ ...currentAlbum, isPublished: e.target.checked })}
-                      className="w-4 h-4 accent-primary cursor-pointer"
-                    />
-                    <span className="text-xs uppercase tracking-wider">
-                      {currentAlbum.isPublished ? (t('admin.published') || 'Published') : (t('admin.draft') || 'Draft')}
-                    </span>
-                  </div>
-                </div>
-              </div>
+          <div className="max-w-xl space-y-6">
+            <div>
+              <label className="block text-xs text-muted-foreground mb-2">{t('admin.album_name') || 'Album Name'}</label>
+              <CustomInput variant="config" value={currentAlbum.name} onChange={e => setCurrentAlbum({ ...currentAlbum, name: e.target.value })} placeholder={t('admin.album_name_placeholder') || 'Enter album name'} />
+            </div>
+            <div>
+              <label className="block text-xs text-muted-foreground mb-2">{t('admin.description') || 'Description'}</label>
+              <textarea value={currentAlbum.description || ''} onChange={e => setCurrentAlbum({ ...currentAlbum, description: e.target.value })} placeholder={t('admin.description_placeholder') || 'Enter description (optional)'} className="w-full p-3 h-24 bg-muted/30 border-b border-border focus:border-primary outline-none text-sm transition-colors resize-none" />
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-muted/30 border-b border-border">
+              <input type="checkbox" checked={currentAlbum.isPublished} onChange={e => setCurrentAlbum({ ...currentAlbum, isPublished: e.target.checked })} className="w-4 h-4 accent-primary" />
+              <span className="text-sm">{currentAlbum.isPublished ? t('admin.published') : t('admin.draft')}</span>
             </div>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {showPhotoSelector ? (
-              <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
-                <div className="flex items-center justify-between p-4 bg-muted/10 border border-border">
-                  <div className="flex items-center gap-4">
-                    <button
-                      onClick={() => {
-                        setShowPhotoSelector(false)
-                        setSelectedPhotoIds(new Set())
-                      }}
-                      className="p-2 hover:bg-muted transition-colors"
-                    >
-                      <X className="w-5 h-5" />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-muted/30 border border-border">
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => { setShowPhotoSelector(false); setSelectedPhotoIds(new Set()) }} className="p-1.5 hover:bg-muted transition-colors">
+                      <X className="w-4 h-4" />
                     </button>
-                    <div>
-                      <h3 className="font-bold text-sm uppercase tracking-wider">{t('admin.select_photos') || 'Select Photos'}</h3>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                        {selectedPhotoIds.size} {t('admin.selected') || 'selected'}
-                      </p>
-                    </div>
+                    <span className="text-sm">{selectedPhotoIds.size} selected</span>
                   </div>
-                  <button
-                    onClick={handleAddPhotos}
-                    disabled={selectedPhotoIds.size === 0 || saving}
-                    className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-all"
-                  >
-                    <Check className="w-4 h-4" />
-                    <span>{t('admin.confirm_add') || 'Confirm Add'}</span>
+                  <button onClick={handleAddPhotos} disabled={selectedPhotoIds.size === 0 || saving} className="flex items-center gap-2 px-4 py-1.5 bg-foreground text-background text-xs font-medium disabled:opacity-50 transition-colors">
+                    <Check className="w-3.5 h-3.5" />
+                    Add
                   </button>
                 </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
-                  {availablePhotos.map((photo) => {
+                <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                  {availablePhotos.map(photo => {
                     const isSelected = selectedPhotoIds.has(photo.id)
                     return (
-                      <div
-                        key={photo.id}
-                        onClick={() => {
-                          setSelectedPhotoIds(prev => {
-                            const next = new Set(prev)
-                            if (next.has(photo.id)) next.delete(photo.id)
-                            else next.add(photo.id)
-                            return next
-                          })
-                        }}
-                        className={`relative aspect-square cursor-pointer group transition-all ${
-                          isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'hover:opacity-90'
-                        }`}
-                      >
-                        <img
-                          src={resolveAssetUrl(photo.thumbnailUrl || photo.url, cdnDomain)}
-                          alt={photo.title}
-                          className="w-full h-full object-cover"
-                        />
-                        {isSelected && (
-                          <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg">
-                              <Check className="w-5 h-5 text-primary-foreground" />
-                            </div>
-                          </div>
-                        )}
+                      <div key={photo.id} onClick={() => setSelectedPhotoIds(prev => { const next = new Set(prev); next.has(photo.id) ? next.delete(photo.id) : next.add(photo.id); return next })} className={`relative aspect-square cursor-pointer ${isSelected ? 'ring-2 ring-primary' : 'hover:opacity-80'}`}>
+                        <img src={resolveAssetUrl(photo.thumbnailUrl || photo.url, cdnDomain)} alt={photo.title} className="w-full h-full object-cover" />
+                        {isSelected && <div className="absolute inset-0 bg-primary/20 flex items-center justify-center"><Check className="w-5 h-5 text-primary" /></div>}
                       </div>
                     )
                   })}
                 </div>
               </div>
+            ) : currentAlbum.photos.length === 0 ? (
+              <div className="py-16 text-center border border-dashed border-border/50 bg-muted/5">
+                <ImageIcon className="w-10 h-10 mx-auto mb-3 opacity-10" />
+                <p className="text-sm text-muted-foreground mb-3">{t('admin.album_empty') || 'This album is empty'}</p>
+                <button onClick={() => setShowPhotoSelector(true)} className="inline-flex items-center gap-2 px-4 py-2 border border-border text-xs font-medium hover:bg-muted transition-colors">
+                  <Plus className="w-4 h-4" />
+                  {t('admin.add_photos') || 'Add Photos'}
+                </button>
+              </div>
             ) : (
-              <>
-                {currentAlbum.photos.length === 0 ? (
-                  <div className="py-24 text-center border border-dashed border-border rounded-lg bg-muted/5">
-                    <ImageIcon className="w-12 h-12 mx-auto mb-6 opacity-10" />
-                    <p className="text-sm text-muted-foreground mb-6">
-                      {t('admin.album_empty') || 'This album is empty'}
-                    </p>
-                    <button
-                      onClick={() => setShowPhotoSelector(true)}
-                      className="inline-flex items-center gap-2 px-6 py-3 border border-border text-xs font-bold uppercase tracking-widest hover:bg-muted transition-all"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>{t('admin.add_photos') || 'Add Photos'}</span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
-                    {currentAlbum.photos.map((photo) => {
-                      const isCover = currentAlbum.coverUrl === (photo.thumbnailUrl || photo.url)
-                      return (
-                        <div
-                          key={photo.id}
-                          className="relative aspect-square group border border-border bg-muted overflow-hidden"
-                        >
-                          <img
-                            src={resolveAssetUrl(photo.thumbnailUrl || photo.url, cdnDomain)}
-                            alt={photo.title}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                          
-                          {isCover && (
-                            <div className="absolute top-2 left-2 px-2 py-1 bg-primary text-primary-foreground text-[8px] font-bold uppercase tracking-wider shadow-sm">
-                              {t('admin.cover') || 'Cover'}
-                            </div>
-                          )}
-                          
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
-                            {!isCover && (
-                              <button
-                                onClick={() => handleSetCover(photo.id)}
-                                className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-[9px] font-bold uppercase tracking-widest border border-white/20 backdrop-blur-sm transition-all"
-                              >
-                                {t('admin.set_cover') || 'Set Cover'}
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleRemovePhoto(photo.id)}
-                              className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/80 text-white text-[9px] font-bold uppercase tracking-widest border border-red-500/30 backdrop-blur-sm transition-all"
-                            >
-                              {t('admin.remove') || 'Remove'}
-                            </button>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </>
+              <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                {currentAlbum.photos.map(photo => {
+                  const isCover = currentAlbum.coverUrl === (photo.thumbnailUrl || photo.url)
+                  return (
+                    <div key={photo.id} className="relative aspect-square group bg-muted overflow-hidden">
+                      <img src={resolveAssetUrl(photo.thumbnailUrl || photo.url, cdnDomain)} alt={photo.title} className="w-full h-full object-cover" />
+                      {isCover && <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-primary text-primary-foreground text-[8px] font-medium">Cover</div>}
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5">
+                        {!isCover && <button onClick={() => handleSetCover(photo.id)} className="px-2 py-1 bg-white/20 hover:bg-white/30 text-white text-[9px] font-medium">Set Cover</button>}
+                        <button onClick={() => handleRemovePhoto(photo.id)} className="px-2 py-1 bg-red-500/80 hover:bg-red-500 text-white text-[9px] font-medium">Remove</button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             )}
           </div>
         )}
