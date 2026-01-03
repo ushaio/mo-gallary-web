@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, TouchEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X,
@@ -18,6 +18,7 @@ import {
   Loader2,
   LayoutGrid,
   ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 import { PhotoDto, resolveAssetUrl, getPhotoStory, type StoryDto, getPhotoComments, getStoryComments, type PublicCommentDto } from '@/lib/api'
 import { useSettings } from '@/contexts/SettingsContext'
@@ -76,6 +77,13 @@ export function PhotoDetailModal({
   // Thumbnails visibility state
   const [showThumbnails, setShowThumbnails] = useState(true)
   const thumbnailsScrollRef = useRef<HTMLDivElement>(null)
+  
+  // Mobile panel state
+  const [mobilePanelExpanded, setMobilePanelExpanded] = useState(false)
+  
+  // Touch swipe handling
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
+  const touchMoveRef = useRef<{ x: number; y: number } | null>(null)
 
   const currentPhotoIndex = photo && allPhotos.length > 0
     ? allPhotos.findIndex(p => p.id === photo.id)
@@ -137,6 +145,35 @@ export function PhotoDetailModal({
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, allPhotos, currentPhotoIndex, hasPrevious, hasNext])
+
+  // Touch swipe handlers for mobile navigation
+  const handleTouchStart = (e: TouchEvent) => {
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+    touchMoveRef.current = null
+  }
+
+  const handleTouchMove = (e: TouchEvent) => {
+    touchMoveRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+  }
+
+  const handleTouchEnd = () => {
+    if (!touchStartRef.current || !touchMoveRef.current) return
+    
+    const deltaX = touchMoveRef.current.x - touchStartRef.current.x
+    const deltaY = touchMoveRef.current.y - touchStartRef.current.y
+    const minSwipeDistance = 50
+    
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+      if (deltaX > 0 && hasPrevious) {
+        handlePrevious()
+      } else if (deltaX < 0 && hasNext) {
+        handleNext()
+      }
+    }
+    
+    touchStartRef.current = null
+    touchMoveRef.current = null
+  }
 
   const notify = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Math.random().toString(36).substring(2, 9)
@@ -260,6 +297,7 @@ export function PhotoDetailModal({
   }
 
   const toggleThumbnails = () => setShowThumbnails(!showThumbnails)
+  const toggleMobilePanel = () => setMobilePanelExpanded(!mobilePanelExpanded)
 
   if (!photo) return null
 
@@ -289,8 +327,13 @@ export function PhotoDetailModal({
           
           <div className="flex flex-col lg:flex-row w-full h-full overflow-hidden">
             {/* Left: Immersive Photo Viewer */}
-            <div className="relative flex-1 bg-black/5 flex flex-col overflow-hidden">
-              <div className="relative flex-1 flex items-center justify-center group overflow-hidden">
+            <div className={`relative bg-black/5 flex flex-col overflow-hidden transition-all duration-300 ${mobilePanelExpanded ? 'h-[35vh] lg:h-full lg:flex-1' : 'flex-1'}`}>
+              <div
+                className="relative flex-1 flex items-center justify-center group overflow-hidden"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
                 {/* Close Button */}
                 <button
                   onClick={onClose}
@@ -299,43 +342,51 @@ export function PhotoDetailModal({
                   <X className="w-5 h-5" />
                 </button>
 
-                <div className="absolute inset-0 flex items-center justify-center p-4 md:p-12">
+                {/* Photo Counter - Top Right */}
+                {(allPhotos.length > 1 || hasMore) && (
+                  <div className="absolute top-4 right-4 md:top-6 md:right-6 z-50 px-3 py-1.5 bg-black/40 backdrop-blur-md text-white/80 font-mono text-xs rounded border border-white/10 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-500">
+                    {displayIndex} / {displayTotal}
+                  </div>
+                )}
+
+                <div className="absolute inset-0 flex items-center justify-center p-2 md:p-12">
                   <img
                     src={resolveAssetUrl(photo.url, settings?.cdn_domain)}
                     alt={photo.title}
-                    className="max-w-full max-h-full object-contain shadow-2xl"
+                    className="max-w-full max-h-full object-contain shadow-2xl select-none"
+                    draggable={false}
                   />
                 </div>
 
-                {/* Navigation Arrows */}
+                {/* Navigation Arrows - Hidden on mobile */}
                 {(allPhotos.length > 1 || hasMore) && (
                   <>
                     <button
                       onClick={handlePrevious}
                       disabled={!hasPrevious}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 p-4 text-foreground/20 hover:text-foreground disabled:opacity-0 transition-all z-20"
+                      className="hidden md:block absolute left-4 top-1/2 -translate-y-1/2 p-4 text-foreground/20 hover:text-foreground disabled:opacity-0 transition-all z-20"
                     >
-                      <ChevronLeft className="w-8 h-8 md:w-12 md:h-12" />
+                      <ChevronLeft className="w-12 h-12" />
                     </button>
                     <button
                       onClick={handleNext}
                       disabled={!hasNext || isLoadingMore}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 p-4 text-foreground/20 hover:text-foreground disabled:opacity-0 transition-all z-20"
+                      className="hidden md:block absolute right-4 top-1/2 -translate-y-1/2 p-4 text-foreground/20 hover:text-foreground disabled:opacity-0 transition-all z-20"
                     >
                       {isLoadingMore ? (
-                        <Loader2 className="w-8 h-8 md:w-12 md:h-12 animate-spin" />
+                        <Loader2 className="w-12 h-12 animate-spin" />
                       ) : (
-                        <ChevronRight className="w-8 h-8 md:w-12 md:h-12" />
+                        <ChevronRight className="w-12 h-12" />
                       )}
                     </button>
                   </>
                 )}
                 
                 {/* Bottom Meta Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black/50 to-transparent text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-10">
-                  <div className="flex items-end justify-between max-w-screen-2xl mx-auto">
-                    <div className="space-y-2">
-                      <p className="font-serif text-2xl md:text-3xl">{photo.title}</p>
+                <div className={`absolute bottom-0 left-0 right-0 p-4 md:p-8 bg-gradient-to-t from-black/50 to-transparent text-white transition-opacity duration-500 pointer-events-none z-10 ${mobilePanelExpanded ? 'opacity-0 lg:opacity-0 lg:group-hover:opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
+                  <div className="max-w-screen-2xl mx-auto">
+                    <div className="space-y-1 md:space-y-2">
+                      <p className="font-serif text-lg md:text-3xl line-clamp-1">{photo.title}</p>
                       {photo.takenAt && (
                         <p className="font-mono text-xs opacity-70 uppercase tracking-widest">
                           {user?.isAdmin
@@ -351,14 +402,11 @@ export function PhotoDetailModal({
                         </p>
                       )}
                     </div>
-                    <div className="font-mono text-xs opacity-60">
-                      {displayIndex} / {displayTotal}
-                    </div>
                   </div>
                 </div>
 
-                {/* Thumbnail Toggle Button */}
-                <div className="absolute bottom-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                {/* Thumbnail Toggle Button - Desktop only */}
+                <div className="hidden md:block absolute bottom-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                    <button
                     onClick={toggleThumbnails}
                     className={`p-2 bg-black/40 hover:bg-black/60 text-white/90 hover:text-white rounded backdrop-blur-md transition-all border border-white/10 ${showThumbnails ? 'bg-primary/40 border-primary/40' : ''}`}
@@ -377,7 +425,7 @@ export function PhotoDetailModal({
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3, type: "spring", stiffness: 200, damping: 25 }}
-                    className="relative bg-black/10 backdrop-blur-md border-t border-white/5 shrink-0 z-30 overflow-hidden"
+                    className="hidden md:block relative bg-black/10 backdrop-blur-md border-t border-white/5 shrink-0 z-30 overflow-hidden"
                   >
                      <div
                       ref={thumbnailsScrollRef}
@@ -415,10 +463,53 @@ export function PhotoDetailModal({
                   </motion.div>
                 )}
               </AnimatePresence>
+              
+              {/* Mobile Thumbnails Strip */}
+              {allPhotos.length > 1 && (
+                <div className="md:hidden relative bg-black/10 backdrop-blur-md border-t border-white/5 shrink-0 z-30">
+                  <div className="flex items-center gap-1.5 p-2 overflow-x-auto scroll-smooth h-16">
+                    {allPhotos.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => onPhotoChange?.(p)}
+                        className={`relative flex-shrink-0 h-full aspect-square rounded overflow-hidden transition-all ${
+                          p.id === photo.id
+                            ? 'ring-2 ring-primary opacity-100'
+                            : 'opacity-50'
+                        }`}
+                      >
+                        <img
+                          src={resolveAssetUrl(p.thumbnailUrl || p.url, settings?.cdn_domain)}
+                          alt={p.title}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </button>
+                    ))}
+                    {hasMore && (
+                      <div className="flex-shrink-0 h-full aspect-square bg-black/20 rounded flex items-center justify-center">
+                        {isLoadingMore ? (
+                          <Loader2 className="w-3 h-3 animate-spin text-white/50" />
+                        ) : (
+                          <span className="text-[10px] text-white/50">...</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right: Info & Story Panel */}
-            <div className="w-full lg:w-[480px] xl:w-[560px] bg-background border-l border-border flex flex-col h-[50vh] lg:h-full">
+            <div className={`w-full lg:w-[480px] xl:w-[560px] bg-background border-t lg:border-t-0 lg:border-l border-border flex flex-col transition-all duration-300 ${mobilePanelExpanded ? 'flex-1' : 'h-auto lg:h-full'}`}>
+              {/* Mobile Panel Handle */}
+              <button
+                onClick={toggleMobilePanel}
+                className="lg:hidden flex items-center justify-center py-2 bg-muted/30 border-b border-border"
+              >
+                {mobilePanelExpanded ? <ChevronDown className="w-5 h-5 text-muted-foreground" /> : <ChevronUp className="w-5 h-5 text-muted-foreground" />}
+              </button>
+              
               {/* Tabs */}
               <div className="flex border-b border-border">
                 {[
@@ -449,7 +540,7 @@ export function PhotoDetailModal({
                           {photo.isFeatured && (
                             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-600 text-ui-micro font-bold uppercase tracking-widest border border-amber-500/20">
                               <Star className="w-3 h-3 fill-current" />
-                              Feature
+                              {t('gallery.featured')}
                             </span>
                           )}
                           {photo.category.split(',').map(cat => (
@@ -479,14 +570,14 @@ export function PhotoDetailModal({
                       {/* File Details */}
                       <div className="p-6 bg-muted/10 border border-border/50 space-y-6">
                         <h3 className="text-ui-xs font-bold uppercase tracking-[0.2em] text-muted-foreground text-center">
-                          File Details
+                          {t('gallery.file_details')}
                         </h3>
                         <div className="flex justify-between items-center font-mono text-xs">
-                          <span className="text-muted-foreground">Dimensions</span>
+                          <span className="text-muted-foreground">{t('gallery.dimensions')}</span>
                           <span>{photo.width} × {photo.height}</span>
                         </div>
                         <div className="flex justify-between items-center font-mono text-xs">
-                          <span className="text-muted-foreground">Size</span>
+                          <span className="text-muted-foreground">{t('gallery.size')}</span>
                           <span>{formatFileSize(photo.size)}</span>
                         </div>
                       </div>
@@ -529,7 +620,7 @@ export function PhotoDetailModal({
               </div>
 
               {/* Action Bar */}
-              <div className="p-6 border-t border-border bg-background flex gap-4 shrink-0">
+              <div className={`p-4 md:p-6 border-t border-border bg-background flex gap-4 shrink-0 ${!mobilePanelExpanded ? 'hidden lg:flex' : ''}`}>
                 <a
                   href={resolveAssetUrl(photo.url, settings?.cdn_domain)}
                   target="_blank"

@@ -306,24 +306,24 @@ export function StoryTab({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto custom-scrollbar p-8 md:p-12 space-y-16 relative">
+    <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 space-y-10 relative">
       <Toast notifications={notifications} remove={(id) => setNotifications(prev => prev.filter(n => n.id !== id))} />
       {!story ? (
-        <div className="space-y-12">
-          <div className="text-center py-12 border border-dashed border-border/50">
+        <div className="space-y-8">
+          <div className="text-center py-8 border border-dashed border-border/50">
             <BookOpen className="w-10 h-10 mx-auto mb-4 opacity-10" />
             <p className="text-xs font-serif italic text-muted-foreground">{t('gallery.no_story')}</p>
           </div>
         </div>
       ) : (
-        <div className="space-y-12">
+        <div className="space-y-8">
           {/* Story Header */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="h-px w-8 bg-primary/30" />
-              <span className="text-ui-xs font-bold uppercase tracking-[0.4em] text-primary/60">Journal</span>
+              <div className="h-px w-6 bg-primary/30" />
+              <span className="text-ui-xs font-bold uppercase tracking-[0.3em] text-primary/60">Journal</span>
             </div>
-            <h3 className="font-serif text-3xl md:text-4xl leading-[1.1] text-foreground tracking-tight">
+            <h3 className="font-serif text-2xl md:text-3xl leading-[1.1] text-foreground tracking-tight">
               {story.title}
             </h3>
             <div className="flex items-center gap-4 text-ui-micro font-mono uppercase tracking-widest text-muted-foreground/60">
@@ -337,10 +337,10 @@ export function StoryTab({
 
           {/* Photo Navigation */}
           {story.photos && story.photos.length > 1 && onPhotoChange && (
-            <div className="py-8 border-t border-b border-border/50">
-              <div className="flex items-center justify-between mb-6">
-                <div className="space-y-1">
-                  <h4 className="text-ui-xs font-bold tracking-[0.3em] uppercase text-primary">
+            <div className="py-5 border-t border-b border-border/50">
+              <div className="flex items-center justify-between mb-4">
+                <div className="space-y-0.5">
+                  <h4 className="text-ui-xs font-bold tracking-[0.2em] uppercase text-primary">
                     {t('story.story_album')}
                   </h4>
                   <div className="text-ui-micro font-mono text-muted-foreground/60 uppercase">
@@ -365,12 +365,12 @@ export function StoryTab({
                 </div>
               </div>
 
-              <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x">
+              <div className="flex gap-3 overflow-x-auto pb-3 custom-scrollbar snap-x">
                 {story.photos.map((photo, index) => (
                   <button
                     key={photo.id}
                     onClick={() => onPhotoChange(photo)}
-                    className={`relative flex-shrink-0 w-20 h-20 overflow-hidden transition-all snap-start ${
+                    className={`relative flex-shrink-0 w-16 h-16 overflow-hidden transition-all snap-start ${
                       index === currentPhotoIndex
                         ? 'grayscale-0 scale-105'
                         : 'grayscale hover:grayscale-0 hover:scale-105'
@@ -398,31 +398,31 @@ export function StoryTab({
       )}
 
       {/* Comments Section */}
-      <div className="pt-16 border-t border-border/50">
-        <div className="flex items-center justify-between mb-12">
-          <div className="flex items-center gap-4">
-            <MessageSquare className="w-5 h-5 text-primary/40" />
-            <h3 className="text-ui-xs font-bold tracking-[0.4em] uppercase text-primary/80">
+      <div className="pt-10 border-t border-border/50">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <MessageSquare className="w-4 h-4 text-primary/40" />
+            <h3 className="text-ui-xs font-bold tracking-[0.3em] uppercase text-primary/80">
               {t('gallery.comments')} {comments.length > 0 && `(${comments.length})`}
             </h3>
           </div>
         </div>
 
         {/* Comment Form - Now at the top */}
-        <div className="relative group mb-16">
-          <div className="absolute -inset-4 bg-muted/5 opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none" />
+        <div className="relative group mb-10">
+          <div className="absolute -inset-3 bg-muted/5 opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none" />
           {!settingsLoaded ? (
             /* Loading state for settings */
-            <div className="space-y-8 animate-pulse">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-6 animate-pulse">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="h-12 bg-muted rounded-none"></div>
                 <div className="h-12 bg-muted rounded-none"></div>
               </div>
-              <div className="h-32 bg-muted rounded-none"></div>
+              <div className="h-24 bg-muted rounded-none"></div>
             </div>
           ) : !canComment ? (
             /* Linux DO only mode - show login prompt */
-            <div className="text-center py-8 border border-dashed border-border/50">
+            <div className="text-center py-6 border border-dashed border-border/50">
               <p className="text-xs text-muted-foreground mb-6">
                 {t('gallery.comment_linuxdo_only')}
               </p>
@@ -439,9 +439,9 @@ export function StoryTab({
               </button>
             </div>
           ) : (
-          <form onSubmit={handleSubmit} className="relative space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-2">
+          <form onSubmit={handleSubmit} className="relative space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-1.5">
                 <label className="text-ui-micro font-bold text-muted-foreground/60 uppercase tracking-[0.3em]">
                   {t('gallery.comment_author')}
                 </label>
@@ -454,7 +454,7 @@ export function StoryTab({
                   disabled={submitting || isLinuxDoUser || isAdmin}
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label className="text-ui-micro font-bold text-muted-foreground/60 uppercase tracking-[0.3em]">
                   {isAdmin && !isLinuxDoUser ? t('admin.admin') : (linuxdoOnly && isLinuxDoUser ? t('gallery.comment_username') : t('gallery.comment_email'))}
                 </label>
@@ -486,15 +486,15 @@ export function StoryTab({
                 )}
               </div>
             </div>
-
-            <div className="space-y-2">
+  
+            <div className="space-y-1.5">
               <label className="text-ui-micro font-bold text-muted-foreground/60 uppercase tracking-[0.3em]">
                 {t('gallery.comment_content')}
               </label>
               <textarea
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                className="w-full py-4 bg-transparent border border-border focus:border-primary p-4 outline-none transition-all text-ui-xs font-serif min-h-[120px] resize-none"
+                className="w-full py-3 bg-transparent border border-border focus:border-primary p-3 outline-none transition-all text-ui-xs font-serif min-h-[100px] resize-none"
                 required
                 disabled={submitting}
               />
@@ -503,10 +503,10 @@ export function StoryTab({
             <button
               type="submit"
               disabled={submitting || !formData.author.trim() || !formData.content.trim()}
-              className="group/btn flex items-center gap-4 text-ui-micro font-bold uppercase tracking-[0.4em] text-primary disabled:opacity-20"
+              className="group/btn flex items-center gap-3 text-ui-micro font-bold uppercase tracking-[0.3em] text-primary disabled:opacity-20"
             >
               <span>{submitting ? t('gallery.comment_submitting') : t('gallery.comment_submit')}</span>
-              <div className="w-8 h-8 flex items-center justify-center border border-primary/20 rounded-full group-hover/btn:bg-primary group-hover/btn:text-primary-foreground transition-all">
+              <div className="w-7 h-7 flex items-center justify-center border border-primary/20 rounded-full group-hover/btn:bg-primary group-hover/btn:text-primary-foreground transition-all">
                 <Send className="w-3 h-3" />
               </div>
             </button>
@@ -516,9 +516,9 @@ export function StoryTab({
 
         {/* Comments List - Now at the bottom with smooth animations */}
         {commentsLoading ? (
-          <div className="space-y-8 animate-pulse">
+          <div className="space-y-5 animate-pulse">
             {[...Array(2)].map((_, i) => (
-              <div key={i} className="space-y-3">
+              <div key={i} className="space-y-2">
                 <div className="h-4 bg-muted rounded-none w-1/4"></div>
                 <div className="h-4 bg-muted rounded-none w-full"></div>
               </div>
@@ -528,12 +528,12 @@ export function StoryTab({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-12 bg-muted/5 border border-border/50"
+            className="text-center py-8 bg-muted/5 border border-border/50"
           >
             <p className="text-xs font-serif italic text-muted-foreground/60">{t('gallery.no_comments')}</p>
           </motion.div>
         ) : (
-          <motion.div layout className="space-y-12">
+          <motion.div layout className="space-y-5">
             <AnimatePresence mode="popLayout">
               {comments.map((comment) => (
                 <motion.div
@@ -543,29 +543,44 @@ export function StoryTab({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
                   transition={{ duration: 0.3, ease: 'easeOut' }}
-                  className="relative pl-8"
+                  className="flex gap-3"
                 >
-                  <div className="absolute left-0 top-0 text-primary/20">
-                    <CornerDownRight className="w-4 h-4" />
+                  {/* Avatar */}
+                  <div className="flex-shrink-0">
+                    {comment.avatarUrl ? (
+                      <img
+                        src={comment.avatarUrl}
+                        alt={comment.author}
+                        className="w-8 h-8 rounded-full object-cover border border-border"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-primary/10 border border-border flex items-center justify-center">
+                        <span className="text-xs font-bold text-primary uppercase">
+                          {comment.author.charAt(0)}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-ui-xs font-bold text-foreground tracking-tight">
-                      {comment.author}
-                    </span>
-                    <div className="w-1 h-1 rounded-full bg-border" />
-                    <span className="text-ui-micro font-mono text-muted-foreground/60 uppercase tracking-widest">
-                      {new Date(comment.createdAt).toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-ui-xs font-bold text-foreground tracking-tight">
+                        {comment.author}
+                      </span>
+                      <span className="text-ui-micro font-mono text-muted-foreground/60 uppercase tracking-widest">
+                        {new Date(comment.createdAt).toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-ui-xs font-serif leading-relaxed text-foreground/70">
+                      {comment.content}
+                    </p>
                   </div>
-                  <p className="text-ui-xs font-serif leading-relaxed text-foreground/70">
-                    {comment.content}
-                  </p>
                 </motion.div>
               ))}
             </AnimatePresence>
