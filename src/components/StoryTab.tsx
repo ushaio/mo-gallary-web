@@ -358,8 +358,8 @@ export function StoryTab({
                     onClick={() => onPhotoChange(photo)}
                     className={`relative flex-shrink-0 w-16 h-16 overflow-hidden transition-all snap-start ${
                       index === currentPhotoIndex
-                        ? 'grayscale-0 scale-105'
-                        : 'grayscale hover:grayscale-0 hover:scale-105'
+                        ? 'scale-105'
+                        : 'opacity-60 hover:opacity-100 hover:scale-105'
                     }`}
                   >
                     <img

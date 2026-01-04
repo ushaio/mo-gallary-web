@@ -188,9 +188,9 @@ export function PhotoDetailModal({
     return storyCache?.story?.photos?.some(p => p.id === pid) ?? false
   }, [storyCache?.story?.photos])
 
-  // Fetch story data - only when modal opens or photo changes to a different story
+  // Fetch story data - only when story tab is active
   useEffect(() => {
-    if (!photo || !isOpen || hideStoryTab) return
+    if (!photo || !isOpen || hideStoryTab || activeTab !== 'story') return
     
     // If photo is within the cached story, no need to refetch
     if (storyCache && isPhotoInCachedStory(photo.id)) {
@@ -535,9 +535,9 @@ export function PhotoDetailModal({
 
               {/* Content Area */}
               <div className="flex-1 overflow-hidden relative">
-                <div className="absolute inset-0 overflow-y-auto custom-scrollbar">
-                  {activeTab === 'info' ? (
-                    <div className="p-8 md:p-12 space-y-12">
+                {/* Info Tab */}
+                <div className={`absolute inset-0 overflow-y-auto custom-scrollbar ${activeTab === 'info' ? '' : 'hidden'}`}>
+                  <div className="p-8 md:p-12 space-y-12">
                       {/* Header Info */}
                       <div className="space-y-6 text-center">
                         <div className="inline-flex flex-wrap justify-center gap-2">
@@ -608,8 +608,11 @@ export function PhotoDetailModal({
                           </div>
                         </div>
                       )}
-                    </div>
-                  ) : (
+                  </div>
+                </div>
+                {/* Story Tab - Always mounted, hidden when not active */}
+                {!hideStoryTab && (
+                  <div className={`absolute inset-0 ${activeTab === 'story' ? '' : 'hidden'}`}>
                     <StoryTab
                       photoId={photo.id}
                       currentPhoto={photo}
@@ -619,8 +622,8 @@ export function PhotoDetailModal({
                       isLoading={storyLoading}
                       onCommentsUpdate={updateCommentsCache}
                     />
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
 
               {/* Action Bar */}
