@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { MessageSquare, LogIn } from 'lucide-react'
-import { getPhotoComments, submitPhotoComment, getCommentSettings, type PublicCommentDto } from '@/lib/api'
+import { getPhotoComments, submitPhotoComment, type PublicCommentDto } from '@/lib/api'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSettings } from '@/contexts/SettingsContext'
 import { Toast, type Notification } from '@/components/Toast'
 
 interface CommentsTabProps {
@@ -15,14 +16,13 @@ interface CommentsTabProps {
 export function CommentsTab({ photoId }: CommentsTabProps) {
   const { t, locale } = useLanguage()
   const { user, token } = useAuth()
+  const { settings, isLoading: settingsLoading } = useSettings()
   const router = useRouter()
   const pathname = usePathname()
   const [comments, setComments] = useState<PublicCommentDto[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [linuxdoOnly, setLinuxdoOnly] = useState(false)
-  const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [formData, setFormData] = useState({
     author: '',
     email: '',
@@ -30,6 +30,8 @@ export function CommentsTab({ photoId }: CommentsTabProps) {
   })
   const [notifications, setNotifications] = useState<Notification[]>([])
 
+  // Use linuxdo_only from cached settings
+  const linuxdoOnly = settings?.linuxdo_only ?? false
   // Check if user is logged in via Linux DO
   const isLinuxDoUser = user?.oauthProvider === 'linuxdo'
   // Check if user is admin
@@ -40,7 +42,6 @@ export function CommentsTab({ photoId }: CommentsTabProps) {
 
   useEffect(() => {
     fetchComments()
-    fetchSettings()
   }, [photoId])
 
   // Auto-fill author name for Linux DO users and admin users
@@ -49,17 +50,6 @@ export function CommentsTab({ photoId }: CommentsTabProps) {
       setFormData(prev => ({ ...prev, author: user.username }))
     }
   }, [isLinuxDoUser, isAdmin, user?.username])
-
-  async function fetchSettings() {
-    try {
-      const settings = await getCommentSettings()
-      setLinuxdoOnly(settings.linuxdoOnly)
-    } catch (err) {
-      console.error('Failed to load comment settings:', err)
-    } finally {
-      setSettingsLoaded(true)
-    }
-  }
 
   async function fetchComments() {
     try {
@@ -126,7 +116,7 @@ export function CommentsTab({ photoId }: CommentsTabProps) {
     }
   }
 
-  if (loading || !settingsLoaded) {
+  if (loading || settingsLoading) {
     return (
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8">
         <div className="space-y-4 animate-pulse">

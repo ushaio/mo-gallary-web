@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageSquare, LogIn, Send, CornerDownRight } from 'lucide-react'
-import { getStoryComments, submitPhotoComment, getCommentSettings, type PublicCommentDto } from '@/lib/api'
+import { getStoryComments, submitPhotoComment, type PublicCommentDto } from '@/lib/api'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSettings } from '@/contexts/SettingsContext'
 import { Toast, type Notification } from '@/components/Toast'
 
 interface StoryCommentsProps {
@@ -17,14 +18,13 @@ interface StoryCommentsProps {
 export function StoryComments({ storyId, targetPhotoId }: StoryCommentsProps) {
   const { t, locale } = useLanguage()
   const { user, token } = useAuth()
+  const { settings, isLoading: settingsLoading } = useSettings()
   const router = useRouter()
   const pathname = usePathname()
   const [comments, setComments] = useState<PublicCommentDto[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [linuxdoOnly, setLinuxdoOnly] = useState(false)
-  const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [formData, setFormData] = useState({
     author: '',
     email: '',
@@ -32,15 +32,13 @@ export function StoryComments({ storyId, targetPhotoId }: StoryCommentsProps) {
   })
   const [notifications, setNotifications] = useState<Notification[]>([])
 
+  const linuxdoOnly = settings?.linuxdo_only ?? false
   const isLinuxDoUser = user?.oauthProvider === 'linuxdo'
-  // Check if user is admin
   const isAdmin = user?.isAdmin === true
-  // Admin users can always comment, even without Linux DO binding
   const canComment = !linuxdoOnly || isLinuxDoUser || isAdmin
 
   useEffect(() => {
     fetchComments()
-    fetchSettings()
   }, [storyId])
 
   // Auto-fill author name for Linux DO users and admin users
@@ -49,17 +47,6 @@ export function StoryComments({ storyId, targetPhotoId }: StoryCommentsProps) {
       setFormData(prev => ({ ...prev, author: user.username }))
     }
   }, [isLinuxDoUser, isAdmin, user?.username])
-
-  async function fetchSettings() {
-    try {
-      const settings = await getCommentSettings()
-      setLinuxdoOnly(settings.linuxdoOnly)
-    } catch (err) {
-      console.error('Failed to load comment settings:', err)
-    } finally {
-      setSettingsLoaded(true)
-    }
-  }
 
   async function fetchComments() {
     try {
@@ -141,7 +128,7 @@ export function StoryComments({ storyId, targetPhotoId }: StoryCommentsProps) {
     router.push(`/login?returnUrl=${returnUrl}`)
   }
 
-  if (!settingsLoaded && loading) return null
+  if (settingsLoading && loading) return null
 
   return (
     <div className="max-w-screen-md mx-auto mt-32 mb-24 px-6 md:px-0 relative">

@@ -21,16 +21,6 @@ const UpdateCommentStatusSchema = z.object({
   status: z.enum(['approved', 'rejected']),
 })
 
-// Get comment settings (public)
-comments.get('/comments/settings', (c) => {
-  return c.json({
-    success: true,
-    data: {
-      linuxdoOnly: LINUXDO_COMMENTS_ONLY,
-    },
-  })
-})
-
 // Public endpoints - Get approved comments for a photo
 comments.get('/photos/:photoId/comments', async (c) => {
   const photoId = c.req.param('photoId')

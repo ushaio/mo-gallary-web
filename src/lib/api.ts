@@ -230,6 +230,7 @@ export interface FriendLinkDto {
 export interface PublicSettingsDto {
   site_title: string
   cdn_domain: string
+  linuxdo_only: boolean
 }
 
 export interface LoginRequest {
@@ -565,6 +566,7 @@ export async function getPublicSettings(): Promise<PublicSettingsDto> {
     return {
       site_title: 'MO GALLERY',
       cdn_domain: '',
+      linuxdo_only: false,
     }
   }
 }
@@ -785,14 +787,6 @@ export async function reorderStoryPhotos(
 }
 
 // --- Public Comment APIs ---
-
-export interface CommentSettings {
-  linuxdoOnly: boolean
-}
-
-export async function getCommentSettings(): Promise<CommentSettings> {
-  return apiRequestData<CommentSettings>('/api/comments/settings')
-}
 
 export async function getPhotoComments(photoId: string): Promise<PublicCommentDto[]> {
   return apiRequestData<PublicCommentDto[]>(`/api/photos/${encodeURIComponent(photoId)}/comments`)

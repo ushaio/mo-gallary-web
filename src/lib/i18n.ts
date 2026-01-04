@@ -536,6 +536,8 @@ export const dictionaries = {
       storage_provider_local: '本地存储',
       storage_provider_r2: 'Cloudflare R2',
       storage_provider_github: 'GitHub',
+      delete_all: '全部删除',
+      confirm_delete_all_drafts: '确定要删除所有草稿吗？此操作不可撤销。',
     }
   },
   en: {
@@ -1072,6 +1074,8 @@ export const dictionaries = {
       storage_provider_local: 'Local',
       storage_provider_r2: 'Cloudflare R2',
       storage_provider_github: 'GitHub',
+      delete_all: 'Delete All',
+      confirm_delete_all_drafts: 'Are you sure you want to delete all drafts? This action cannot be undone.',
     }
   }
 }

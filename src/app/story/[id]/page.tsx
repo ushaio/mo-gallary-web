@@ -242,7 +242,7 @@ export default function StoryDetailPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  className={`relative group cursor-pointer overflow-hidden bg-muted
+                  className={`relative group overflow-hidden bg-muted
                     ${index % 5 === 0 ? 'md:col-span-2 aspect-[16/10]' : 'aspect-square'}
                   `}
                   onClick={() => setSelectedPhoto(photo)}
