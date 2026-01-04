@@ -2,10 +2,10 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Upload, X, Loader2, Image as ImageIcon, Send, Sparkles, Database, ChevronDown, Check, FolderOpen, Minimize2, Save, Clock, Trash2 } from 'lucide-react'
+import { Upload, X, Loader2, Image as ImageIcon, Send, Sparkles, Check, FolderOpen, Minimize2, Save, Clock, Trash2 } from 'lucide-react'
 import { compressImage } from '@/lib/image-compress'
 import { useAuth } from '@/contexts/AuthContext'
-import { uploadPhotoWithProgress, createStory, getAdminSettings, getAdminAlbums, addPhotosToAlbum, type PhotoDto, type AlbumDto, resolveAssetUrl } from '@/lib/api'
+import { uploadPhotoWithProgress, createStory, getAdminAlbums, addPhotosToAlbum, type PhotoDto, type AlbumDto, resolveAssetUrl } from '@/lib/api'
 import { useSettings } from '@/contexts/SettingsContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useDropzone } from 'react-dropzone'
@@ -26,7 +26,6 @@ export function QuickStoryEditor({ onSuccess }: QuickStoryEditorProps) {
   // UI State
   const [isExpanded, setIsExpanded] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [isStorageOpen, setIsStorageOpen] = useState(false)
   const [isAlbumOpen, setIsAlbumOpen] = useState(false)
   const [draftSaved, setDraftSaved] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null)
@@ -44,7 +43,6 @@ export function QuickStoryEditor({ onSuccess }: QuickStoryEditorProps) {
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null)
 
   // Configuration State
-  const [storageProvider, setStorageProvider] = useState('local')
   const [selectedAlbumIds, setSelectedAlbumIds] = useState<string[]>([])
   const [compressionEnabled, setCompressionEnabled] = useState(false)
   const [maxSizeMB, setMaxSizeMB] = useState(4)
@@ -57,10 +55,9 @@ export function QuickStoryEditor({ onSuccess }: QuickStoryEditorProps) {
 
   // Refs for click outside
   const containerRef = useRef<HTMLDivElement>(null)
-  const storageRef = useRef<HTMLDivElement>(null)
   const albumRef = useRef<HTMLDivElement>(null)
 
-  const isAnyPopoverOpen = isStorageOpen || isAlbumOpen
+  const isAnyPopoverOpen = isAlbumOpen
 
   // Toast notification helper
   const notify = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -105,11 +102,7 @@ export function QuickStoryEditor({ onSuccess }: QuickStoryEditorProps) {
     async function initData() {
       if (token && user?.isAdmin) {
         try {
-          const [adminSettings, adminAlbums] = await Promise.all([
-            getAdminSettings(token),
-            getAdminAlbums(token)
-          ])
-          setStorageProvider(adminSettings.storage_provider)
+          const adminAlbums = await getAdminAlbums(token)
           setAlbums(adminAlbums)
         } catch (e) {
           console.error('Failed to init editor data', e)
@@ -199,7 +192,6 @@ export function QuickStoryEditor({ onSuccess }: QuickStoryEditorProps) {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node
-      if (storageRef.current && !storageRef.current.contains(target)) setIsStorageOpen(false)
       if (albumRef.current && !albumRef.current.contains(target)) setIsAlbumOpen(false)
     }
     document.addEventListener('click', handleClickOutside, true)
@@ -331,7 +323,6 @@ export function QuickStoryEditor({ onSuccess }: QuickStoryEditorProps) {
               token,
               file: fileToUpload,
               title: fileToUpload.name,
-              storage_provider: storageProvider,
               onProgress: (progress) => {
                 setUploadQueue(prev => prev.map(p => p.id === pending.id ? { ...p, progress } : p))
               }
@@ -640,42 +631,6 @@ export function QuickStoryEditor({ onSuccess }: QuickStoryEditorProps) {
                                     </button>
                                   ))
                                 )}
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-
-                        {/* Storage Selector */}
-                        <div ref={storageRef} className="relative">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setIsStorageOpen(!isStorageOpen) }}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/30 hover:bg-muted transition-colors"
-                          >
-                            <Database className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                              {storageProvider}
-                            </span>
-                            <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform ${isStorageOpen ? 'rotate-180' : ''}`} />
-                          </button>
-                          <AnimatePresence>
-                            {isStorageOpen && (
-                              <motion.div
-                                initial={{ opacity: 0, y: -5, scale: 0.95 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: -5, scale: 0.95 }}
-                                transition={{ duration: 0.1 }}
-                                className="absolute top-full left-0 mt-2 w-32 bg-popover border border-border rounded-lg shadow-xl overflow-hidden z-50"
-                              >
-                                {['local', 'r2', 'github'].map((provider) => (
-                                  <button
-                                    key={provider}
-                                    onClick={(e) => { e.stopPropagation(); setStorageProvider(provider); setIsStorageOpen(false) }}
-                                    className={`w-full text-left px-3 py-2 text-[10px] font-bold uppercase tracking-wider flex items-center justify-between ${storageProvider === provider ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-muted-foreground'}`}
-                                  >
-                                    {provider}
-                                    {storageProvider === provider && <Check className="w-3 h-3" />}
-                                  </button>
-                                ))}
                               </motion.div>
                             )}
                           </AnimatePresence>

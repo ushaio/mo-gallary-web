@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { BookText, BookOpen, FileArchive, Clock, Trash2, Eye, X, Image as ImageIcon, Edit3, ArrowRight } from 'lucide-react'
-import { PhotoDto, PublicSettingsDto } from '@/lib/api'
+import { PhotoDto, AdminSettingsDto } from '@/lib/api'
 import { BlogTab } from './BlogTab'
 import { StoriesTab } from './StoriesTab'
 import { CustomSelect, type SelectOption } from '@/components/ui/CustomSelect'
@@ -11,6 +11,7 @@ import {
   clearDraftFromDB,
   clearBlogDraftFromDB,
   clearStoryEditorDraftFromDB,
+  clearAllDraftsFromDB,
   type StoryDraftData,
   type BlogDraftData,
   type StoryEditorDraftData
@@ -26,7 +27,7 @@ interface StoryDraftWithPreviews extends Omit<StoryDraftData, 'files'> {
 interface LogsTabProps {
   token: string | null
   photos: PhotoDto[]
-  settings: PublicSettingsDto | null
+  settings: AdminSettingsDto | null
   t: (key: string) => string
   notify: (message: string, type?: 'success' | 'error' | 'info') => void
   initialTab?: 'blog' | 'stories' | 'drafts'
@@ -49,7 +50,7 @@ export function LogsTab({ token, photos, settings, t, notify, initialTab, editSt
   // Delete dialog state
   const [deleteDialog, setDeleteDialog] = useState<{
     isOpen: boolean
-    type: 'story' | 'blog' | 'storyEditor'
+    type: 'story' | 'blog' | 'storyEditor' | 'all'
     id?: string
   }>({ isOpen: false, type: 'story' })
   
@@ -128,7 +129,12 @@ export function LogsTab({ token, photos, settings, t, notify, initialTab, editSt
 
   async function confirmDelete() {
     try {
-      if (deleteDialog.type === 'story') {
+      if (deleteDialog.type === 'all') {
+        await clearAllDraftsFromDB()
+        setStoryDraft(null)
+        setBlogDrafts([])
+        setStoryEditorDrafts([])
+      } else if (deleteDialog.type === 'story') {
         await clearDraftFromDB()
         setStoryDraft(null)
       } else if (deleteDialog.type === 'blog') {
@@ -311,12 +317,23 @@ export function LogsTab({ token, photos, settings, t, notify, initialTab, editSt
                   className="w-32"
                 />
               </div>
-              <button
-                onClick={loadDrafts}
-                className="flex items-center px-6 py-2 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest hover:bg-primary/20 transition-all rounded-md"
-              >
-                {t('common.refresh')}
-              </button>
+              <div className="flex items-center gap-2">
+                {totalDrafts > 0 && (
+                  <button
+                    onClick={() => setDeleteDialog({ isOpen: true, type: 'all' })}
+                    className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive text-xs font-bold uppercase tracking-widest hover:bg-destructive/20 transition-all rounded-md"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    {t('admin.delete_all')}
+                  </button>
+                )}
+                <button
+                  onClick={loadDrafts}
+                  className="flex items-center px-6 py-2 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest hover:bg-primary/20 transition-all rounded-md"
+                >
+                  {t('common.refresh')}
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-6">
@@ -664,6 +681,7 @@ export function LogsTab({ token, photos, settings, t, notify, initialTab, editSt
 
       <SimpleDeleteDialog
         isOpen={deleteDialog.isOpen}
+        message={deleteDialog.type === 'all' ? t('admin.confirm_delete_all_drafts') : undefined}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteDialog({ isOpen: false, type: 'story' })}
         t={t}

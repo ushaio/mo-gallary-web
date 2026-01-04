@@ -5,7 +5,7 @@ import { BookOpen, MessageSquare, ChevronLeft, ChevronRight, CornerDownRight, Se
 import { useRouter, usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
-import { getPhotoStory, type StoryDto, getPhotoComments, getStoryComments, submitPhotoComment, getCommentSettings, type PublicCommentDto, type PhotoDto, resolveAssetUrl } from '@/lib/api'
+import { getPhotoStory, type StoryDto, getPhotoComments, getStoryComments, submitPhotoComment, type PublicCommentDto, type PhotoDto, resolveAssetUrl } from '@/lib/api'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useSettings } from '@/contexts/SettingsContext'
 import { useAuth } from '@/contexts/AuthContext'
@@ -47,7 +47,7 @@ export function StoryTab({
   onCommentsUpdate
 }: StoryTabProps) {
   const { t, locale } = useLanguage()
-  const { settings } = useSettings()
+  const { settings, isLoading } = useSettings()
   const { user, token } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
@@ -68,8 +68,6 @@ export function StoryTab({
   const comments = hasCachedData && cachedComments ? cachedComments : internalComments
   const [commentsLoading, setCommentsLoading] = useState(!hasCachedData)
   const [submitting, setSubmitting] = useState(false)
-  const [linuxdoOnly, setLinuxdoOnly] = useState(false)
-  const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [formData, setFormData] = useState({
     author: '',
     email: '',
@@ -77,6 +75,9 @@ export function StoryTab({
   })
   const [notifications, setNotifications] = useState<Notification[]>([])
 
+  // Use linuxdo_only from cached settings
+  const linuxdoOnly = settings?.linuxdo_only ?? false
+  const settingsLoaded = !isLoading
   // Check if user is logged in via Linux DO
   const isLinuxDoUser = user?.oauthProvider === 'linuxdo'
   // Check if user is admin
@@ -94,21 +95,6 @@ export function StoryTab({
   const isPhotoInCurrentStory = useCallback((pid: string) => {
     return story?.photos?.some(p => p.id === pid) ?? false
   }, [story?.photos])
-
-  // Fetch comment settings
-  useEffect(() => {
-    async function fetchSettings() {
-      try {
-        const settings = await getCommentSettings()
-        setLinuxdoOnly(settings.linuxdoOnly)
-      } catch (err) {
-        console.error('Failed to load comment settings:', err)
-      } finally {
-        setSettingsLoaded(true)
-      }
-    }
-    fetchSettings()
-  }, [])
 
   // Auto-fill author name for Linux DO users and admin users
   useEffect(() => {
@@ -372,8 +358,8 @@ export function StoryTab({
                     onClick={() => onPhotoChange(photo)}
                     className={`relative flex-shrink-0 w-16 h-16 overflow-hidden transition-all snap-start ${
                       index === currentPhotoIndex
-                        ? 'grayscale-0 scale-105'
-                        : 'grayscale hover:grayscale-0 hover:scale-105'
+                        ? 'scale-105'
+                        : 'opacity-60 hover:opacity-100 hover:scale-105'
                     }`}
                   >
                     <img

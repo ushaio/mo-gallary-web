@@ -358,6 +358,31 @@ export async function getAllStoryEditorDraftsFromDB(): Promise<StoryEditorDraftD
   }
 }
 
+/**
+ * Clear all story editor drafts from IndexedDB
+ */
+export async function clearAllStoryEditorDraftsFromDB(): Promise<void> {
+  try {
+    const drafts = await getAllStoryEditorDraftsFromDB();
+    for (const draft of drafts) {
+      await clearStoryEditorDraftFromDB(draft.storyId);
+    }
+  } catch (error) {
+    console.error('Failed to clear all story editor drafts:', error);
+  }
+}
+
+/**
+ * Clear all drafts from IndexedDB
+ */
+export async function clearAllDraftsFromDB(): Promise<void> {
+  await Promise.all([
+    clearDraftFromDB(),
+    clearAllBlogDraftsFromDB(),
+    clearAllStoryEditorDraftsFromDB()
+  ]);
+}
+
 // ============ Get All Drafts (for admin/logs display) ============
 
 export interface AllDraftsData {

@@ -7,7 +7,7 @@ import path from 'path'
 
 const storage = new Hono<{ Variables: AuthVariables }>()
 
-storage.use('/*', authMiddleware)
+storage.use('/admin/storage/*', authMiddleware)
 
 type FileStatus = 'linked' | 'orphan' | 'missing' | 'missing_original' | 'missing_thumbnail'
 

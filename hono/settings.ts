@@ -11,6 +11,7 @@ settings.get('/public', async (c) => {
   const config = {
     site_title: process.env.SITE_TITLE || 'MO GALLERY',
     cdn_domain: process.env.CDN_DOMAIN || '',
+    linuxdo_only: process.env.LINUXDO_COMMENTS_ONLY === 'true',
   }
 
   return c.json({

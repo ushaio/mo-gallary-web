@@ -12,7 +12,6 @@ import { useSettings } from '@/contexts/SettingsContext'
 import { StoryComments } from '@/components/StoryComments'
 import { PhotoDetailModal } from '@/components/PhotoDetailModal'
 
-// Dynamically import MilkdownViewer to avoid SSR issues
 const MilkdownViewer = dynamic(
   () => import('@/components/MilkdownViewer'),
   {
@@ -35,12 +34,12 @@ export default function StoryDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoDto | null>(null)
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0)
   
   const heroRef = useRef<HTMLDivElement>(null)
   const { scrollY } = useScroll()
   const opacity = useTransform(scrollY, [0, 400], [1, 0])
   const scale = useTransform(scrollY, [0, 400], [1, 1.1])
-  const y = useTransform(scrollY, [0, 400], [0, 100])
 
   useEffect(() => {
     async function fetchStory() {
@@ -70,7 +69,6 @@ export default function StoryDetailPage() {
     }
     return story.photos[0]
   }
-
 
   if (loading) {
     return (
@@ -103,19 +101,19 @@ export default function StoryDetailPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Immersive Hero Section */}
-      <section ref={heroRef} className="relative h-screen w-full overflow-hidden bg-black">
+      {/* Compact Hero Section */}
+      <section ref={heroRef} className="relative h-[50vh] md:h-[60vh] w-full overflow-hidden bg-black">
         <motion.div style={{ scale, opacity }} className="absolute inset-0">
           {coverUrl ? (
             <img
               src={coverUrl}
               alt={story.title}
-              className="w-full h-full object-cover opacity-60"
+              className="w-full h-full object-cover opacity-50"
             />
           ) : (
             <div className="w-full h-full bg-muted/10" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-background" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-background" />
         </motion.div>
 
         <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
@@ -123,7 +121,7 @@ export default function StoryDetailPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="flex items-center gap-3 mb-8"
+            className="flex items-center gap-3 mb-6"
           >
             <div className="h-px w-8 bg-primary/50" />
             <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-primary/80">Narrative</span>
@@ -134,7 +132,7 @@ export default function StoryDetailPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.8 }}
-            className="text-5xl md:text-7xl lg:text-9xl font-serif font-light tracking-tighter text-white leading-[0.9] max-w-5xl"
+            className="text-4xl md:text-6xl lg:text-7xl font-serif font-light tracking-tighter text-white leading-[0.95] max-w-4xl"
           >
             {story.title}
           </motion.h1>
@@ -143,7 +141,7 @@ export default function StoryDetailPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
-            className="mt-12 flex items-center gap-8 text-[10px] font-mono uppercase tracking-[0.3em] text-white/60"
+            className="mt-8 flex items-center gap-6 text-[10px] font-mono uppercase tracking-[0.3em] text-white/60"
           >
             <div className="flex items-center gap-2">
               <Calendar className="w-3 h-3" />
@@ -156,24 +154,13 @@ export default function StoryDetailPage() {
           </motion.div>
         </div>
 
-        {/* Scroll Indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 1 }}
-          className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4"
-        >
-          <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-white/40">Scroll</span>
-          <div className="w-px h-12 bg-gradient-to-b from-primary/50 to-transparent" />
-        </motion.div>
-
-        {/* Floating Back Button */}
-        <div className="absolute top-32 left-6 md:left-12 z-10">
+        {/* Back Button */}
+        <div className="absolute top-24 left-6 md:left-12 z-10">
           <Link
             href="/story"
-            className="group flex items-center gap-4 text-white/50 hover:text-white transition-colors"
+            className="group flex items-center gap-3 text-white/50 hover:text-white transition-colors"
           >
-            <div className="w-8 h-8 flex items-center justify-center border border-white/10 rounded-full group-hover:border-white/30 transition-colors">
+            <div className="w-8 h-8 flex items-center justify-center border border-white/20 rounded-full group-hover:border-white/40 transition-colors">
               <ArrowLeft className="w-4 h-4" />
             </div>
             <span className="text-[10px] font-bold uppercase tracking-widest hidden md:block">Back</span>
@@ -181,98 +168,171 @@ export default function StoryDetailPage() {
         </div>
       </section>
 
-      {/* Content Section */}
-      <div className="px-6 md:px-12 lg:px-24 py-24 md:py-40">
-        <div className="max-w-screen-md mx-auto">
-          {/* Intro Text / Meta */}
-          <div className="mb-20 space-y-6">
-            <div className="flex items-center gap-4 text-primary/40">
-              <span className="text-xs font-mono">01</span>
-              <div className="h-px flex-1 bg-border/50" />
-            </div>
-            <p className="text-xl md:text-2xl font-serif italic text-muted-foreground leading-relaxed">
-              This narrative features {story.photos.length} visual records captured during this journey.
-            </p>
-          </div>
-
-          {/* Main Article */}
-          <motion.article
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="milkdown-article"
-          >
-            <MilkdownViewer content={story.content} />
-          </motion.article>
-
-          {/* Large Featured Photo */}
-          {story.photos.length > 1 && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              className="my-32 -mx-6 md:-mx-24 lg:-mx-48 aspect-[21/9] overflow-hidden bg-muted"
-            >
-              <img
-                src={getPhotoUrl(story.photos[1])}
-                alt="Featured visual"
-                className="w-full h-full object-cover"
-              />
-            </motion.div>
-          )}
-
-          {/* Final Gallery */}
-          <section className="mt-40">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-              <div className="space-y-4">
-                <span className="text-[10px] font-mono text-primary uppercase tracking-[0.4em]">Visual Archive</span>
-                <h2 className="text-4xl md:text-5xl font-serif font-light tracking-tight">Gallery</h2>
+      {/* Split Layout: Article Left, Photos Right (desktop) / Article then Photos (mobile) */}
+      <div className="flex flex-col lg:flex-row">
+        {/* Left: Article Content */}
+        <div className="w-full lg:w-1/2 xl:w-[45%] lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
+          <div className="px-6 md:px-12 lg:px-16 py-12 lg:py-16">
+            {/* Meta Info */}
+            <div className="mb-8 pb-6 border-b border-border/30">
+              <div className="flex items-center gap-3 text-primary/60 mb-3">
+                <span className="text-xs font-mono">01</span>
+                <div className="h-px flex-1 bg-border/40" />
               </div>
-              <p className="text-sm text-muted-foreground font-serif italic max-w-xs">
-                A complete collection of moments documented in this narrative.
+              <p className="text-lg md:text-xl font-serif italic text-muted-foreground leading-relaxed">
+                {story.photos.length} visual records from this journey.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
+            {/* Article */}
+            <motion.article
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="milkdown-article prose prose-lg dark:prose-invert max-w-none"
+            >
+              <MilkdownViewer content={story.content} />
+            </motion.article>
+
+            {/* Mobile Photo Gallery - after article content */}
+            <div className="lg:hidden mt-12 pt-8 border-t border-border/30">
+              <div className="mb-4 flex items-end justify-between">
+                <div>
+                  <span className="text-[10px] font-mono text-primary uppercase tracking-[0.3em]">Visual Archive</span>
+                  <h2 className="text-xl font-serif font-light tracking-tight mt-1">Gallery</h2>
+                </div>
+                <span className="text-xs text-muted-foreground font-mono">{story.photos.length} photos</span>
+              </div>
+
+              {story.photos.length > 0 && (
+                <div
+                  className="relative h-[40vh] mb-3 overflow-hidden bg-black flex items-center justify-center cursor-pointer"
+                  onClick={() => setSelectedPhoto(story.photos[activePhotoIndex])}
+                >
+                  <img
+                    src={getPhotoUrl(story.photos[activePhotoIndex])}
+                    alt={story.photos[activePhotoIndex].title}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                  <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
+                    <span className="text-white text-xs font-medium drop-shadow-lg">
+                      {story.photos[activePhotoIndex].title}
+                    </span>
+                    <span className="text-white/70 text-[10px] font-mono">
+                      {activePhotoIndex + 1} / {story.photos.length}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                {story.photos.map((photo, index) => (
+                  <div
+                    key={photo.id}
+                    className={`flex-shrink-0 w-16 h-16 overflow-hidden bg-muted cursor-pointer ${
+                      index === activePhotoIndex ? 'ring-2 ring-primary' : ''
+                    }`}
+                    onClick={() => setActivePhotoIndex(index)}
+                    onDoubleClick={() => setSelectedPhoto(photo)}
+                  >
+                    <img
+                      src={getPhotoUrl(photo, true)}
+                      alt={photo.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Comments */}
+            {targetPhotoId && (
+              <div className="mt-12 pt-8 border-t border-border/30">
+                <StoryComments storyId={story.id} targetPhotoId={targetPhotoId} />
+              </div>
+            )}
+
+            {/* Footer Nav */}
+            <div className="mt-12 pt-8 border-t border-border/30">
+              <Link
+                href="/story"
+                className="group inline-flex items-center gap-4 text-muted-foreground hover:text-primary transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="text-sm font-bold uppercase tracking-widest">Back to Journal</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Photo Gallery (desktop only) */}
+        <div className="hidden lg:block w-full lg:w-1/2 xl:w-[55%] bg-muted/20 lg:border-l border-border/20">
+          <div className="p-4 md:p-6 lg:p-8">
+            {/* Gallery Header */}
+            <div className="mb-6 flex items-end justify-between">
+              <div>
+                <span className="text-[10px] font-mono text-primary uppercase tracking-[0.3em]">Visual Archive</span>
+                <h2 className="text-2xl md:text-3xl font-serif font-light tracking-tight mt-1">Gallery</h2>
+              </div>
+              <span className="text-xs text-muted-foreground font-mono">{story.photos.length} photos</span>
+            </div>
+
+            {/* Featured Photo */}
+            {story.photos.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6 }}
+                className="relative h-[50vh] lg:h-[60vh] mb-4 overflow-hidden bg-black flex items-center justify-center cursor-pointer group"
+                onClick={() => setSelectedPhoto(story.photos[activePhotoIndex])}
+              >
+                <img
+                  src={getPhotoUrl(story.photos[activePhotoIndex])}
+                  alt={story.photos[activePhotoIndex].title}
+                  className="max-w-full max-h-full object-contain transition-transform duration-700 group-hover:scale-[1.02]"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-white text-sm font-medium drop-shadow-lg">
+                    {story.photos[activePhotoIndex].title}
+                  </span>
+                  <span className="text-white/70 text-xs font-mono">
+                    {activePhotoIndex + 1} / {story.photos.length}
+                  </span>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Thumbnail Grid */}
+            <div className="grid grid-cols-4 xl:grid-cols-5 gap-2">
               {story.photos.map((photo, index) => (
                 <motion.div
                   key={photo.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className={`relative group cursor-pointer overflow-hidden bg-muted
-                    ${index % 5 === 0 ? 'md:col-span-2 aspect-[16/10]' : 'aspect-square'}
-                  `}
-                  onClick={() => setSelectedPhoto(photo)}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className={`relative aspect-square overflow-hidden bg-muted cursor-pointer group transition-all duration-200 ${
+                    index === activePhotoIndex 
+                      ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' 
+                      : 'hover:ring-1 hover:ring-border'
+                  }`}
+                  onClick={() => setActivePhotoIndex(index)}
+                  onDoubleClick={() => setSelectedPhoto(photo)}
                 >
                   <img
                     src={getPhotoUrl(photo, true)}
                     alt={photo.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    className={`w-full h-full object-cover transition-all duration-300 ${
+                      index === activePhotoIndex ? 'scale-100' : 'grayscale-[30%] group-hover:grayscale-0'
+                    }`}
                   />
                 </motion.div>
               ))}
             </div>
-          </section>
 
-          {/* Comments Section */}
-          {targetPhotoId && <StoryComments storyId={story.id} targetPhotoId={targetPhotoId} />}
-
-          {/* Footer Nav */}
-          <div className="mt-40 pt-24 border-t border-border/50 text-center">
-            <Link
-              href="/story"
-              className="group inline-flex flex-col items-center gap-6"
-            >
-              <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-muted-foreground group-hover:text-primary transition-colors">
-                Next Chapter
-              </span>
-              <span className="text-4xl md:text-6xl font-serif font-light italic tracking-tight hover:text-primary transition-colors">
-                Back to Journal
-              </span>
-            </Link>
+            <p className="mt-4 text-[10px] text-muted-foreground text-center font-mono uppercase tracking-wider">
+              Click to preview · Double-click to view full
+            </p>
           </div>
         </div>
       </div>

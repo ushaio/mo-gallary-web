@@ -479,7 +479,6 @@ export const dictionaries = {
       draft_preview_hint: '这是本地保存的草稿预览，内容存储在浏览器中',
       upload_settings: '上传设置',
       upload_settings_hint: '即将上传图片，请设置上传参数（均为可选）：',
-      compression_size: '压缩大小 (MB)',
       use_default: '使用默认',
       category: '分类',
       none: '不添加到相册',
@@ -536,6 +535,8 @@ export const dictionaries = {
       storage_provider_local: '本地存储',
       storage_provider_r2: 'Cloudflare R2',
       storage_provider_github: 'GitHub',
+      delete_all: '全部删除',
+      confirm_delete_all_drafts: '确定要删除所有草稿吗？此操作不可撤销。',
     }
   },
   en: {
@@ -1015,7 +1016,6 @@ export const dictionaries = {
       draft_preview_hint: 'This is a preview of locally saved draft, stored in browser',
       upload_settings: 'Upload Settings',
       upload_settings_hint: 'Configure upload parameters (all optional):',
-      compression_size: 'Max Size (MB)',
       use_default: 'Use Default',
       category: 'Category',
       none: 'None',
@@ -1072,6 +1072,8 @@ export const dictionaries = {
       storage_provider_local: 'Local',
       storage_provider_r2: 'Cloudflare R2',
       storage_provider_github: 'GitHub',
+      delete_all: 'Delete All',
+      confirm_delete_all_drafts: 'Are you sure you want to delete all drafts? This action cannot be undone.',
     }
   }
 }
