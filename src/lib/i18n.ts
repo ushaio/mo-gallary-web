@@ -1016,7 +1016,6 @@ export const dictionaries = {
       draft_preview_hint: 'This is a preview of locally saved draft, stored in browser',
       upload_settings: 'Upload Settings',
       upload_settings_hint: 'Configure upload parameters (all optional):',
-      compression_size: 'Max Size (MB)',
       use_default: 'Use Default',
       category: 'Category',
       none: 'None',
