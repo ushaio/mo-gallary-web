@@ -479,7 +479,6 @@ export const dictionaries = {
       draft_preview_hint: '这是本地保存的草稿预览，内容存储在浏览器中',
       upload_settings: '上传设置',
       upload_settings_hint: '即将上传图片，请设置上传参数（均为可选）：',
-      compression_size: '压缩大小 (MB)',
       use_default: '使用默认',
       category: '分类',
       none: '不添加到相册',

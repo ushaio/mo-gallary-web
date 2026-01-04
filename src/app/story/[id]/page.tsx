@@ -182,10 +182,10 @@ export default function StoryDetailPage() {
       </section>
 
       {/* Content Section */}
-      <div className="px-6 md:px-12 lg:px-24 py-24 md:py-40">
+      <div className="px-6 md:px-12 lg:px-24 py-16 md:py-24">
         <div className="max-w-screen-md mx-auto">
           {/* Intro Text / Meta */}
-          <div className="mb-20 space-y-6">
+          <div className="mb-12 space-y-4">
             <div className="flex items-center gap-4 text-primary/40">
               <span className="text-xs font-mono">01</span>
               <div className="h-px flex-1 bg-border/50" />
@@ -212,7 +212,7 @@ export default function StoryDetailPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              className="my-32 -mx-6 md:-mx-24 lg:-mx-48 aspect-[21/9] overflow-hidden bg-muted"
+              className="my-16 -mx-6 md:-mx-24 lg:-mx-48 aspect-[21/9] overflow-hidden bg-muted"
             >
               <img
                 src={getPhotoUrl(story.photos[1])}
@@ -223,9 +223,9 @@ export default function StoryDetailPage() {
           )}
 
           {/* Final Gallery */}
-          <section className="mt-40">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-              <div className="space-y-4">
+          <section className="mt-20">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+              <div className="space-y-2">
                 <span className="text-[10px] font-mono text-primary uppercase tracking-[0.4em]">Visual Archive</span>
                 <h2 className="text-4xl md:text-5xl font-serif font-light tracking-tight">Gallery</h2>
               </div>
@@ -261,7 +261,7 @@ export default function StoryDetailPage() {
           {targetPhotoId && <StoryComments storyId={story.id} targetPhotoId={targetPhotoId} />}
 
           {/* Footer Nav */}
-          <div className="mt-40 pt-24 border-t border-border/50 text-center">
+          <div className="mt-24 pt-16 border-t border-border/50 text-center">
             <Link
               href="/story"
               className="group inline-flex flex-col items-center gap-6"
