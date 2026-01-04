@@ -8,14 +8,15 @@ interface MasonryViewProps {
   photos: PhotoDto[]
   settings: PublicSettingsDto | null
   grayscale: boolean
+  immersive?: boolean
   onPhotoClick: (photo: PhotoDto) => void
 }
 
-export function MasonryView({ photos, settings, grayscale, onPhotoClick }: MasonryViewProps) {
+export function MasonryView({ photos, settings, grayscale, immersive = false, onPhotoClick }: MasonryViewProps) {
   return (
     <motion.div
       layout
-      className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-8"
+      className={`columns-2 sm:columns-3 lg:columns-4 xl:columns-5 ${immersive ? 'gap-1' : 'gap-4 sm:gap-6 lg:gap-8'}`}
     >
       <AnimatePresence mode="popLayout">
         {photos.map((photo, index) => (
@@ -25,6 +26,7 @@ export function MasonryView({ photos, settings, grayscale, onPhotoClick }: Mason
             index={index}
             settings={settings}
             grayscale={grayscale}
+            immersive={immersive}
             onClick={() => onPhotoClick(photo)}
           />
         ))}

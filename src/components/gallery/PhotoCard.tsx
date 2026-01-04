@@ -10,10 +10,11 @@ interface PhotoCardProps {
   index: number
   settings: PublicSettingsDto | null
   grayscale: boolean
+  immersive?: boolean
   onClick: () => void
 }
 
-export function PhotoCard({ photo, index, settings, grayscale, onClick }: PhotoCardProps) {
+export function PhotoCard({ photo, index, settings, grayscale, immersive = false, onClick }: PhotoCardProps) {
   return (
     <motion.div
       layout
@@ -21,10 +22,10 @@ export function PhotoCard({ photo, index, settings, grayscale, onClick }: PhotoC
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.8, delay: (index % 3) * 0.1 }}
-      className="break-inside-avoid group mb-12 cursor-pointer"
+      className={`break-inside-avoid group cursor-pointer ${immersive ? 'mb-1' : 'mb-12'}`}
       onClick={onClick}
     >
-      <div className="relative overflow-hidden bg-muted mb-4">
+      <div className={`relative overflow-hidden bg-muted ${immersive ? '' : 'mb-4'}`}>
         <img
           src={resolveAssetUrl(photo.thumbnailUrl || photo.url, settings?.cdn_domain)}
           alt={photo.title}
@@ -38,21 +39,23 @@ export function PhotoCard({ photo, index, settings, grayscale, onClick }: PhotoC
       </div>
 
       {/* Info Below */}
-      <div className="flex justify-between items-start gap-4">
-        <div className="space-y-1.5 max-w-[80%]">
-          <h3 className="text-lg font-serif leading-tight text-foreground group-hover:text-primary transition-colors duration-300">
-            {photo.title}
-          </h3>
-          <p className="text-ui-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
-             {photo.category.split(',')[0]}
-          </p>
+      {!immersive && (
+        <div className="flex justify-between items-start gap-4">
+          <div className="space-y-1.5 max-w-[80%]">
+            <h3 className="text-lg font-serif leading-tight text-foreground group-hover:text-primary transition-colors duration-300">
+              {photo.title}
+            </h3>
+            <p className="text-ui-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
+               {photo.category.split(',')[0]}
+            </p>
+          </div>
+          
+          <div className="flex flex-col items-end gap-1 text-ui-micro font-mono text-muted-foreground/60">
+             <span>{String(index + 1).padStart(2, '0')}</span>
+             <span>{new Date(photo.createdAt).getFullYear()}</span>
+          </div>
         </div>
-        
-        <div className="flex flex-col items-end gap-1 text-ui-micro font-mono text-muted-foreground/60">
-           <span>{String(index + 1).padStart(2, '0')}</span>
-           <span>{new Date(photo.createdAt).getFullYear()}</span>
-        </div>
-      </div>
+      )}
     </motion.div>
   )
 }

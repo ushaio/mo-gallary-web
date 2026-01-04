@@ -105,6 +105,8 @@ interface GalleryToolbarProps {
   onViewModeChange: (mode: ViewMode) => void
   grayscale: boolean
   onGrayscaleChange: (grayscale: boolean) => void
+  immersive: boolean
+  onImmersiveChange: (immersive: boolean) => void
   t: (key: string) => string
 }
 
@@ -115,14 +117,16 @@ export function GalleryToolbar({
   onViewModeChange,
   grayscale,
   onGrayscaleChange,
+  immersive,
+  onImmersiveChange,
   t,
 }: GalleryToolbarProps) {
   return (
     <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border/50 transition-all">
       <div className="px-4 md:px-8 lg:px-12">
-        <div className="max-w-screen-2xl mx-auto flex items-center justify-between gap-4 h-16">
+        <div className="max-w-screen-2xl mx-auto flex items-center justify-between gap-2 sm:gap-4 h-14 sm:h-16">
           {/* Search Bar - Minimal */}
-          <div className="flex-1 max-w-sm">
+          <div className="flex-1 min-w-0 max-w-[120px] sm:max-w-sm">
              <div className="relative group">
               <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
               <input
@@ -130,17 +134,30 @@ export function GalleryToolbar({
                 value={search}
                 onChange={(e) => onSearchChange(e.target.value)}
                 placeholder={t('common.search')}
-                className="w-full bg-transparent border-none py-2 pl-8 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-0 font-serif"
+                className="w-full bg-transparent border-none py-2 pl-6 sm:pl-8 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-0 font-serif"
               />
             </div>
           </div>
 
           {/* Controls */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 sm:gap-6 overflow-x-auto">
+            {/* Immersive Toggle */}
+            <button
+              onClick={() => onImmersiveChange(!immersive)}
+              className={`flex-shrink-0 flex items-center gap-1 sm:gap-2 text-ui-micro font-bold uppercase tracking-widest transition-colors ${
+                immersive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+              title={t('gallery.immersive') || '沉浸模式'}
+            >
+              <span>{t('gallery.immersive') || '沉浸'}</span>
+            </button>
+
+            <div className="w-px h-4 bg-border flex-shrink-0" />
+
             {/* Grayscale Toggle */}
             <button
               onClick={() => onGrayscaleChange(!grayscale)}
-              className={`flex items-center gap-2 text-ui-micro font-bold uppercase tracking-widest transition-colors ${
+              className={`flex-shrink-0 flex items-center gap-1 sm:gap-2 text-ui-micro font-bold uppercase tracking-widest transition-colors ${
                 grayscale ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -148,7 +165,7 @@ export function GalleryToolbar({
               <span className="hidden sm:inline">B&W</span>
             </button>
 
-            <div className="w-px h-4 bg-border" />
+            <div className="w-px h-4 bg-border flex-shrink-0" />
 
             {/* View Mode Toggle */}
             <ViewModeToggle

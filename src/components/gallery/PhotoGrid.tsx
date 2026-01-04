@@ -12,11 +12,12 @@ interface PhotoGridProps {
   settings: PublicSettingsDto | null
   viewMode: ViewMode
   grayscale: boolean
+  immersive?: boolean
   onPhotoClick: (photo: PhotoDto) => void
   t: (key: string) => string
 }
 
-export function PhotoGrid({ loading, photos, settings, viewMode, grayscale, onPhotoClick, t }: PhotoGridProps) {
+export function PhotoGrid({ loading, photos, settings, viewMode, grayscale, immersive = false, onPhotoClick, t }: PhotoGridProps) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -44,6 +45,7 @@ export function PhotoGrid({ loading, photos, settings, viewMode, grayscale, onPh
           photos={photos}
           settings={settings}
           grayscale={grayscale}
+          immersive={immersive}
           onPhotoClick={onPhotoClick}
         />
       )}
@@ -52,6 +54,7 @@ export function PhotoGrid({ loading, photos, settings, viewMode, grayscale, onPh
           photos={photos}
           settings={settings}
           grayscale={grayscale}
+          immersive={immersive}
           onPhotoClick={onPhotoClick}
         />
       )}

@@ -128,6 +128,7 @@ export const dictionaries = {
       weekday_sat: '周六',
       loadingMore: '加载更多...',
       noMore: '已加载全部照片',
+      immersive: '沉浸',
     },
     they: {
       title: '他们',
@@ -666,6 +667,7 @@ export const dictionaries = {
       weekday_sat: 'SAT',
       loadingMore: 'Loading more...',
       noMore: 'All photos loaded',
+      immersive: 'Immersive',
     },
     they: {
       title: 'THEY',
