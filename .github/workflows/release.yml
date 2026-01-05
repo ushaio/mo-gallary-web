@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - main
+      - master
   workflow_dispatch:
 
 jobs:
@@ -51,7 +51,7 @@ jobs:
           git add package.json
           git diff --staged --quiet || git commit -m "chore: bump version to ${{ steps.version.outputs.TAG }}"
           git tag ${{ steps.version.outputs.TAG }}
-          git push origin main --tags
+          git push origin master --tags
 
       - name: Extract changelog for this version
         if: steps.check_tag.outputs.exists == 'false'
