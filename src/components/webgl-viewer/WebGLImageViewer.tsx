@@ -129,7 +129,7 @@ export const WebGLImageViewer = ({
       webGLImageViewerEngine?.destroy()
       viewerRef.current = null
     }
-  }, [src, config, debug])
+  }, [src, debug])
 
   const handleOutlineToggle = useCallback(
     (enabled: boolean) => {

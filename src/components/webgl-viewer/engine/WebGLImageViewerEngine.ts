@@ -8,6 +8,7 @@ const TextureWorkerRaw = `
 /// <reference lib="webworker" />
 
 let originalImage = null
+let currentImageUrl = null
 
 const TILE_SIZE = 512
 
@@ -26,8 +27,13 @@ self.onmessage = async (e) => {
   switch (type) {
     case 'load-image': {
       const { url } = payload
+      if (currentImageUrl === url && originalImage) {
+        console.info('[Worker] Image already loaded, skipping:', url)
+        return
+      }
       try {
         console.info('[Worker] Fetching image:', url)
+        currentImageUrl = url
         const response = await fetch(url, { mode: 'cors' })
         const blob = await response.blob()
         originalImage = await createImageBitmap(blob)
@@ -67,6 +73,7 @@ self.onmessage = async (e) => {
     }
     case 'init': {
       originalImage = payload.imageBitmap
+      currentImageUrl = null
       self.postMessage({ type: 'init-done' })
       break
     }
@@ -588,6 +595,11 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
   }
 
   async loadImage(url: string, preknownWidth?: number, preknownHeight?: number) {
+    if (this.originalImageSrc === url && this.imageLoaded) {
+      console.info('[Engine] Image already loaded, skipping:', url)
+      return Promise.resolve()
+    }
+
     this.originalImageSrc = url
     this.isLoadingTexture = true
     this.notifyLoadingStateChange(true, LoadingState.IMAGE_LOADING)
