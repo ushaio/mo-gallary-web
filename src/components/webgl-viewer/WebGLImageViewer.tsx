@@ -8,10 +8,10 @@ import {
   defaultPinchConfig,
   defaultVelocityAnimation,
   defaultWheelConfig,
-} from '../constants'
+} from './constants'
 import DebugInfoComponent from './DebugInfo'
-import type { WebGLImageViewerProps, WebGLImageViewerRef } from '../types/interface'
-import { WebGLImageViewerEngine } from '../engine/WebGLImageViewerEngine'
+import type { WebGLImageViewerProps, WebGLImageViewerRef } from './types/interface'
+import { WebGLImageViewerEngine } from './engine/WebGLImageViewerEngine'
 
 export const WebGLImageViewer = ({
   ref,
