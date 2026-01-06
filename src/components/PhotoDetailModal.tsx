@@ -27,6 +27,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { formatFileSize } from '@/lib/utils'
 import { Toast, type Notification } from '@/components/Toast'
 import { StoryTab } from '@/components/StoryTab'
+import { WebGLImageViewer } from './webgl-viewer'
 
 type TabType = 'story' | 'info'
 
@@ -47,7 +48,8 @@ interface PhotoDetailModalProps {
   totalPhotos?: number // Total count of all photos (for display)
   hasMore?: boolean // Whether there are more photos to load
   onLoadMore?: () => Promise<void> // Callback to load more photos
-  hideStoryTab?: boolean // Hide the story tab (useful when viewing from story detail page)
+  hideStoryTab?: boolean // Hide story tab (useful when viewing from story detail page)
+  useWebGL?: boolean // Enable WebGL image viewer (default: true)
 }
 
 export function PhotoDetailModal({
@@ -60,6 +62,7 @@ export function PhotoDetailModal({
   hasMore = false,
   onLoadMore,
   hideStoryTab = false,
+  useWebGL = true,
 }: PhotoDetailModalProps) {
   const { settings } = useSettings()
   const { t, locale } = useLanguage()
@@ -86,6 +89,10 @@ export function PhotoDetailModal({
   // Touch swipe handling
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
   const touchMoveRef = useRef<{ x: number; y: number } | null>(null)
+
+  // WebGL viewer reference
+  const webGLViewerRef = useRef<{ getScale: () => number } | null>(null)
+  const [isZoomed, setIsZoomed] = useState(false)
 
   const currentPhotoIndex = photo && allPhotos.length > 0
     ? allPhotos.findIndex(p => p.id === photo.id)
@@ -160,11 +167,15 @@ export function PhotoDetailModal({
 
   const handleTouchEnd = () => {
     if (!touchStartRef.current || !touchMoveRef.current) return
-    
+
     const deltaX = touchMoveRef.current.x - touchStartRef.current.x
     const deltaY = touchMoveRef.current.y - touchStartRef.current.y
     const minSwipeDistance = 50
-    
+
+    if (useWebGL && isZoomed) {
+      return
+    }
+
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
       if (deltaX > 0 && hasPrevious) {
         handlePrevious()
@@ -338,9 +349,10 @@ export function PhotoDetailModal({
             <div className={`relative bg-black/5 flex flex-col overflow-hidden transition-all duration-300 ${mobilePanelExpanded ? 'h-[35vh] lg:h-full lg:flex-1' : 'flex-1'}`}>
               <div
                 className="relative flex-1 flex items-center justify-center group overflow-hidden"
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
+                onTouchStart={!useWebGL ? handleTouchStart : undefined}
+                onTouchMove={!useWebGL ? handleTouchMove : undefined}
+                onTouchEnd={!useWebGL ? handleTouchEnd : undefined}
+                style={{ touchAction: useWebGL ? 'none' : 'auto' }}
               >
                 {/* Close Button */}
                 <button
@@ -358,12 +370,31 @@ export function PhotoDetailModal({
                 )}
 
                 <div className="absolute inset-0 flex items-center justify-center p-2 md:p-12">
-                  <img
-                    src={resolveAssetUrl(photo.url, settings?.cdn_domain)}
-                    alt={photo.title}
-                    className="max-w-full max-h-full object-contain shadow-2xl select-none"
-                    draggable={false}
-                  />
+                  {useWebGL && photo ? (
+                    <WebGLImageViewer
+                      ref={webGLViewerRef}
+                      src={resolveAssetUrl(photo.url, settings?.cdn_domain)}
+                      className="w-full h-full"
+                      width={photo.width}
+                      height={photo.height}
+                      onZoomChange={(originalScale, relativeScale) => {
+                        const fitScale = Math.min(
+                          window.innerWidth / (photo.width || 1),
+                          window.innerHeight / (photo.height || 1)
+                        )
+                        setIsZoomed(Math.abs(relativeScale - 1) > 0.1)
+                      }}
+                      smooth={true}
+                      limitToBounds={true}
+                    />
+                  ) : (
+                    <img
+                      src={resolveAssetUrl(photo.url, settings?.cdn_domain)}
+                      alt={photo.title}
+                      className="max-w-full max-h-full object-contain shadow-2xl select-none"
+                      draggable={false}
+                    />
+                  )}
                 </div>
 
                 {/* Navigation Arrows - Hidden on mobile */}
