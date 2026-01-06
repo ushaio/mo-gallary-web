@@ -22,23 +22,19 @@ const WORKER_SIMPLE_LOD_LEVELS = [
 
 self.onmessage = async (e) => {
   const { type, payload } = e.data
-  console.info('[Worker] Received message:', type, payload)
 
   switch (type) {
     case 'load-image': {
       const { url } = payload
       if (currentImageUrl === url && originalImage) {
-        console.info('[Worker] Image already loaded, skipping:', url)
         return
       }
       try {
-        console.info('[Worker] Fetching image:', url)
         currentImageUrl = url
         const response = await fetch(url, { mode: 'cors' })
         const blob = await response.blob()
         originalImage = await createImageBitmap(blob)
 
-        console.info('[Worker] Image decoded, posting init-done')
         self.postMessage({ type: 'init-done' })
 
         const lodLevel = 1
@@ -52,7 +48,6 @@ self.onmessage = async (e) => {
           resizeQuality: 'medium',
         })
 
-        console.info('[Worker] Initial LOD created, posting image-loaded')
         self.postMessage(
           {
             type: 'image-loaded',
@@ -596,7 +591,6 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
 
   async loadImage(url: string, preknownWidth?: number, preknownHeight?: number) {
     if (this.originalImageSrc === url && this.imageLoaded) {
-      console.info('[Engine] Image already loaded, skipping:', url)
       return Promise.resolve()
     }
 
@@ -614,7 +608,6 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
       this.loadImageResolve = resolve
       this.loadImageReject = reject
 
-      console.info('[Engine] Posting "load-image" to worker', this.worker)
       this.worker?.postMessage({
         type: 'load-image',
         payload: { url },
