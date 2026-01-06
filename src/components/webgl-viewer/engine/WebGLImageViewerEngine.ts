@@ -3,7 +3,27 @@ import { ImageViewerEngineBase } from './ImageViewerEngineBase'
 import type { DebugInfo, WebGLImageViewerProps } from '../types/interface'
 import { createShader, FRAGMENT_SHADER_SOURCE, VERTEX_SHADER_SOURCE } from './shaders'
 
-const TextureWorkerRaw = `
+/**
+ * Note on image loading strategy:
+ * 
+ * Two approaches available:
+ * 
+ * 1. HTMLImage with crossOrigin (CURRENT)
+ *    - Bypasses CORS without server config
+ *    - Main thread loading
+ *    - Better compatibility
+ * 
+ * 2. Worker fetch with { mode: 'cors' } (ALTERNATIVE)
+ *    - Matches Afilmory implementation
+ *    - Requires R2 CORS configuration
+ *    - Background processing
+ * 
+ * To switch to Worker fetch:
+ * 1. Configure R2 bucket CORS headers
+ * 2. Set USE_WORKER_FETCH = true below
+ * 3. Worker will handle fetch instead of main thread
+ */
+const USE_WORKER_FETCH = false // Set to true after configuring R2 CORS
 // @ts-nocheck
 /// <reference lib="webworker" />
 
