@@ -181,4 +181,4 @@ export const WebGLImageViewer = ({
 
 WebGLImageViewer.displayName = 'WebGLImageViewer'
 
-export { type WebGLImageViewerProps, type WebGLImageViewerRef } from '../types/interface'
+export { type WebGLImageViewerProps, type WebGLImageViewerRef } from './types/interface'

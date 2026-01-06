@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useCallback, useImperativeHandle, useState } from 'react'
 
-import type { DebugInfo } from '../types/interface'
+import type { DebugInfo } from './types/interface'
 
 export interface DebugInfoRef {
   updateDebugInfo: (debugInfo: DebugInfo) => void
