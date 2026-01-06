@@ -24,52 +24,37 @@ self.onmessage = async (e) => {
   const { type, payload } = e.data
 
   switch (type) {
-    case 'load-image': {
-      const { url } = payload
-      if (currentImageUrl === url && originalImage) {
+    case 'init': {
+      if (!payload.imageBitmap) {
+        console.warn('[Worker] Invalid init: no imageBitmap provided')
         return
       }
-      try {
-        currentImageUrl = url
-        const response = await fetch(url, { mode: 'cors' })
-        const blob = await response.blob()
-        originalImage = await createImageBitmap(blob)
 
-        self.postMessage({ type: 'init-done' })
-
-        const lodLevel = 1
-        const lodConfig = WORKER_SIMPLE_LOD_LEVELS[lodLevel]
-        const finalWidth = Math.max(1, Math.round(originalImage.width * lodConfig.scale))
-        const finalHeight = Math.max(1, Math.round(originalImage.height * lodConfig.scale))
-
-        const initialLODBitmap = await createImageBitmap(originalImage, {
-          resizeWidth: finalWidth,
-          resizeHeight: finalHeight,
-          resizeQuality: 'medium',
-        })
-
-        self.postMessage(
-          {
-            type: 'image-loaded',
-            payload: {
-              imageBitmap: initialLODBitmap,
-              imageWidth: originalImage.width,
-              imageHeight: originalImage.height,
-              lodLevel,
-            },
-          },
-          [initialLODBitmap],
-        )
-      } catch (error) {
-        console.error('[Worker] Error loading image:', error)
-        self.postMessage({ type: 'load-error', payload: { error } })
-      }
-      break
-    }
-    case 'init': {
       originalImage = payload.imageBitmap
-      currentImageUrl = null
-      self.postMessage({ type: 'init-done' })
+
+      const lodLevel = 1
+      const lodConfig = WORKER_SIMPLE_LOD_LEVELS[lodLevel]
+      const finalWidth = Math.max(1, Math.round(originalImage.width * lodConfig.scale))
+      const finalHeight = Math.max(1, Math.round(originalImage.height * lodConfig.scale))
+
+      const initialLODBitmap = await createImageBitmap(originalImage, {
+        resizeWidth: finalWidth,
+        resizeHeight: finalHeight,
+        resizeQuality: 'medium',
+      })
+
+      self.postMessage(
+        {
+          type: 'image-loaded',
+          payload: {
+            imageBitmap: initialLODBitmap,
+            imageWidth: originalImage.width,
+            imageHeight: originalImage.height,
+            lodLevel,
+          },
+        },
+        [initialLODBitmap],
+      )
       break
     }
     case 'create-tile': {
@@ -604,14 +589,27 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
       this.setupInitialScaling()
     }
 
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<void>(async (resolve, reject) => {
       this.loadImageResolve = resolve
       this.loadImageReject = reject
 
-      this.worker?.postMessage({
-        type: 'load-image',
-        payload: { url },
-      })
+      try {
+        const response = await fetch(url)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`)
+        }
+        const blob = await response.blob()
+
+        this.worker?.postMessage({
+          type: 'init',
+          payload: { imageBitmap: await createImageBitmap(blob) },
+        })
+      } catch (error) {
+        console.error('[Engine] Failed to load image:', error)
+        if (this.loadImageReject) {
+          this.loadImageReject(error as Error)
+        }
+      }
     })
   }
 
