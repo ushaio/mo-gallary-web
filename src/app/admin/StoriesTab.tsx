@@ -626,6 +626,11 @@ export function StoriesTab({ token, t, notify, editStoryId, editFromDraft, onDra
       setStoryEditMode('list')
       setCurrentStory(null)
       await loadStories()
+
+      // Clear URL parameter after successful save
+      if (window.location.search.includes('editStory=')) {
+        router.replace('/admin/logs', { scroll: false })
+      }
     } catch (err) {
       console.error('Failed to save story:', err)
       notify(t('story.save_failed'), 'error')
@@ -984,6 +989,10 @@ export function StoriesTab({ token, t, notify, editStoryId, editFromDraft, onDra
                   initialStoryRef.current = null
                   setIsDirty(false)
                   setUseCustomDate(false)
+                  // Clear URL parameter when returning to list
+                  if (window.location.search.includes('editStory=')) {
+                    router.replace('/admin/logs', { scroll: false })
+                  }
                 }}
                 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors"
               >
