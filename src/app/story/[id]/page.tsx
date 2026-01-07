@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { motion, useScroll, useTransform } from 'framer-motion'
-import { ArrowLeft, Calendar, Clock } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, Share2 } from 'lucide-react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { getStory, type StoryDto, type PhotoDto, resolveAssetUrl } from '@/lib/api'
@@ -11,6 +11,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { useSettings } from '@/contexts/SettingsContext'
 import { StoryComments } from '@/components/StoryComments'
 import { PhotoDetailModal } from '@/components/PhotoDetailModal'
+import { Toast, type Notification } from '@/components/Toast'
 
 const MilkdownViewer = dynamic(
   () => import('@/components/MilkdownViewer'),
@@ -35,7 +36,8 @@ export default function StoryDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoDto | null>(null)
   const [activePhotoIndex, setActivePhotoIndex] = useState(0)
-  
+  const [notifications, setNotifications] = useState<Notification[]>([])
+
   const heroRef = useRef<HTMLDivElement>(null)
   const { scrollY } = useScroll()
   const opacity = useTransform(scrollY, [0, 400], [1, 0])
@@ -68,6 +70,43 @@ export default function StoryDetailPage() {
       return story.photos.find(p => p.id === story.coverPhotoId) || story.photos[0]
     }
     return story.photos[0]
+  }
+
+  const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    const id = Date.now().toString()
+    setNotifications(prev => [...prev, { id, message, type }])
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id))
+    }, 3000)
+  }
+
+  const handleShare = async () => {
+    const url = window.location.href
+    const title = story?.title || 'Narrative'
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title,
+          url,
+        })
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          await copyToClipboard(url)
+        }
+      }
+    } else {
+      await copyToClipboard(url)
+    }
+  }
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      showNotification(t('common.copied') || 'Link copied!', 'success')
+    } catch {
+      showNotification(t('common.error') || 'Failed to copy', 'error')
+    }
   }
 
   if (loading) {
@@ -247,7 +286,19 @@ export default function StoryDetailPage() {
 
             {/* Comments */}
             {targetPhotoId && (
-              <div className="mt-12 pt-8 border-t border-border/30">
+              <div className="mt-6 pt-6 border-t border-border/30">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                    {t('story.comments') || 'Comments'}
+                  </h3>
+                  <button
+                    onClick={handleShare}
+                    className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary border border-primary/30 hover:bg-primary/10 transition-all rounded-md"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    {t('story.share') || 'Share'}
+                  </button>
+                </div>
                 <StoryComments storyId={story.id} targetPhotoId={targetPhotoId} />
               </div>
             )}
@@ -346,6 +397,9 @@ export default function StoryDetailPage() {
         allPhotos={story.photos}
         hideStoryTab
       />
+
+      {/* Toast Notifications */}
+      <Toast notifications={notifications} remove={(id) => setNotifications(prev => prev.filter(n => n.id !== id))} />
     </div>
   )
 }

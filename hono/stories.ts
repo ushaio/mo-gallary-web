@@ -6,14 +6,6 @@ import { z } from 'zod'
 
 const stories = new Hono<{ Variables: AuthVariables }>()
 
-// Helper function to sort photos by the order stored in PhotoStories junction table
-// Note: Since Prisma doesn't maintain order in many-to-many relations automatically,
-// we need to store the order. For now, we'll use the order from the reorder API call.
-// This function will be enhanced when order field is added to the junction table.
-function sortPhotosByOrder<T extends { id: string }>(photos: T[], photoIds: string[]): T[] {
-  return photoIds.map((orderId) => photos.find((p) => p.id === orderId)).filter((p): p is T => !!p)
-}
-
 // Validation schemas
 const CreateStorySchema = z.object({
   title: z.string().min(1).max(200),
