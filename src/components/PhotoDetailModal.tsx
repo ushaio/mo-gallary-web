@@ -27,7 +27,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { formatFileSize } from '@/lib/utils'
 import { Toast, type Notification } from '@/components/Toast'
 import { StoryTab } from '@/components/StoryTab'
-import { WebGLImageViewer, type WebGLImageViewerRef } from './webgl-viewer'
+// WebGL imports temporarily disabled for testing
+// import { WebGLImageViewer, type WebGLImageViewerRef } from './webgl-viewer'
 
 type TabType = 'story' | 'info'
 
@@ -62,7 +63,7 @@ export function PhotoDetailModal({
   hasMore = false,
   onLoadMore,
   hideStoryTab = false,
-  useWebGL = true,
+  useWebGL = false, // WebGL temporarily disabled for testing
 }: PhotoDetailModalProps) {
   const { settings } = useSettings()
   const { t, locale } = useLanguage()
@@ -91,7 +92,7 @@ export function PhotoDetailModal({
   const touchMoveRef = useRef<{ x: number; y: number } | null>(null)
 
   // WebGL viewer reference
-  const webGLViewerRef = useRef<WebGLImageViewerRef | null>(null)
+  // const webGLViewerRef = useRef<WebGLImageViewerRef | null>(null)
   const [isZoomed, setIsZoomed] = useState(false)
 
   const currentPhotoIndex = photo && allPhotos.length > 0
@@ -171,10 +172,6 @@ export function PhotoDetailModal({
     const deltaX = touchMoveRef.current.x - touchStartRef.current.x
     const deltaY = touchMoveRef.current.y - touchStartRef.current.y
     const minSwipeDistance = 50
-
-    if (useWebGL && isZoomed) {
-      return
-    }
 
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
       if (deltaX > 0 && hasPrevious) {
@@ -349,10 +346,10 @@ export function PhotoDetailModal({
             <div className={`relative bg-black/5 flex flex-col overflow-hidden transition-all duration-300 ${mobilePanelExpanded ? 'h-[35vh] lg:h-full lg:flex-1' : 'flex-1'}`}>
               <div
                 className="relative flex-1 flex items-center justify-center group overflow-hidden"
-                onTouchStart={!useWebGL ? handleTouchStart : undefined}
-                onTouchMove={!useWebGL ? handleTouchMove : undefined}
-                onTouchEnd={!useWebGL ? handleTouchEnd : undefined}
-                style={{ touchAction: useWebGL ? 'none' : 'auto' }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                style={{ touchAction: 'auto' }}
               >
                 {/* Close Button */}
                 <button
@@ -370,31 +367,12 @@ export function PhotoDetailModal({
                 )}
 
                 <div className="absolute inset-0 flex items-center justify-center p-2 md:p-12">
-                  {useWebGL && photo ? (
-                    <WebGLImageViewer
-                      ref={webGLViewerRef}
-                      src={resolveAssetUrl(photo.url, settings?.cdn_domain)}
-                      className="w-full h-full"
-                      width={photo.width}
-                      height={photo.height}
-                      onZoomChange={(originalScale, relativeScale) => {
-                        const fitScale = Math.min(
-                          window.innerWidth / (photo.width || 1),
-                          window.innerHeight / (photo.height || 1)
-                        )
-                        setIsZoomed(Math.abs(relativeScale - 1) > 0.1)
-                      }}
-                      smooth={true}
-                      limitToBounds={true}
-                    />
-                  ) : (
-                    <img
-                      src={resolveAssetUrl(photo.url, settings?.cdn_domain)}
-                      alt={photo.title}
-                      className="max-w-full max-h-full object-contain shadow-2xl select-none"
-                      draggable={false}
-                    />
-                  )}
+                  <img
+                    src={resolveAssetUrl(photo.url, settings?.cdn_domain)}
+                    alt={photo.title}
+                    className="max-w-full max-h-full object-contain shadow-2xl select-none"
+                    draggable={false}
+                  />
                 </div>
 
                 {/* Navigation Arrows - Hidden on mobile */}
