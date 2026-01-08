@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { init, type WalineInstance, type WalineInitOptions } from '@waline/client'
+import '@waline/client/waline.css'
 import './waline-custom.css'
 
 export interface WalineCommentsProps {
@@ -45,6 +46,8 @@ export function WalineComments({
       locale,
       comment: true,
       pageview: true,
+      wordLimit: 0,
+      requiredMeta: [],
     }
 
     walineInstanceRef.current = init(options)

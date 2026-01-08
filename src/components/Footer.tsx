@@ -12,10 +12,13 @@ export default function Footer() {
   const siteTitle = settings?.site_title || 'MO GALLERY'
   const currentYear = new Date().getFullYear()
 
-  // Hide footer on admin pages
+  // Hide footer completely on admin pages
   if (pathname?.startsWith('/admin/')) {
     return null
   }
+
+  // Show only copyright bar on story detail pages
+  const isStoryDetail = pathname?.startsWith('/story/')
 
   const navLinks = [
     { name: t('nav.home'), path: '/' },
@@ -44,7 +47,8 @@ export default function Footer() {
 
   return (
     <footer className="relative bg-background text-foreground border-t border-border overflow-hidden">
-      {/* Main Footer Content */}
+      {/* Main Footer Content - hidden on story detail pages */}
+      {!isStoryDetail && (
       <div className="max-w-[1920px] mx-auto px-4 md:px-12 py-12 md:py-20">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8">
           {/* Brand Section */}
@@ -120,6 +124,7 @@ export default function Footer() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Bottom Bar */}
       <div className="border-t border-border">

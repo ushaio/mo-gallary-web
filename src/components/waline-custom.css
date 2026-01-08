@@ -1,194 +1,320 @@
-.waline-container {
+/* Waline 极简风格 - 匹配项目默认评论组件 */
+
+.waline-container [data-waline] {
   --waline-theme-color: var(--primary);
+  --waline-active-color: var(--primary);
   --waline-bg-color: transparent;
-  --waline-text-color: var(--foreground);
+  --waline-bg-color-light: var(--muted);
+  --waline-bg-color-hover: var(--accent);
   --waline-border-color: var(--border);
-  --waline-secondary-bg-color: transparent;
-  --waline-secondary-text-color: var(--muted-foreground);
+  --waline-color: var(--foreground);
+  --waline-light-grey: var(--muted-foreground);
+  --waline-dark-grey: var(--muted-foreground);
   --waline-info-color: var(--muted-foreground);
-  --waline-border-radius: 0;
+  --waline-info-bg-color: var(--muted);
+  --waline-border: 1px solid var(--border);
+  --waline-avatar-radius: 50%;
   --waline-box-shadow: none;
-  --waline-avatar-size: 40px;
+  --waline-font-size: 0.875rem;
+  --waline-avatar-size: 2.5rem;
+  --waline-m-avatar-size: 2rem;
 }
 
-.waline-container .wl-comment {
-  padding: 1.5rem 0;
-  border-bottom: 1px solid var(--border);
+/* 隐藏不需要的元素 */
+.waline-container .wl-power,
+.waline-container .wl-reaction {
+  display: none !important;
 }
 
-.waline-container .wl-avatar {
-  border-radius: 50%;
-  width: 40px !important;
-  height: 40px !important;
-}
-
-.waline-container .wl-input,
-.waline-container .wl-editor {
+/* 面板样式 - 去除圆角和阴影，无边框 */
+.waline-container .wl-panel {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
   background: transparent !important;
-  border: none !important;
-  border-bottom: 1px solid var(--border) !important;
-  border-radius: 0 !important;
-  padding: 0.75rem 0 !important;
-  font-family: var(--font-serif);
-  font-size: 0.875rem;
-  color: var(--foreground) !important;
+  margin: 0 !important;
 }
 
-.waline-container .wl-input:focus,
-.waline-container .wl-editor:focus {
-  border-bottom-color: var(--primary) !important;
-  outline: none;
-}
-
-.waline-container .wl-nick {
-  background: transparent !important;
-  border: none !important;
-  border-bottom: 1px solid var(--border) !important;
-  border-radius: 0 !important;
-  font-family: var(--font-serif);
-  font-size: 0.875rem;
-}
-
-.waline-container .wl-btn {
-  background: var(--primary) !important;
-  color: var(--primary-foreground) !important;
-  border: none !important;
-  border-radius: 0 !important;
-  padding: 0.75rem 1.5rem !important;
-  font-size: 0.75rem !important;
-  font-weight: bold !important;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  transition: opacity 0.2s;
-}
-
-.waline-container .wl-btn:hover {
-  opacity: 0.9;
-}
-
-.waline-container .wl-content {
-  font-family: var(--font-serif);
-  font-size: 0.875rem;
-  line-height: 1.6;
-  color: var(--foreground);
-}
-
-.waline-container .wl-time {
-  font-size: 0.625rem !important;
-  color: var(--muted-foreground) !important;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-.waline-container .wl-count {
-  font-size: 0.75rem !important;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: var(--primary);
-}
-
-.waline-container .wl-label {
-  font-size: 0.625rem !important;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: var(--muted-foreground);
-}
-
+/* 头部输入区域 - 三列布局 */
 .waline-container .wl-header {
-  gap: 1rem;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 1.5rem !important;
 }
 
-.waline-container .wl-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+.waline-container .wl-header-item {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  border: none !important;
+  padding: 0 !important;
 }
 
-.waline-container .wl-sort {
-  font-size: 0.75rem !important;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--muted-foreground);
-}
-
-.waline-container .wl-sort:hover {
-  color: var(--primary) !important;
-}
-
-.waline-container .wl-active {
-  color: var(--primary) !important;
-}
-
-.waline-container .wl-reply {
-  font-size: 0.75rem !important;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+.waline-container .wl-header label {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.3em !important;
   color: var(--muted-foreground) !important;
+  opacity: 0.6 !important;
+  padding: 0 !important;
+  margin-bottom: 0.5rem !important;
+  min-width: auto !important;
 }
 
-.waline-container .wl-reply:hover {
-  color: var(--primary) !important;
+.waline-container .wl-header input {
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif !important;
+  font-size: 0.875rem !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border) !important;
+  background: transparent !important;
+  padding: 0.75rem 0 !important;
+  flex: 1 !important;
+  width: 100% !important;
+  transition: border-color 0.2s !important;
+}
+
+.waline-container .wl-header input:focus {
+  border-bottom-color: var(--primary) !important;
+  background: transparent !important;
+}
+
+/* 编辑器文本域 */
+.waline-container .wl-editor {
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif !important;
+  font-size: 0.875rem !important;
+  min-height: 120px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 1rem !important;
+  margin: 1rem 0 0.5rem 0 !important;
+  width: calc(100% - 1em) !important;
+  transition: border-color 0.2s !important;
+}
+
+.waline-container .wl-editor:focus {
+  border-color: var(--primary) !important;
+  background: transparent !important;
+}
+
+/* 底部操作栏 */
+.waline-container .wl-footer {
+  border: none !important;
+  padding: 0.5rem 0 !important;
+  margin-top: 0 !important;
+}
+
+/* 操作按钮区域 */
+.waline-container .wl-actions {
+  display: flex !important;
 }
 
 .waline-container .wl-action {
   color: var(--muted-foreground) !important;
+  opacity: 0.6 !important;
+  transition: opacity 0.2s !important;
 }
 
 .waline-container .wl-action:hover {
   color: var(--primary) !important;
+  opacity: 1 !important;
 }
 
-.waline-container .wl-pagination {
-  margin-top: 2rem;
+/* 提交按钮区域 - 靠右显示 */
+.waline-container .wl-info {
+  justify-content: flex-end !important;
+  flex: 1 !important;
 }
 
-.waline-container .wl-page {
-  font-size: 0.75rem !important;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--muted-foreground);
-  padding: 0.5rem 0.75rem;
-}
-
-.waline-container .wl-page:hover {
+/* 提交按钮 - 极简文字风格 */
+.waline-container .wl-btn.primary {
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
   color: var(--primary) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.4em !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-width: auto !important;
+  transition: opacity 0.2s !important;
 }
 
-.waline-container .wl-current {
-  color: var(--primary-foreground) !important;
-  background: var(--primary) !important;
+.waline-container .wl-btn.primary:hover {
+  background: transparent !important;
+  color: var(--primary) !important;
+  opacity: 0.7 !important;
 }
 
-.waline-container .wl-quote {
-  border-left: 2px solid var(--border);
-  margin-left: 1rem;
-  padding-left: 1rem;
+.waline-container .wl-btn.primary:disabled {
+  opacity: 0.2 !important;
 }
 
-.waline-container .wl-emoji {
-  font-size: 1.25rem;
+/* 评论卡片 */
+.waline-container .wl-cards {
+  margin-top: 2rem !important;
 }
 
-.waline-container .wl-power {
-  font-size: 0.625rem !important;
+.waline-container .wl-card-item {
+  padding: 1.5rem 0 !important;
+}
+
+.waline-container .wl-card {
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+}
+
+.waline-container .wl-card-item:not(:last-child) .wl-card {
+  border-bottom: 1px solid var(--border) !important;
+  padding-bottom: 1.5rem !important;
+}
+
+/* 用户头像 */
+.waline-container .wl-user .wl-user-avatar {
+  border-radius: 50% !important;
+  box-shadow: none !important;
+}
+
+/* 昵称 */
+.waline-container .wl-card .wl-nick {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: var(--foreground) !important;
+  letter-spacing: 0.02em !important;
+}
+
+/* 时间 */
+.waline-container .wl-card .wl-time {
+  font-size: 9px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  color: var(--muted-foreground) !important;
+  opacity: 0.6 !important;
+}
+
+/* 评论内容 */
+.waline-container .wl-card .wl-content {
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif !important;
+  font-size: 0.875rem !important;
+  line-height: 1.625 !important;
+  color: var(--foreground) !important;
+  opacity: 0.7 !important;
+  padding-top: 0.5rem !important;
+  margin-bottom: 0 !important;
+}
+
+.waline-container .wl-card .wl-content p {
+  margin: 0 !important;
+}
+
+/* 操作按钮 */
+.waline-container .wl-card .wl-comment-actions {
+  opacity: 0.4 !important;
+  transition: opacity 0.2s !important;
+}
+
+.waline-container .wl-card:hover .wl-comment-actions {
+  opacity: 1 !important;
+}
+
+.waline-container .wl-card .wl-like,
+.waline-container .wl-card .wl-reply,
+.waline-container .wl-card .wl-edit {
+  font-size: 0.75rem !important;
+}
+
+/* 回复引用 */
+.waline-container .wl-card .wl-quote {
+  border-left: 2px solid var(--border) !important;
+  margin-left: 0.5rem !important;
+}
+
+/* 空状态 */
+.waline-container .wl-empty {
+  text-align: center !important;
+  padding: 3rem 0 !important;
+  background: var(--muted) !important;
+  border: 1px solid var(--border) !important;
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif !important;
+  font-size: 0.75rem !important;
+  font-style: italic !important;
   color: var(--muted-foreground) !important;
 }
 
-@media (max-width: 640px) {
-  .waline-container .wl-comment {
-    padding: 1rem 0;
-  }
+/* 加载状态 */
+.waline-container .wl-loading {
+  padding: 3rem 0 !important;
+}
 
-  .waline-container .wl-avatar {
-    width: 32px !important;
-    height: 32px !important;
-  }
+/* 评论数和排序 */
+.waline-container .wl-meta-head {
+  margin-bottom: 1rem !important;
+}
 
-  .waline-container .wl-content {
-    font-size: 0.8125rem;
+.waline-container .wl-count {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.4em !important;
+  color: var(--primary) !important;
+  opacity: 0.8 !important;
+}
+
+.waline-container .wl-sort li {
+  font-size: 9px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.2em !important;
+}
+
+/* 表情弹窗 */
+.waline-container .wl-emoji-popup,
+.waline-container .wl-gif-popup {
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 徽章 */
+.waline-container .wl-card .wl-badge {
+  border-radius: 0 !important;
+  font-size: 9px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+}
+
+/* 隐藏元信息 */
+.waline-container .wl-card .wl-meta > span {
+  display: none !important;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .waline-container .wl-header {
+    flex-wrap: wrap !important;
   }
+  
+  .waline-container .wl-header-item {
+    flex: 1 1 calc(50% - 0.75rem) !important;
+    min-width: 120px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .waline-container .wl-header-item {
+    flex: 1 1 100% !important;
+  }
+}
+
+/* 预览区域 */
+.waline-container .wl-preview {
+  padding: 1rem !important;
+  border: 1px dashed var(--border) !important;
+  margin-bottom: 1rem !important;
 }

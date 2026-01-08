@@ -100,7 +100,7 @@ export default function StoryDetailPage() {
   const targetPhotoId = story.coverPhotoId || story.photos[0]?.id
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="bg-background text-foreground">
       {/* Compact Hero Section */}
       <section ref={heroRef} className="relative h-[50vh] md:h-[60vh] w-full overflow-hidden bg-black">
         <motion.div style={{ scale, opacity }} className="absolute inset-0">
