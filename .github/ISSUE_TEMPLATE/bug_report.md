@@ -45,7 +45,7 @@ assignees: ''
 
 - 部署方式：[例如 Docker, Vercel, 本地开发]
 - 存储后端：[例如 本地, GitHub, R2]
-- 数据库：[例如 SQLite, PostgreSQL]
+- 数据库：[例如 PostgreSQL]
 
 ## 📎 附加信息
 

@@ -33,7 +33,7 @@ pnpm run prisma:seed     # Seed database with admin user
 ### Tech Stack
 - **Frontend**: Next.js 16, React 19, Tailwind CSS 4
 - **Backend**: Hono.js (runs as Next.js API route)
-- **Database**: Prisma ORM with PostgreSQL/SQLite
+- **Database**: Prisma ORM with PostgreSQL
 - **Storage**: Pluggable providers (local/GitHub/R2)
 
 ### Directory Structure

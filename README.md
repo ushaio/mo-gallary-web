@@ -100,7 +100,7 @@
 | **数据库 ORM** | Prisma |
 | **样式** | Tailwind CSS 4 |
 | **动画** | Framer Motion |
-| **数据库** | SQLite (开发) / PostgreSQL (生产) |
+| **数据库** |PostgreSQL |
 | **图片处理** | Sharp, ExifReader |
 | **Markdown 编辑器** | Milkdown (Crepe) |
 | **认证** | JWT, Linux DO OAuth |
@@ -114,7 +114,7 @@
 
 - Node.js 18+
 - pnpm（推荐）或 npm
-- PostgreSQL（生产环境）或 SQLite（开发环境）
+- PostgreSQL
 
 ### 本地开发
 
@@ -142,9 +142,9 @@ pnpm run dev
 ### 最小环境变量配置
 
 ```env
-# 数据库（本地开发使用 SQLite）
-DATABASE_URL="file:./dev.db"
-DIRECT_URL="file:./dev.db"
+# 数据库
+DATABASE_URL="postgre:xxx"
+DIRECT_URL="postgre:xxx"
 
 # JWT 密钥（生产环境请修改！）
 JWT_SECRET="your-secret-key"

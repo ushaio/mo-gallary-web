@@ -100,7 +100,7 @@ English | [中文](README.md)
 | **Database ORM** | Prisma |
 | **Styling** | Tailwind CSS 4 |
 | **Animation** | Framer Motion |
-| **Database** | SQLite (dev) / PostgreSQL (prod) |
+| **Database** | PostgreSQL (dev/prod) |
 | **Image Processing** | Sharp, ExifReader |
 | **Markdown Editor** | Milkdown (Crepe) |
 | **Authentication** | JWT, Linux DO OAuth |
@@ -114,7 +114,7 @@ English | [中文](README.md)
 
 - Node.js 18+
 - pnpm (recommended) or npm
-- PostgreSQL (production) or SQLite (development)
+- PostgreSQL
 
 ### Local Development
 
@@ -142,9 +142,9 @@ Visit `http://localhost:3000` to see your gallery!
 ### Minimal Environment Variables
 
 ```env
-# Database (SQLite for local development)
-DATABASE_URL="file:./dev.db"
-DIRECT_URL="file:./dev.db"
+# Database
+DATABASE_URL="postgre:xxx"
+DIRECT_URL="postgre:xxx"
 
 # JWT Secret (change in production!)
 JWT_SECRET="your-secret-key"
