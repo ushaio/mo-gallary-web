@@ -44,8 +44,16 @@ route.route('/', storage)
 route.route('/settings', settings)
 route.route('/admin/settings', settings)
 
-// Waline comments API (when COMMENTS_STORAGE=LEANCLOUD)
-route.all('/waline/*', walineHandler)
-route.all('/api/waline/*', walineHandler)
+// Waline comments API - only register if local Waline is needed
+// (when COMMENTS_STORAGE=LEANCLOUD and no external WALINE_SERVER_URL)
+// If WALINE_SERVER_URL is set, the frontend will connect directly to the external server
+const commentsStorage = process.env.COMMENTS_STORAGE || ''
+const walineServerUrl = process.env.WALINE_SERVER_URL || ''
+const useLocalWaline = commentsStorage.toUpperCase() === 'LEANCLOUD' && !walineServerUrl
+
+if (useLocalWaline) {
+  route.all('/waline/*', walineHandler)
+  route.all('/api/waline/*', walineHandler)
+}
 
 export default route
