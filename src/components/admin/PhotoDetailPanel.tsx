@@ -33,6 +33,7 @@ import {
 } from '@/lib/api'
 import { CustomInput } from '@/components/ui/CustomInput'
 import { CustomSelect } from '@/components/ui/CustomSelect'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 interface PhotoDetailPanelProps {
   photo: PhotoDto | null
@@ -331,12 +332,14 @@ export function PhotoDetailPanel({
                   </p>
                 </div>
               </div>
-              <button
+              <AdminButton
                 onClick={onClose}
-                className="p-2 hover:bg-muted transition-colors"
+                adminVariant="icon"
+                size="sm"
+                className="p-2"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </AdminButton>
             </div>
 
             {/* Image Preview - 50% height */}
@@ -347,7 +350,7 @@ export function PhotoDetailPanel({
                 className="w-full h-full object-contain"
               />
               {/* Featured Badge */}
-              <button
+              <AdminButton
                 onClick={async (e) => {
                   e.stopPropagation()
                   if (!photo || !token) return
@@ -375,39 +378,31 @@ export function PhotoDetailPanel({
                     }
                   }
                 }}
-                className={`absolute top-3 right-3 p-2 transition-colors ${
-                  editData.isFeatured
-                    ? 'bg-amber-500 text-white'
-                    : 'bg-black/50 text-white/70 hover:text-amber-400'
-                }`}
+                adminVariant={editData.isFeatured ? 'iconAccent' : 'iconOnDark'}
+                size="sm"
+                className="absolute top-3 right-3 p-2"
                 title={editData.isFeatured ? t('admin.notify_featured_removed') : t('admin.notify_featured_added')}
               >
                 <Star className={`w-4 h-4 ${editData.isFeatured ? 'fill-current' : ''}`} />
-              </button>
+              </AdminButton>
             </div>
 
             {/* Tabs */}
             <div className="flex border-b border-border flex-shrink-0">
-              <button
+              <AdminButton
                 onClick={() => setActiveTab('info')}
-                className={`flex-1 px-4 py-3 text-xs font-bold uppercase tracking-widest transition-colors ${
-                  activeTab === 'info'
-                    ? 'bg-background text-primary border-b-2 border-primary'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
+                adminVariant="tab"
+                data-state={activeTab === 'info' ? 'active' : 'inactive'}
               >
                 {t('gallery.info') || 'Info'}
-              </button>
-              <button
+              </AdminButton>
+              <AdminButton
                 onClick={() => setActiveTab('story')}
-                className={`flex-1 px-4 py-3 text-xs font-bold uppercase tracking-widest transition-colors ${
-                  activeTab === 'story'
-                    ? 'bg-background text-primary border-b-2 border-primary'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
+                adminVariant="tab"
+                data-state={activeTab === 'story' ? 'active' : 'inactive'}
               >
                 {t('gallery.story') || 'Story'}
-              </button>
+              </AdminButton>
             </div>
 
             {/* Content - 50% height */}
@@ -477,7 +472,7 @@ export function PhotoDetailPanel({
                         <Palette className="w-3 h-3" />
                         {t('gallery.palette')}
                       </h4>
-                      <button
+                      <AdminButton
                         onClick={async () => {
                           if (!token || !photo) return
                           setReanalyzing(true)
@@ -497,11 +492,13 @@ export function PhotoDetailPanel({
                           }
                         }}
                         disabled={reanalyzing}
-                        className="flex items-center gap-1 text-[10px] text-primary hover:underline disabled:opacity-50"
+                        adminVariant="link"
+                        size="xs"
+                        className="flex items-center gap-1 text-[10px]"
                       >
                         <RefreshCw className={`w-3 h-3 ${reanalyzing ? 'animate-spin' : ''}`} />
                         {t('admin.reanalyze_colors')}
-                      </button>
+                      </AdminButton>
                     </div>
                     {displayColors && displayColors.length > 0 ? (
                       <div className="flex gap-3 flex-wrap">
@@ -612,18 +609,18 @@ export function PhotoDetailPanel({
                           <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                             {t('admin.publish')}
                           </label>
-                          <button
+                          <AdminButton
                             onClick={() => setStoryData({ ...storyData, isPublished: !storyData.isPublished })}
-                            className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
-                              storyData.isPublished ? 'bg-primary' : 'bg-muted'
-                            }`}
+                            adminVariant="switch"
+                            data-state={storyData.isPublished ? 'checked' : 'unchecked'}
+                            className="relative inline-flex h-5 w-10 shrink-0 items-center rounded-full"
                           >
                             <span
                               className={`pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg transition-transform ${
                                 storyData.isPublished ? 'translate-x-5' : 'translate-x-1'
                               }`}
                             />
-                          </button>
+                          </AdminButton>
                           <span className="text-xs text-muted-foreground">
                             {storyData.isPublished ? t('admin.published') : t('admin.draft')}
                           </span>
@@ -637,13 +634,15 @@ export function PhotoDetailPanel({
                             <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                               {t('admin.associate_photos')} ({story.photos.length})
                             </h4>
-                            <button
+                            <AdminButton
                               onClick={() => setShowPhotoSelector(!showPhotoSelector)}
-                              className="flex items-center gap-1 text-[10px] text-primary hover:underline"
+                              adminVariant="link"
+                              size="xs"
+                              className="flex items-center gap-1 text-[10px]"
                             >
                               <Plus className="w-3 h-3" />
                               {t('admin.add_photos')}
-                            </button>
+                            </AdminButton>
                           </div>
 
                           {/* Photo Selector */}
@@ -682,12 +681,14 @@ export function PhotoDetailPanel({
                                 )}
                               </div>
                               {selectedPhotoIds.size > 0 && (
-                                <button
+                                <AdminButton
                                   onClick={handleAddPhotos}
-                                  className="w-full py-2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90"
+                                  adminVariant="primary"
+                                  size="md"
+                                  className="w-full py-2 text-xs font-bold uppercase tracking-widest"
                                 >
                                   {t('admin.add')} ({selectedPhotoIds.size})
-                                </button>
+                                </AdminButton>
                               )}
                             </div>
                           )}
@@ -712,22 +713,26 @@ export function PhotoDetailPanel({
                                 )}
                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                   {story.coverPhotoId !== p.id && (
-                                    <button
+                                    <AdminButton
                                       onClick={() => handleSetCover(p.id)}
-                                      className="p-1.5 bg-white/20 hover:bg-white/40 text-white text-[8px]"
+                                      adminVariant="iconOnDark"
+                                      size="xs"
+                                      className="p-1.5 text-[8px]"
                                       title={t('admin.set_as_cover')}
                                     >
                                       <ImageIcon className="w-3 h-3" />
-                                    </button>
+                                    </AdminButton>
                                   )}
                                   {story.photos.length > 1 && (
-                                    <button
+                                    <AdminButton
                                       onClick={() => handleRemovePhoto(p.id)}
-                                      className="p-1.5 bg-white/20 hover:bg-destructive text-white text-[8px]"
+                                      adminVariant="iconOnDarkDanger"
+                                      size="xs"
+                                      className="p-1.5 text-[8px]"
                                       title={t('admin.remove')}
                                     >
                                       <X className="w-3 h-3" />
-                                    </button>
+                                    </AdminButton>
                                   )}
                                 </div>
                               </div>
@@ -744,16 +749,20 @@ export function PhotoDetailPanel({
 
             {/* Footer - Fixed at bottom */}
             <div className="flex gap-3 p-6 border-t border-border bg-muted/20 flex-shrink-0">
-              <button
+              <AdminButton
                 onClick={onClose}
-                className="flex-1 px-6 py-3 border border-border text-foreground text-xs font-bold uppercase tracking-widest hover:bg-muted transition-all"
+                adminVariant="outline"
+                size="lg"
+                className="flex-1 px-6 py-3 text-xs font-bold uppercase tracking-widest"
               >
                 {t('common.cancel')}
-              </button>
-              <button
+              </AdminButton>
+              <AdminButton
                 onClick={activeTab === 'info' ? handleSave : handleSaveStory}
                 disabled={activeTab === 'info' ? saving : storySaving}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-all"
+                adminVariant="primary"
+                size="lg"
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 text-xs font-bold uppercase tracking-widest"
               >
                 <Save className="w-4 h-4" />
                 <span>
@@ -762,7 +771,7 @@ export function PhotoDetailPanel({
                     : (storySaving ? t('admin.saving') : (story ? t('admin.save') : t('admin.create_story_upload')))
                   }
                 </span>
-              </button>
+              </AdminButton>
             </div>
           </motion.div>
         </>
@@ -770,3 +779,4 @@ export function PhotoDetailPanel({
     </AnimatePresence>
   )
 }
+

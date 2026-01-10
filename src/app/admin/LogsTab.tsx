@@ -18,6 +18,7 @@ import {
 } from '@/lib/client-db'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SimpleDeleteDialog } from '@/components/admin/SimpleDeleteDialog'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 // Extended type with preview URLs for display
 interface StoryDraftWithPreviews extends Omit<StoryDraftData, 'files'> {
@@ -233,37 +234,31 @@ export function LogsTab({ token, photos, settings, t, notify, initialTab, editSt
     <div className="h-full flex flex-col">
       {/* Sub-tab Navigation */}
       <div className="flex space-x-1 border-b border-border flex-shrink-0">
-        <button
+        <AdminButton
           onClick={() => handleTabClick('stories')}
-          className={`flex items-center gap-2 px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] border-b-2 transition-colors ${
-            activeSubTab === 'stories'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
+          adminVariant="tab"
+          data-state={activeSubTab === 'stories' ? 'active' : 'inactive'}
+          className="flex items-center gap-2 px-6 py-4 text-xs font-bold uppercase tracking-[0.2em]"
           title={t('admin.double_click_refresh') || '双击刷新'}
         >
           <BookOpen className="w-4 h-4" />
           {t('nav.story') || '叙事'}
-        </button>
-        <button
+        </AdminButton>
+        <AdminButton
           onClick={() => handleTabClick('blog')}
-          className={`flex items-center gap-2 px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] border-b-2 transition-colors ${
-            activeSubTab === 'blog'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
+          adminVariant="tab"
+          data-state={activeSubTab === 'blog' ? 'active' : 'inactive'}
+          className="flex items-center gap-2 px-6 py-4 text-xs font-bold uppercase tracking-[0.2em]"
           title={t('admin.double_click_refresh') || '双击刷新'}
         >
           <BookText className="w-4 h-4" />
           {t('admin.blog') || '博客'}
-        </button>
-        <button
+        </AdminButton>
+        <AdminButton
           onClick={() => handleTabClick('drafts')}
-          className={`flex items-center gap-2 px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] border-b-2 transition-colors ${
-            activeSubTab === 'drafts'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
+          adminVariant="tab"
+          data-state={activeSubTab === 'drafts' ? 'active' : 'inactive'}
+          className="flex items-center gap-2 px-6 py-4 text-xs font-bold uppercase tracking-[0.2em]"
           title={t('admin.double_click_refresh') || '双击刷新'}
         >
           <FileArchive className="w-4 h-4" />
@@ -273,7 +268,7 @@ export function LogsTab({ token, photos, settings, t, notify, initialTab, editSt
               {totalDrafts}
             </span>
           )}
-        </button>
+        </AdminButton>
       </div>
 
       {/* Sub-tab Content */}
@@ -319,20 +314,24 @@ export function LogsTab({ token, photos, settings, t, notify, initialTab, editSt
               </div>
               <div className="flex items-center gap-2">
                 {totalDrafts > 0 && (
-                  <button
+                  <AdminButton
                     onClick={() => setDeleteDialog({ isOpen: true, type: 'all' })}
-                    className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive text-xs font-bold uppercase tracking-widest hover:bg-destructive/20 transition-all rounded-md"
+                    adminVariant="destructiveOutline"
+                    size="sm"
+                    className="gap-2 rounded-md"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     {t('admin.delete_all')}
-                  </button>
+                  </AdminButton>
                 )}
-                <button
+                <AdminButton
                   onClick={loadDrafts}
-                  className="flex items-center px-6 py-2 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest hover:bg-primary/20 transition-all rounded-md"
+                  adminVariant="outline"
+                  size="sm"
+                  className="rounded-md"
                 >
                   {t('common.refresh')}
-                </button>
+                </AdminButton>
               </div>
             </div>
 
@@ -377,20 +376,24 @@ export function LogsTab({ token, photos, settings, t, notify, initialTab, editSt
                             </div>
                           </div>
                           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
+                            <AdminButton
                               onClick={() => setSelectedDraft(filteredStoryDraft)}
-                              className="p-2 text-muted-foreground hover:text-primary transition-colors rounded-md hover:bg-muted"
+                              adminVariant="icon"
+                              size="xs"
+                              className="p-2 rounded-md"
                               title={t('common.view')}
                             >
                               <Eye className="w-4 h-4" />
-                            </button>
-                            <button
+                            </AdminButton>
+                            <AdminButton
                               onClick={() => setDeleteDialog({ isOpen: true, type: 'story' })}
-                              className="p-2 text-muted-foreground hover:text-destructive transition-colors rounded-md hover:bg-muted"
+                              adminVariant="iconDestructive"
+                              size="xs"
+                              className="p-2 rounded-md"
                               title={t('common.delete')}
                             >
                               <Trash2 className="w-4 h-4" />
-                            </button>
+                            </AdminButton>
                           </div>
                         </div>
                       </div>
@@ -442,27 +445,33 @@ export function LogsTab({ token, photos, settings, t, notify, initialTab, editSt
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button
+                                  <AdminButton
                                     onClick={() => handleEditStoryFromDraft(draft)}
-                                    className="p-2 text-muted-foreground hover:text-primary transition-colors rounded-md hover:bg-muted flex items-center gap-1"
+                                    adminVariant="icon"
+                                    size="xs"
+                                    className="p-2 rounded-md flex items-center gap-1"
                                     title={t('common.edit')}
                                   >
                                     <ArrowRight className="w-4 h-4" />
-                                  </button>
-                                  <button
+                                  </AdminButton>
+                                  <AdminButton
                                     onClick={() => setSelectedDraft(draft)}
-                                    className="p-2 text-muted-foreground hover:text-primary transition-colors rounded-md hover:bg-muted"
+                                    adminVariant="icon"
+                                    size="xs"
+                                    className="p-2 rounded-md"
                                     title={t('common.view')}
                                   >
                                     <Eye className="w-4 h-4" />
-                                  </button>
-                                  <button
+                                  </AdminButton>
+                                  <AdminButton
                                     onClick={() => setDeleteDialog({ isOpen: true, type: 'storyEditor', id: draft.storyId })}
-                                    className="p-2 text-muted-foreground hover:text-destructive transition-colors rounded-md hover:bg-muted"
+                                    adminVariant="iconDestructive"
+                                    size="xs"
+                                    className="p-2 rounded-md"
                                     title={t('common.delete')}
                                   >
                                     <Trash2 className="w-4 h-4" />
-                                  </button>
+                                  </AdminButton>
                                 </div>
                             </div>
                           </div>
@@ -519,20 +528,24 @@ export function LogsTab({ token, photos, settings, t, notify, initialTab, editSt
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button
+                                <AdminButton
                                   onClick={() => setSelectedDraft(draft)}
-                                  className="p-2 text-muted-foreground hover:text-primary transition-colors rounded-md hover:bg-muted"
+                                  adminVariant="icon"
+                                  size="xs"
+                                  className="p-2 rounded-md"
                                   title={t('common.view')}
                                 >
                                   <Eye className="w-4 h-4" />
-                                </button>
-                                <button
+                                </AdminButton>
+                                <AdminButton
                                   onClick={() => setDeleteDialog({ isOpen: true, type: 'blog', id: draft.blogId })}
-                                  className="p-2 text-muted-foreground hover:text-destructive transition-colors rounded-md hover:bg-muted"
+                                  adminVariant="iconDestructive"
+                                  size="xs"
+                                  className="p-2 rounded-md"
                                   title={t('common.delete')}
                                 >
                                   <Trash2 className="w-4 h-4" />
-                                </button>
+                                </AdminButton>
                               </div>
                             </div>
                           </div>
@@ -601,12 +614,14 @@ export function LogsTab({ token, photos, settings, t, notify, initialTab, editSt
                     )}
                   </div>
                 </div>
-                <button
+                <AdminButton
                   onClick={() => setSelectedDraft(null)}
-                  className="p-2 hover:bg-muted rounded-md transition-colors"
+                  adminVariant="icon"
+                  size="sm"
+                  className="p-2 rounded-md"
                 >
                   <X className="w-5 h-5" />
-                </button>
+                </AdminButton>
               </div>
 
               {/* Content */}
@@ -689,3 +704,4 @@ export function LogsTab({ token, photos, settings, t, notify, initialTab, editSt
     </div>
   )
 }
+

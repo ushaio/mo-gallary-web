@@ -46,6 +46,7 @@ import { UrlUpdateConfirmDialog } from '@/components/admin/UrlUpdateConfirmDialo
 import { PhotoDetailPanel } from '@/components/admin/PhotoDetailPanel'
 import { UploadQueueProvider, useUploadQueue } from '@/contexts/UploadQueueContext'
 import { UploadProgressPopup } from '@/components/admin/UploadProgressPopup'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 // Admin Context for shared state
 interface AdminContextType {
@@ -553,9 +554,11 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               {/* Settings Row */}
               <div className="flex items-center gap-2">
                 {/* Theme Toggle */}
-                <button
+                <AdminButton
                   onClick={toggleTheme}
-                  className="flex-1 flex items-center gap-2 px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors rounded-sm border border-border"
+                  adminVariant="outline"
+                  size="sm"
+                  className="flex-1 flex items-center gap-2 px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-sm"
                   title={t('nav.toggle_theme')}
                 >
                   {!mounted ? (
@@ -570,15 +573,17 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                   <span className="text-[10px] font-bold uppercase tracking-widest">
                     {theme === 'system' ? t('nav.system') : theme === 'light' ? t('nav.light') : t('nav.dark')}
                   </span>
-                </button>
+                </AdminButton>
 
                 {/* Language Toggle */}
-                <button
+                <AdminButton
                   onClick={toggleLanguage}
-                  className="flex-1 flex items-center justify-center px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors rounded-sm border border-border"
+                  adminVariant="outline"
+                  size="sm"
+                  className="flex-1 flex items-center justify-center px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-sm"
                 >
                   {locale === 'zh' ? 'EN' : '中'}
-                </button>
+                </AdminButton>
               </div>
 
               {/* Divider */}
@@ -600,13 +605,15 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               </div>
 
               {/* Logout Button */}
-              <button
+              <AdminButton
                 onClick={() => setShowLogoutConfirm(true)}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-destructive hover:bg-destructive/10 transition-colors rounded-sm border border-destructive/20"
+                adminVariant="destructiveOutline"
+                size="lg"
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 text-xs font-bold uppercase tracking-widest rounded-sm"
               >
                 <LogOut className="w-4 h-4" />
                 <span>{t('nav.logout')}</span>
-              </button>
+              </AdminButton>
             </div>
           </div>
         </aside>
@@ -615,12 +622,14 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         <main className="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden">
           <header className="flex-shrink-0 flex items-center justify-between px-8 py-4 bg-background/95 backdrop-blur-xl border-b border-border">
             <div className="flex items-center">
-              <button
+              <AdminButton
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                adminVariant="icon"
+                size="sm"
                 className="p-2 mr-4 md:hidden hover:bg-muted"
               >
                 <Menu className="w-5 h-5" />
-              </button>
+              </AdminButton>
               <h1 className="font-serif text-2xl font-light tracking-tight uppercase">
                 {getPageTitle()}
               </h1>
@@ -734,22 +743,26 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                   </div>
 
                   <div className="flex gap-3">
-                    <button
+                    <AdminButton
                       onClick={() => setShowLogoutConfirm(false)}
-                      className="flex-1 px-6 py-3 border border-border text-foreground text-xs font-bold uppercase tracking-widest hover:bg-muted active:bg-muted/70 transition-all"
+                      adminVariant="outline"
+                      size="xl"
+                      className="flex-1 px-6 py-3 text-xs font-bold uppercase tracking-widest"
                     >
                       {t('common.cancel')}
-                    </button>
-                    <button
+                    </AdminButton>
+                    <AdminButton
                       onClick={() => {
                         setShowLogoutConfirm(false)
                         logout()
                       }}
-                      className="flex-1 px-6 py-3 bg-destructive text-destructive-foreground text-xs font-bold uppercase tracking-widest hover:bg-destructive/90 active:bg-destructive/80 transition-all flex items-center justify-center gap-2"
+                      adminVariant="destructive"
+                      size="xl"
+                      className="flex-1 px-6 py-3 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2"
                     >
                       <LogOut className="w-4 h-4" />
                       <span>{t('nav.logout')}</span>
-                    </button>
+                    </AdminButton>
                   </div>
                 </motion.div>
               </div>
@@ -787,3 +800,4 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </ProtectedRoute>
   )
 }
+

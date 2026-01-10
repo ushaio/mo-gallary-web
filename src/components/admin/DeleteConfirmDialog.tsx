@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, AlertTriangle, Loader2, BookOpen, X, ImageIcon, Image, ExternalLink } from 'lucide-react'
 import { type PhotoWithStories } from '@/lib/api'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 interface DeleteConfirmDialogProps {
   isOpen: boolean
@@ -127,16 +128,18 @@ export function DeleteConfirmDialog({
                       <ul className="space-y-2 max-h-32 overflow-y-auto">
                           {uniqueStories.map(story => (
                             <li key={story.id}>
-                              <button
+                              <AdminButton
                                 onClick={() => {
                                   router.push(`/admin/logs?editStory=${story.id}`)
                                 }}
-                                className="w-full flex items-center gap-2 text-sm text-left hover:text-primary transition-colors group"
+                                adminVariant="link"
+                                size="sm"
+                                className="w-full justify-start gap-2 text-sm text-left hover:text-primary transition-colors group"
                               >
                                 <BookOpen className="w-3.5 h-3.5 text-amber-500 shrink-0 group-hover:text-primary transition-colors" />
                                 <span className="truncate flex-1">{story.title || t('story.untitled')}</span>
                                 <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
-                              </button>
+                              </AdminButton>
                             </li>
                           ))}
                         </ul>
@@ -148,13 +151,15 @@ export function DeleteConfirmDialog({
                   </div>
 
                   <div className="flex gap-3">
-                    <button
+                    <AdminButton
                       onClick={handleCancel}
-                      className="flex-1 px-6 py-3 bg-muted text-foreground text-xs font-bold uppercase tracking-widest hover:bg-muted/80 active:bg-muted/70 transition-all flex items-center justify-center gap-2"
+                      adminVariant="outlineMuted"
+                      size="lg"
+                      className="flex-1 px-6 py-3 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2"
                     >
                       <X className="w-4 h-4" />
                       <span>{t('common.cancel')}</span>
-                    </button>
+                    </AdminButton>
                   </div>
                 </>
               ) : (
@@ -244,17 +249,21 @@ export function DeleteConfirmDialog({
                   </div>
 
                   <div className="flex gap-3">
-                    <button
+                    <AdminButton
                       onClick={handleCancel}
                       disabled={isDeleting}
-                      className="flex-1 px-6 py-3 border border-border text-foreground text-xs font-bold uppercase tracking-widest hover:bg-muted active:bg-muted/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      adminVariant="outline"
+                      size="lg"
+                      className="flex-1 px-6 py-3 text-xs font-bold uppercase tracking-widest"
                     >
                       {t('common.cancel')}
-                    </button>
-                    <button
+                    </AdminButton>
+                    <AdminButton
                       onClick={handleConfirm}
                       disabled={isDeleting}
-                      className="flex-1 px-6 py-3 bg-destructive text-destructive-foreground text-xs font-bold uppercase tracking-widest hover:bg-destructive/90 active:bg-destructive/80 disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                      adminVariant="destructive"
+                      size="lg"
+                      className="flex-1 px-6 py-3 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2"
                     >
                       {isDeleting ? (
                         <>
@@ -267,7 +276,7 @@ export function DeleteConfirmDialog({
                           <span>{t('common.delete')}</span>
                         </>
                       )}
-                    </button>
+                    </AdminButton>
                   </div>
                 </>
               )}
@@ -278,3 +287,4 @@ export function DeleteConfirmDialog({
     </AnimatePresence>
   )
 }
+

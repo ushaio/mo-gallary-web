@@ -27,6 +27,7 @@ import {
 } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 interface FriendsTabProps {
   t: (key: string) => string
@@ -292,13 +293,15 @@ export function FriendsTab({ t, notify }: FriendsTabProps) {
             {friends.length} {t('admin.items')}
           </span>
         </div>
-        <button
+        <AdminButton
           onClick={handleCreate}
-          className="flex items-center px-6 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all"
+          adminVariant="primary"
+          size="lg"
+          className="flex items-center"
         >
           <Plus className="w-4 h-4 mr-2" />
           {t('admin.friends_add')}
-        </button>
+        </AdminButton>
       </div>
 
       {/* Friends List */}
@@ -371,9 +374,9 @@ export function FriendsTab({ t, notify }: FriendsTabProps) {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
+                  <AdminButton
                     onClick={() => handleToggleActive(friend)}
-                    className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                    adminVariant="icon"
                     title={friend.isActive ? t('admin.friends_disable') : t('admin.friends_enable')}
                   >
                     {friend.isActive ? (
@@ -381,10 +384,11 @@ export function FriendsTab({ t, notify }: FriendsTabProps) {
                     ) : (
                       <EyeOff className="w-4 h-4" />
                     )}
-                  </button>
-                  <button
+                  </AdminButton>
+                  <AdminButton
                     onClick={() => handleToggleFeatured(friend)}
-                    className="p-2 text-muted-foreground hover:text-yellow-500 transition-colors"
+                    adminVariant="icon"
+                    className="hover:text-yellow-500"
                     title={friend.featured ? t('admin.friends_unfeature') : t('admin.friends_feature')}
                   >
                     {friend.featured ? (
@@ -392,19 +396,19 @@ export function FriendsTab({ t, notify }: FriendsTabProps) {
                     ) : (
                       <Star className="w-4 h-4" />
                     )}
-                  </button>
-                  <button
+                  </AdminButton>
+                  <AdminButton
                     onClick={() => handleEdit(friend)}
-                    className="p-2 text-muted-foreground hover:text-primary transition-colors"
+                    adminVariant="iconPrimary"
                   >
                     <Edit3 className="w-4 h-4" />
-                  </button>
-                  <button
+                  </AdminButton>
+                  <AdminButton
                     onClick={() => setDeleteConfirm(friend.id)}
-                    className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+                    adminVariant="iconDestructive"
                   >
                     <Trash2 className="w-4 h-4" />
-                  </button>
+                  </AdminButton>
                   <a
                     href={friend.url}
                     target="_blank"
@@ -429,15 +433,15 @@ export function FriendsTab({ t, notify }: FriendsTabProps) {
               <h3 className="font-serif text-2xl uppercase tracking-tight">
                 {editingFriend.id ? t('admin.friends_edit') : t('admin.friends_add')}
               </h3>
-              <button
+              <AdminButton
                 onClick={() => {
                   setShowModal(false)
                   setEditingFriend(null)
                 }}
-                className="p-2 hover:bg-muted"
+                adminVariant="icon"
               >
                 <X className="w-5 h-5" />
-              </button>
+              </AdminButton>
             </div>
 
             {/* Modal Body */}
@@ -539,19 +543,22 @@ export function FriendsTab({ t, notify }: FriendsTabProps) {
 
             {/* Modal Footer */}
             <div className="p-6 border-t border-border flex justify-end gap-3">
-              <button
+              <AdminButton
                 onClick={() => {
                   setShowModal(false)
                   setEditingFriend(null)
                 }}
-                className="px-6 py-2 border border-border text-xs font-bold uppercase tracking-widest hover:bg-muted transition-all"
+                adminVariant="outline"
+                size="lg"
               >
                 {t('common.cancel')}
-              </button>
-              <button
+              </AdminButton>
+              <AdminButton
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-50"
+                adminVariant="primary"
+                size="lg"
+                className="flex items-center gap-2"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -559,7 +566,7 @@ export function FriendsTab({ t, notify }: FriendsTabProps) {
                   <Save className="w-4 h-4" />
                 )}
                 <span>{t('common.save')}</span>
-              </button>
+              </AdminButton>
             </div>
           </div>
         </div>
@@ -588,18 +595,22 @@ export function FriendsTab({ t, notify }: FriendsTabProps) {
             </p>
 
             <div className="flex gap-3">
-              <button
+              <AdminButton
                 onClick={() => setDeleteConfirm(null)}
-                className="flex-1 px-6 py-3 border border-border text-foreground text-xs font-bold uppercase tracking-widest hover:bg-muted transition-all"
+                adminVariant="outline"
+                size="xl"
+                className="flex-1"
               >
                 {t('common.cancel')}
-              </button>
-              <button
+              </AdminButton>
+              <AdminButton
                 onClick={() => handleDelete(deleteConfirm)}
-                className="flex-1 px-6 py-3 bg-destructive text-destructive-foreground text-xs font-bold uppercase tracking-widest hover:bg-destructive/90 transition-all"
+                adminVariant="destructive"
+                size="xl"
+                className="flex-1"
               >
                 {t('common.delete')}
-              </button>
+              </AdminButton>
             </div>
           </div>
         </div>

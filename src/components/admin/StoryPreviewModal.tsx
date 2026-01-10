@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { resolveAssetUrl, type StoryDto, type PhotoDto } from '@/lib/api'
 import dynamic from 'next/dynamic'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 // Dynamically import MilkdownViewer for preview
 const MilkdownViewer = dynamic(
@@ -70,12 +71,13 @@ export function StoryPreviewModal({
       className="fixed inset-0 z-[100] bg-background overflow-y-auto"
     >
       {/* Close Button */}
-      <button
+      <AdminButton
         onClick={onClose}
-        className="fixed top-6 right-6 z-[110] p-3 bg-background/80 backdrop-blur-sm border border-border rounded-full text-muted-foreground hover:text-foreground transition-colors"
+        adminVariant="icon"
+        className="fixed top-6 right-6 z-[110] p-3 bg-background/80 backdrop-blur-sm border border-border rounded-full text-muted-foreground hover:text-foreground"
       >
         <X className="w-5 h-5" />
-      </button>
+      </AdminButton>
 
       {/* Hero Section */}
       <section className="relative h-screen w-full overflow-hidden bg-black">
@@ -225,8 +227,9 @@ export function StoryPreviewModal({
 
           {/* Footer */}
           <div className="mt-40 pt-24 border-t border-border/50 text-center">
-            <button
+            <AdminButton
               onClick={onClose}
+              adminVariant="link"
               className="group inline-flex flex-col items-center gap-6"
             >
               <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-muted-foreground group-hover:text-primary transition-colors">
@@ -235,7 +238,7 @@ export function StoryPreviewModal({
               <span className="text-4xl md:text-6xl font-serif font-light italic tracking-tight hover:text-primary transition-colors">
                 Close Preview
               </span>
-            </button>
+            </AdminButton>
           </div>
         </div>
       </div>
@@ -249,27 +252,30 @@ export function StoryPreviewModal({
           className="fixed inset-0 z-[120] bg-black/98 flex items-center justify-center"
           onClick={onPhotoClose}
         >
-          <button
+          <AdminButton
             onClick={onPhotoClose}
-            className="absolute top-12 right-12 p-2 text-white/30 hover:text-white transition-colors z-10"
+            adminVariant="icon"
+            className="absolute top-12 right-12 p-2 text-white/30 hover:text-white z-10"
           >
             <X className="w-8 h-8" />
-          </button>
+          </AdminButton>
 
           {story.photos.length > 1 && (
             <>
-              <button
+              <AdminButton
                 onClick={(e) => { e.stopPropagation(); onPrevPhoto() }}
-                className="absolute left-8 top-1/2 -translate-y-1/2 p-4 text-white/20 hover:text-white transition-colors z-10"
+                adminVariant="icon"
+                className="absolute left-8 top-1/2 -translate-y-1/2 p-4 text-white/20 hover:text-white z-10"
               >
                 <ChevronLeft className="w-12 h-12" />
-              </button>
-              <button
+              </AdminButton>
+              <AdminButton
                 onClick={(e) => { e.stopPropagation(); onNextPhoto() }}
-                className="absolute right-8 top-1/2 -translate-y-1/2 p-4 text-white/20 hover:text-white transition-colors z-10"
+                adminVariant="icon"
+                className="absolute right-8 top-1/2 -translate-y-1/2 p-4 text-white/20 hover:text-white z-10"
               >
                 <ChevronRight className="w-12 h-12" />
-              </button>
+              </AdminButton>
             </>
           )}
 

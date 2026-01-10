@@ -30,6 +30,7 @@ import {
   ApiUnauthorizedError,
 } from '@/lib/api'
 import { CustomInput } from '@/components/ui/CustomInput'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 interface SettingsTabProps {
   token: string | null
@@ -212,9 +213,10 @@ export function SettingsTab({
             { id: 'comments', label: t('admin.comments') },
             { id: 'account', label: t('admin.account') },
           ].map((tab) => (
-            <button
+            <AdminButton
               key={tab.id}
               onClick={() => setSettingsTab(tab.id)}
+              adminVariant="unstyled"
               className={`w-full flex items-center justify-between px-2 py-3 text-xs font-bold uppercase tracking-widest transition-all border-l-2 ${
                 settingsTab === tab.id
                   ? 'border-primary text-primary pl-4'
@@ -222,7 +224,7 @@ export function SettingsTab({
               }`}
             >
               <span>{tab.label}</span>
-            </button>
+            </AdminButton>
           ))}
         </aside>
         <div className="flex-1 min-h-[500px] flex flex-col">
@@ -306,11 +308,12 @@ export function SettingsTab({
                     </label>
                     <div className="flex gap-4">
                       {['local', 'r2', 'github'].map((p) => (
-                        <button
+                        <AdminButton
                           key={p}
                           onClick={() =>
                             setSettings({ ...settings, storage_provider: p })
                           }
+                          adminVariant="unstyled"
                           className={`px-6 py-3 text-xs font-bold uppercase tracking-widest border transition-all ${
                             settings.storage_provider === p
                               ? 'border-primary bg-primary text-primary-foreground'
@@ -318,7 +321,7 @@ export function SettingsTab({
                           }`}
                         >
                           {p}
-                        </button>
+                        </AdminButton>
                       ))}
                     </div>
                   </div>
@@ -473,7 +476,7 @@ export function SettingsTab({
                           <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">
                             {t('admin.gh_branch')}
                           </label>
-                          <button
+                          <AdminButton
                             onClick={async () => {
                               if (
                                 !settings.github_token ||
@@ -494,9 +497,17 @@ export function SettingsTab({
                                 if (!res.ok)
                                   throw new Error('Failed to fetch branches')
                                 const data = await res.json()
-                                const branchNames = data.map(
-                                  (b: any) => b.name
-                                )
+                                const branchNames = Array.isArray(data)
+                                  ? data
+                                      .map((b) => {
+                                        if (b && typeof b === 'object' && 'name' in b) {
+                                          const name = (b as Record<string, unknown>).name
+                                          return typeof name === 'string' ? name : null
+                                        }
+                                        return null
+                                      })
+                                      .filter((name): name is string => !!name)
+                                  : []
                                 notify(
                                   `${t('admin.notify_gh_branches')}: ${branchNames.join(
                                     ', '
@@ -507,10 +518,11 @@ export function SettingsTab({
                                 notify('Error fetching branches', 'error')
                               }
                             }}
+                            adminVariant="unstyled"
                             className="text-[8px] font-bold text-primary uppercase hover:underline"
                           >
                             {t('admin.gh_test')}
-                          </button>
+                          </AdminButton>
                         </div>
                         <CustomInput
                           variant="config"
@@ -593,18 +605,17 @@ export function SettingsTab({
             {settingsTab === 'comments' && (
               <div className="space-y-8">
                 <div className="flex space-x-1 border-b border-border">
-                  {['manage', 'config'].map((tab) => (
-                    <button
+                  {(['manage', 'config'] as const).map((tab) => (
+                    <AdminButton
                       key={tab}
-                      onClick={() => setCommentTab(tab as any)}
-                      className={`px-6 py-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors ${
-                        commentTab === tab
-                          ? 'border-primary text-primary'
-                          : 'border-transparent text-muted-foreground hover:text-foreground'
-                      }`}
+                      onClick={() => setCommentTab(tab)}
+                      adminVariant="tab"
+                      size="none"
+                      data-state={commentTab === tab ? 'active' : 'inactive'}
+                      className="px-6 py-3"
                     >
                       {t(`admin.comments_tabs_${tab}`)}
-                    </button>
+                    </AdminButton>
                   ))}
                 </div>
 
@@ -745,12 +756,12 @@ export function SettingsTab({
                       <h3 className="font-serif text-2xl">
                         {t('admin.comments_manage')}
                       </h3>
-                      <button
+                      <AdminButton
                         onClick={refreshComments}
-                        className="p-2 hover:bg-muted"
+                        adminVariant="icon"
                       >
                         <Globe className="w-4 h-4" />
-                      </button>
+                      </AdminButton>
                     </div>
 
                     {commentsLoading ? (
@@ -820,42 +831,42 @@ export function SettingsTab({
 
                               <div className="flex items-center gap-2">
                                 {comment.status !== 'approved' && (
-                                  <button
+                                  <AdminButton
                                     onClick={() =>
                                       handleUpdateCommentStatus(
                                         comment.id,
                                         'approved'
                                       )
                                     }
-                                    className="p-2 text-muted-foreground hover:text-primary transition-colors"
+                                    adminVariant="iconPrimary"
                                     title="Approve"
                                   >
                                     <Check className="w-4 h-4" />
-                                  </button>
+                                  </AdminButton>
                                 )}
                                 {comment.status !== 'rejected' && (
-                                  <button
+                                  <AdminButton
                                     onClick={() =>
                                       handleUpdateCommentStatus(
                                         comment.id,
                                         'rejected'
                                       )
                                     }
-                                    className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+                                    adminVariant="iconDestructive"
                                     title="Reject"
                                   >
                                     <X className="w-4 h-4" />
-                                  </button>
+                                  </AdminButton>
                                 )}
-                                <button
+                                <AdminButton
                                   onClick={() =>
                                     handleDeleteComment(comment.id)
                                   }
-                                  className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+                                  adminVariant="iconDestructive"
                                   title="Delete"
                                 >
                                   <Trash2 className="w-4 h-4" />
-                                </button>
+                                </AdminButton>
                               </div>
                             </div>
                           </div>
@@ -864,23 +875,25 @@ export function SettingsTab({
                         {/* Pagination */}
                         {totalPages > 1 && (
                           <div className="flex items-center justify-center gap-4 mt-8">
-                            <button
+                            <AdminButton
                               onClick={() => setPage((p) => Math.max(1, p - 1))}
                               disabled={page === 1}
+                              adminVariant="unstyled"
                               className="p-2 border border-border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted/50 transition-colors"
                             >
                               <ChevronLeft className="w-4 h-4" />
-                            </button>
+                            </AdminButton>
                             <span className="text-xs font-mono">
                               {page} / {totalPages}
                             </span>
-                            <button
+                            <AdminButton
                               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                               disabled={page === totalPages}
+                              adminVariant="unstyled"
                               className="p-2 border border-border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted/50 transition-colors"
                             >
                               <ChevronRight className="w-4 h-4" />
-                            </button>
+                            </AdminButton>
                           </div>
                         )}
                       </div>
@@ -956,9 +969,10 @@ export function SettingsTab({
                           </span>
                         </div>
                       </div>
-                      <button
+                      <AdminButton
                         onClick={handleLinuxDoUnbind}
                         disabled={linuxDoBindLoading}
+                        adminVariant="unstyled"
                         className="w-full py-3 border border-destructive/50 text-destructive hover:bg-destructive/10 text-xs font-bold uppercase tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                       >
                         {linuxDoBindLoading ? (
@@ -967,7 +981,7 @@ export function SettingsTab({
                           <Unlink className="w-4 h-4" />
                         )}
                         {t('admin.linuxdo_unbind')}
-                      </button>
+                      </AdminButton>
                     </div>
                   ) : (
                     <div className="p-6 border border-dashed border-border text-center space-y-4">
@@ -979,9 +993,10 @@ export function SettingsTab({
                           {t('admin.linuxdo_bind_hint')}
                         </p>
                       </div>
-                      <button
+                      <AdminButton
                         onClick={handleLinuxDoBind}
                         disabled={linuxDoBindLoading}
+                        adminVariant="unstyled"
                         className="px-6 py-3 bg-[#f8d568] text-[#1a1a1a] hover:bg-[#f5c842] text-xs font-bold uppercase tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2 mx-auto"
                       >
                         {linuxDoBindLoading ? (
@@ -990,7 +1005,7 @@ export function SettingsTab({
                           <Link className="w-4 h-4" />
                         )}
                         {t('admin.linuxdo_bind')}
-                      </button>
+                      </AdminButton>
                     </div>
                   )}
                 </div>
@@ -999,10 +1014,12 @@ export function SettingsTab({
 
             {settingsTab !== 'site' && settingsTab !== 'account' && (
               <div className="pt-8 border-t border-border flex justify-end">
-                <button
+                <AdminButton
                   onClick={onSave}
                   disabled={saving}
-                  className="px-8 py-4 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-all flex items-center space-x-2"
+                  adminVariant="primary"
+                  size="none"
+                  className="px-8 py-4 flex items-center space-x-2"
                 >
                   {saving ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -1010,7 +1027,7 @@ export function SettingsTab({
                     <Save className="w-4 h-4" />
                   )}
                   <span>{t('admin.save')}</span>
-                </button>
+                </AdminButton>
               </div>
             )}
           </div>
@@ -1019,3 +1036,4 @@ export function SettingsTab({
     </div>
   )
 }
+

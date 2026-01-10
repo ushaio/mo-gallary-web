@@ -14,6 +14,7 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import { PhotoDto, resolveAssetUrl, AlbumDto, getAlbums, AdminSettingsDto } from '@/lib/api'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 type SortOption = 'upload-desc' | 'upload-asc' | 'taken-desc' | 'taken-asc'
 type ViewMode = 'grid' | 'list'
@@ -180,13 +181,15 @@ export function PhotosTab({
             {selectedIds.size > 0 && (
               <>
                 <div className="h-5 w-px bg-border" />
-                <button
+                <AdminButton
                   onClick={() => onDelete()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                  adminVariant="destructiveOutline"
+                  size="sm"
+                  className="gap-1.5 rounded-md text-xs font-medium normal-case"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   <span>{t('common.delete')}</span>
-                </button>
+                </AdminButton>
               </>
             )}
           </div>
@@ -203,12 +206,14 @@ export function PhotosTab({
                 className="w-full h-9 pl-9 pr-4 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
               {search && (
-                <button
+                <AdminButton
                   onClick={() => setSearch('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  adminVariant="icon"
+                  size="xs"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-0 text-muted-foreground hover:text-foreground"
                 >
                   <X className="w-3.5 h-3.5" />
-                </button>
+                </AdminButton>
               )}
             </div>
           </div>
@@ -216,12 +221,14 @@ export function PhotosTab({
           {/* Right: Actions */}
           <div className="flex items-center gap-2 shrink-0">
             {/* Filter Toggle */}
-            <button
+            <AdminButton
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-3 py-2 text-xs font-medium border rounded-md transition-all ${
+              adminVariant="outline"
+              size="sm"
+              className={`gap-2 rounded-md text-xs font-medium normal-case ${
                 showFilters || activeFilterCount > 0
                   ? 'bg-primary/10 border-primary/30 text-primary'
-                  : 'bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
+                  : 'bg-background text-muted-foreground hover:text-foreground hover:border-foreground/30'
               }`}
             >
               <SlidersHorizontal className="w-4 h-4" />
@@ -231,13 +238,15 @@ export function PhotosTab({
                   {activeFilterCount}
                 </span>
               )}
-            </button>
+            </AdminButton>
 
             {/* View Mode Toggle */}
             <div className="flex bg-background border border-border rounded-md overflow-hidden">
-              <button
+              <AdminButton
                 onClick={() => onViewModeChange('grid')}
-                className={`p-2 transition-colors ${
+                adminVariant="icon"
+                size="xs"
+                className={`p-2 ${
                   viewMode === 'grid'
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -245,10 +254,12 @@ export function PhotosTab({
                 title="Grid view"
               >
                 <LayoutGrid className="w-4 h-4" />
-              </button>
-              <button
+              </AdminButton>
+              <AdminButton
                 onClick={() => onViewModeChange('list')}
-                className={`p-2 transition-colors ${
+                adminVariant="icon"
+                size="xs"
+                className={`p-2 ${
                   viewMode === 'list'
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -256,17 +267,19 @@ export function PhotosTab({
                 title="List view"
               >
                 <ListIcon className="w-4 h-4" />
-              </button>
+              </AdminButton>
             </div>
 
             {/* Refresh */}
-            <button
+            <AdminButton
               onClick={onRefresh}
-              className="p-2 bg-background border border-border rounded-md text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+              adminVariant="icon"
+              size="xs"
+              className="p-2 bg-background border border-border rounded-md text-muted-foreground hover:text-foreground hover:border-foreground/30"
               title={t('common.refresh')}
             >
               <RefreshCw className="w-4 h-4" />
-            </button>
+            </AdminButton>
           </div>
         </div>
 
@@ -379,13 +392,15 @@ export function PhotosTab({
               {activeFilterCount > 0 && (
                 <>
                   <div className="h-5 w-px bg-border" />
-                  <button
+                  <AdminButton
                     onClick={clearAllFilters}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    adminVariant="link"
+                    size="xs"
+                    className="gap-1.5 text-xs font-medium normal-case"
                   >
                     <X className="w-3.5 h-3.5" />
                     <span>Clear all</span>
-                  </button>
+                  </AdminButton>
                 </>
               )}
             </div>
@@ -399,42 +414,64 @@ export function PhotosTab({
             {categoryFilter !== 'all' && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-md">
                 {categoryFilter}
-                <button onClick={() => setCategoryFilter('all')} className="hover:text-primary/70">
+                <AdminButton
+                  onClick={() => setCategoryFilter('all')}
+                  adminVariant="icon"
+                  size="xs"
+                  className="p-0 hover:text-primary/70"
+                >
                   <X className="w-3 h-3" />
-                </button>
+                </AdminButton>
               </span>
             )}
             {channelFilter !== 'all' && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-md">
                 {channelFilter}
-                <button onClick={() => setChannelFilter('all')} className="hover:text-primary/70">
+                <AdminButton
+                  onClick={() => setChannelFilter('all')}
+                  adminVariant="icon"
+                  size="xs"
+                  className="p-0 hover:text-primary/70"
+                >
                   <X className="w-3 h-3" />
-                </button>
+                </AdminButton>
               </span>
             )}
             {albumFilter !== 'all' && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-md">
                 {albums.find(a => a.id === albumFilter)?.name || albumFilter}
-                <button onClick={() => setAlbumFilter('all')} className="hover:text-primary/70">
+                <AdminButton
+                  onClick={() => setAlbumFilter('all')}
+                  adminVariant="icon"
+                  size="xs"
+                  className="p-0 hover:text-primary/70"
+                >
                   <X className="w-3 h-3" />
-                </button>
+                </AdminButton>
               </span>
             )}
             {onlyFeatured && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-500/10 text-amber-600 text-xs rounded-md">
                 <Star className="w-3 h-3 fill-current" />
                 Featured
-                <button onClick={() => setOnlyFeatured(false)} className="hover:text-amber-500/70">
+                <AdminButton
+                  onClick={() => setOnlyFeatured(false)}
+                  adminVariant="icon"
+                  size="xs"
+                  className="p-0 hover:text-amber-500/70"
+                >
                   <X className="w-3 h-3" />
-                </button>
+                </AdminButton>
               </span>
             )}
-            <button
+            <AdminButton
               onClick={clearAllFilters}
-              className="text-xs text-muted-foreground hover:text-foreground underline"
+              adminVariant="link"
+              size="xs"
+              className="text-xs text-muted-foreground underline normal-case"
             >
               Clear all
-            </button>
+            </AdminButton>
           </div>
         )}
       </div>
@@ -504,45 +541,47 @@ export function PhotosTab({
                   {/* Action Buttons - Fixed positions */}
                   <div className="absolute top-2 right-2 flex flex-col gap-1.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     {/* Star button - toggle featured status */}
-                    <button
+                    <AdminButton
                       onClick={(e) => {
                         e.stopPropagation()
                         onToggleFeatured(photo)
                       }}
-                      className={`p-1.5 backdrop-blur-sm rounded transition-colors ${
-                        photo.isFeatured
-                          ? 'bg-amber-500 text-white hover:bg-amber-600'
-                          : 'bg-black/60 text-white hover:text-amber-400'
-                      }`}
+                      adminVariant={photo.isFeatured ? 'iconAccent' : 'iconOnDark'}
+                      size="xs"
+                      className="p-1.5 backdrop-blur-sm rounded"
                       title={photo.isFeatured ? "Remove from featured" : "Add to featured"}
                     >
                       <Star className={`w-3.5 h-3.5 ${photo.isFeatured ? 'fill-current' : ''}`} />
-                    </button>
+                    </AdminButton>
                     {/* Delete button - always in same position */}
-                    <button
+                    <AdminButton
                       onClick={(e) => {
                         e.stopPropagation()
                         onDelete(photo.id)
                       }}
-                      className="p-1.5 bg-black/60 backdrop-blur-sm text-white hover:text-destructive rounded transition-colors"
+                      adminVariant="iconOnDarkDanger"
+                      size="xs"
+                      className="p-1.5 backdrop-blur-sm rounded"
                       title="Delete photo"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    </AdminButton>
                   </div>
 
                   {/* Featured Badge - Always visible when featured, higher z-index than hover overlay */}
                   {photo.isFeatured && (
-                    <button
+                    <AdminButton
                       onClick={(e) => {
                         e.stopPropagation()
                         onToggleFeatured(photo)
                       }}
-                      className="absolute top-2 right-2 p-1.5 bg-amber-500 text-white rounded z-30 shadow-lg hover:bg-amber-600 transition-colors group-hover:opacity-0 pointer-events-auto"
+                      adminVariant="iconAccent"
+                      size="xs"
+                      className="absolute top-2 right-2 p-1.5 z-30 shadow-lg group-hover:opacity-0 pointer-events-auto"
                       title="Remove from featured"
                     >
                       <Star className="w-3 h-3 fill-current" />
-                    </button>
+                    </AdminButton>
                   )}
 
                   {/* Bottom Info */}
@@ -597,26 +636,30 @@ export function PhotosTab({
                     <span className="uppercase">{photo.storageProvider}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button
+                    <AdminButton
                       onClick={(e) => {
                         e.stopPropagation()
                         onToggleFeatured(photo)
                       }}
-                      className={`p-2 rounded hover:bg-muted transition-colors ${
+                      adminVariant="icon"
+                      size="xs"
+                      className={`p-2 ${
                         photo.isFeatured ? 'text-amber-500' : 'text-muted-foreground hover:text-amber-500'
                       }`}
                     >
                       <Star className={`w-4 h-4 ${photo.isFeatured ? 'fill-current' : ''}`} />
-                    </button>
-                    <button
+                    </AdminButton>
+                    <AdminButton
                       onClick={(e) => {
                         e.stopPropagation()
                         onDelete(photo.id)
                       }}
-                      className="p-2 text-muted-foreground hover:text-destructive rounded hover:bg-muted transition-colors"
+                      adminVariant="iconDestructive"
+                      size="xs"
+                      className="p-2"
                     >
                       <Trash2 className="w-4 h-4" />
-                    </button>
+                    </AdminButton>
                   </div>
                 </div>
               )
@@ -628,12 +671,14 @@ export function PhotosTab({
                   {t('admin.no_photos')}
                 </p>
                 {activeFilterCount > 0 && (
-                  <button
+                  <AdminButton
                     onClick={clearAllFilters}
-                    className="text-xs text-primary hover:underline"
+                    adminVariant="link"
+                    size="xs"
+                    className="text-xs text-primary hover:underline normal-case"
                   >
                     Clear filters to see all photos
-                  </button>
+                  </AdminButton>
                 )}
               </div>
             )}

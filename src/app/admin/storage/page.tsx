@@ -6,6 +6,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { scanStorage, cleanupStorage, fixMissingPhotos, generateThumbnail, StorageFile, StorageScanStats } from '@/lib/api'
 import { MissingFileUploadModal } from '@/components/admin/MissingFileUploadModal'
 import { Toast, Notification } from '@/components/Toast'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 function formatSize(bytes: number): string {
   if (bytes === 0) return '-'
@@ -234,21 +235,25 @@ export default function StorageCleanupPage() {
             placeholder={t('common.search')}
             className="flex-1 px-3 py-2 border rounded-lg dark:bg-zinc-800 dark:border-zinc-700"
           />
-          <button
+          <AdminButton
             onClick={handleSearch}
-            className="px-4 py-2 border rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
+            adminVariant="outline"
+            size="sm"
+            className="px-4 py-2 text-sm font-medium normal-case rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
           >
             {t('common.search').replace('...', '')}
-          </button>
+          </AdminButton>
         </div>
         
-        <button
+        <AdminButton
           onClick={() => loadFiles()}
           disabled={loading}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          adminVariant="primary"
+          size="sm"
+          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium normal-case rounded-lg hover:bg-blue-700 disabled:opacity-50"
         >
           {loading ? t('admin.storage_scanning') : t('admin.storage_scan')}
-        </button>
+        </AdminButton>
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
@@ -281,18 +286,22 @@ export default function StorageCleanupPage() {
       {selected.size > 0 && (
         <div className="flex gap-4 mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg items-center">
           <span>{t('admin.selected')} {selected.size}</span>
-          <button 
-            onClick={handleCleanup} 
-            className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+          <AdminButton
+            onClick={handleCleanup}
+            adminVariant="destructive"
+            size="xs"
+            className="px-3 py-1 text-xs font-medium normal-case rounded hover:bg-red-700"
           >
             {t('admin.storage_cleanup_selected')}
-          </button>
-          <button 
+          </AdminButton>
+          <AdminButton
             onClick={() => setSelected(new Set())}
-            className="px-3 py-1 border rounded hover:bg-zinc-100 dark:hover:bg-zinc-700"
+            adminVariant="outline"
+            size="xs"
+            className="px-3 py-1 text-xs font-medium normal-case rounded hover:bg-zinc-100 dark:hover:bg-zinc-700"
           >
             {t('common.cancel')}
-          </button>
+          </AdminButton>
         </div>
       )}
       
@@ -385,7 +394,7 @@ export default function StorageCleanupPage() {
                     ) : generatingThumb.has(file.photoId || '') ? (
                       <span className="text-zinc-400 animate-pulse">...</span>
                     ) : (
-                      <button
+                      <AdminButton
                         onClick={async () => {
                           if (!token || !file.photoId) return
                           setGeneratingThumb(prev => new Set(prev).add(file.photoId!))
@@ -399,10 +408,12 @@ export default function StorageCleanupPage() {
                             setGeneratingThumb(prev => { const n = new Set(prev); n.delete(file.photoId!); return n })
                           }
                         }}
-                        className="text-xs text-primary hover:underline"
+                        adminVariant="link"
+                        size="xs"
+                        className="text-xs text-primary hover:underline normal-case"
                       >
                         {t('admin.storage_generate')}
-                      </button>
+                      </AdminButton>
                     )
                   ) : '-'}
                 </span>
@@ -430,12 +441,14 @@ export default function StorageCleanupPage() {
             className="max-w-full max-h-full object-contain"
             onClick={e => e.stopPropagation()}
           />
-          <button
+          <AdminButton
             onClick={() => setPreviewUrl(null)}
-            className="absolute top-4 right-4 text-white text-2xl hover:text-zinc-300"
+            adminVariant="iconOnDark"
+            size="sm"
+            className="absolute top-4 right-4 text-2xl hover:text-zinc-300"
           >
             ✕
-          </button>
+          </AdminButton>
         </div>
       )}
 

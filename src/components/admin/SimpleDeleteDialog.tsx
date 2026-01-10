@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, AlertTriangle, Loader2 } from 'lucide-react'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 interface SimpleDeleteDialogProps {
   isOpen: boolean
@@ -75,17 +76,21 @@ export function SimpleDeleteDialog({
               </div>
 
               <div className="flex gap-3">
-                <button
+                <AdminButton
                   onClick={handleCancel}
                   disabled={isDeleting}
-                  className="flex-1 px-6 py-3 border border-border text-foreground text-xs font-bold uppercase tracking-widest hover:bg-muted active:bg-muted/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all rounded-md"
+                  adminVariant="outline"
+                  size="xl"
+                  className="flex-1 rounded-md"
                 >
                   {t('common.cancel')}
-                </button>
-                <button
+                </AdminButton>
+                <AdminButton
                   onClick={handleConfirm}
                   disabled={isDeleting}
-                  className="flex-1 px-6 py-3 bg-destructive text-destructive-foreground text-xs font-bold uppercase tracking-widest hover:bg-destructive/90 active:bg-destructive/80 disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 rounded-md"
+                  adminVariant="destructive"
+                  size="xl"
+                  className="flex-1 rounded-md flex items-center justify-center gap-2"
                 >
                   {isDeleting ? (
                     <>
@@ -98,7 +103,7 @@ export function SimpleDeleteDialog({
                       <span>{t('common.delete')}</span>
                     </>
                   )}
-                </button>
+                </AdminButton>
               </div>
             </motion.div>
           </div>

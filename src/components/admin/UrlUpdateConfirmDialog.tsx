@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { RefreshCw, AlertCircle } from 'lucide-react'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 interface UrlUpdateConfirmDialogProps {
   isOpen: boolean
@@ -91,25 +92,31 @@ export function UrlUpdateConfirmDialog({
               </div>
 
               <div className="flex flex-col gap-3">
-                <button
+                <AdminButton
                   onClick={() => onConfirm(true)}
-                  className="w-full px-6 py-3 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                  adminVariant="primary"
+                  size="xl"
+                  className="w-full flex items-center justify-center gap-2"
                 >
                   <RefreshCw className="w-4 h-4" />
                   <span>{t('admin.update_photo_urls')}</span>
-                </button>
-                <button
+                </AdminButton>
+                <AdminButton
                   onClick={() => onConfirm(false)}
-                  className="w-full px-6 py-3 border border-border text-foreground text-xs font-bold uppercase tracking-widest hover:bg-muted transition-all"
+                  adminVariant="outline"
+                  size="xl"
+                  className="w-full"
                 >
                   {t('admin.save_without_updating')}
-                </button>
-                <button
+                </AdminButton>
+                <AdminButton
                   onClick={onCancel}
-                  className="w-full px-6 py-3 text-muted-foreground text-xs font-bold uppercase tracking-widest hover:text-foreground transition-all"
+                  adminVariant="link"
+                  size="xl"
+                  className="w-full"
                 >
                   {t('common.cancel')}
-                </button>
+                </AdminButton>
               </div>
             </motion.div>
           </div>
@@ -118,3 +125,4 @@ export function UrlUpdateConfirmDialog({
     </AnimatePresence>
   )
 }
+

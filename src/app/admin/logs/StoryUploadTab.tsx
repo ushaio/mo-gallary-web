@@ -21,6 +21,7 @@ import { compressImage, type CompressionMode } from '@/lib/image-compress'
 import { formatFileSize } from '@/lib/utils'
 import { CustomInput } from '@/components/ui/CustomInput'
 import { useUploadQueue } from '@/contexts/UploadQueueContext'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 interface StoryUploadFile {
   id: string
@@ -86,8 +87,10 @@ export function StoryUploadTab({
   // Initialize defaults from settings
   useEffect(() => {
     if (settings?.storage_provider && !isInitialized) {
-      setUploadSource(settings.storage_provider)
-      setIsInitialized(true)
+      queueMicrotask(() => {
+        setUploadSource(settings.storage_provider)
+        setIsInitialized(true)
+      })
     }
   }, [settings, isInitialized])
 
@@ -380,15 +383,17 @@ export function StoryUploadTab({
                     className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider"
                   >
                     {cat}
-                    <button
+                    <AdminButton
                       onClick={(e) => {
                         e.stopPropagation()
                         removeCategory(cat)
                       }}
-                      className="hover:text-primary/70"
+                      adminVariant="icon"
+                      size="xs"
+                      className="p-0 hover:text-primary/70"
                     >
                       <X className="w-3 h-3" />
-                    </button>
+                    </AdminButton>
                   </span>
                 ))}
                 <input
@@ -420,29 +425,33 @@ export function StoryUploadTab({
                 <div className="absolute z-10 w-full mt-1 bg-background border border-border shadow-2xl max-h-48 overflow-y-auto">
                   {filteredCategories.length > 0 ? (
                     filteredCategories.map((cat) => (
-                      <button
+                      <AdminButton
                         key={cat}
                         onClick={(e) => {
                           e.stopPropagation()
                           addCategory(cat)
                         }}
-                        className="w-full text-left px-4 py-3 text-xs font-bold uppercase tracking-wider hover:bg-primary hover:text-primary-foreground flex items-center justify-between group transition-colors"
+                        adminVariant="ghost"
+                        size="md"
+                        className="w-full px-4 py-3 text-xs font-bold uppercase tracking-wider text-left flex items-center justify-between group hover:bg-primary hover:text-primary-foreground"
                       >
                         <span>{cat}</span>
                         <Check className="w-3 h-3 opacity-0 group-hover:opacity-100" />
-                      </button>
+                      </AdminButton>
                     ))
                   ) : categoryInput.trim() ? (
-                    <button
+                    <AdminButton
                       onClick={(e) => {
                         e.stopPropagation()
                         addCategory(categoryInput)
                       }}
-                      className="w-full text-left px-4 py-3 text-xs font-bold uppercase tracking-wider hover:bg-primary hover:text-primary-foreground text-primary flex items-center justify-between transition-colors"
+                      adminVariant="ghost"
+                      size="md"
+                      className="w-full px-4 py-3 text-xs font-bold uppercase tracking-wider text-left text-primary flex items-center justify-between hover:bg-primary hover:text-primary-foreground"
                     >
                       <span>Create &ldquo;{categoryInput}&rdquo;</span>
                       <Plus className="w-3 h-3" />
-                    </button>
+                    </AdminButton>
                   ) : (
                     <div className="px-4 py-3 text-[10px] text-muted-foreground uppercase tracking-widest text-center">
                       Start typing...
@@ -534,10 +543,12 @@ export function StoryUploadTab({
 
           {/* Upload Button */}
           <div className="pt-4">
-            <button
+            <AdminButton
               onClick={handleUpload}
               disabled={compressing || pendingCount === 0}
-              className="w-full py-4 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] hover:bg-primary hover:text-primary-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2"
+              adminVariant="primary"
+              size="lg"
+              className="w-full py-4 bg-foreground text-background text-xs font-bold uppercase tracking-[0.2em] hover:bg-primary hover:text-primary-foreground disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               {compressing ? (
                 <>
@@ -553,7 +564,7 @@ export function StoryUploadTab({
                   <span>{t('admin.create_story_upload')}</span>
                 </>
               )}
-            </button>
+            </AdminButton>
             {uploadError && (
               <p className="mt-4 text-[10px] text-destructive text-center font-bold uppercase tracking-widest">
                 {uploadError}
@@ -600,46 +611,54 @@ export function StoryUploadTab({
                     </span>
                   </div>
                   {selectedUploadIds.size > 0 && (
-                    <button
+                    <AdminButton
                       onClick={handleBulkRemoveUploads}
-                      className="p-1.5 text-destructive hover:bg-destructive/10 transition-colors rounded"
+                      adminVariant="iconDestructive"
+                      size="xs"
+                      className="p-1.5 rounded"
                       title="Delete Selected"
                     >
                       <Trash2 className="w-4 h-4" />
-                    </button>
+                    </AdminButton>
                   )}
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="flex bg-muted p-1 border border-border">
-                    <button
+                    <AdminButton
                       onClick={() => setUploadViewMode('list')}
-                      className={`p-1.5 transition-all ${
+                      adminVariant="icon"
+                      size="xs"
+                      className={`p-1.5 ${
                         uploadViewMode === 'list'
                           ? 'bg-background text-primary'
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
                       <ListIcon className="w-3.5 h-3.5" />
-                    </button>
-                    <button
+                    </AdminButton>
+                    <AdminButton
                       onClick={() => setUploadViewMode('grid')}
-                      className={`p-1.5 transition-all ${
+                      adminVariant="icon"
+                      size="xs"
+                      className={`p-1.5 ${
                         uploadViewMode === 'grid'
                           ? 'bg-background text-primary'
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
                       <LayoutGrid className="w-3.5 h-3.5" />
-                    </button>
+                    </AdminButton>
                   </div>
-                  <button
+                  <AdminButton
                     onClick={() => {
                       setUploadFiles([])
                     }}
-                    className="flex items-center gap-2 text-destructive hover:opacity-80 transition-opacity text-[10px] font-bold uppercase tracking-widest"
+                    adminVariant="link"
+                    size="xs"
+                    className="text-destructive hover:opacity-80 text-[10px] font-bold uppercase tracking-widest"
                   >
                     Clear
-                  </button>
+                  </AdminButton>
                   <div className="h-4 w-[1px] bg-border"></div>
                   <label className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors text-[10px] font-bold uppercase tracking-widest">
                     <Plus className="w-3.5 h-3.5" />
@@ -807,12 +826,14 @@ function StoryUploadFileItem({
 
         {/* Remove button */}
         {!uploading && item.status !== 'success' && (
-          <button
+          <AdminButton
             onClick={() => onRemove(item.id)}
-            className="absolute top-2 right-2 p-1.5 bg-background/80 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all z-20"
+            adminVariant="iconDestructive"
+            size="xs"
+            className="absolute top-2 right-2 p-1.5 bg-background/80 opacity-0 group-hover:opacity-100 transition-all z-20"
           >
             <X className="w-3 h-3" />
-          </button>
+          </AdminButton>
         )}
 
         {/* Title at bottom */}
@@ -942,14 +963,17 @@ function StoryUploadFileItem({
             Waiting
           </span>
         ) : (
-          <button
+          <AdminButton
             onClick={() => onRemove(item.id)}
-            className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+            adminVariant="iconDestructive"
+            size="xs"
+            className="p-2"
           >
             <X className="w-4 h-4" />
-          </button>
+          </AdminButton>
         )}
       </div>
     </div>
   )
 }
+

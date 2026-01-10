@@ -46,6 +46,7 @@ import { StoryPreviewModal } from '@/components/admin/StoryPreviewModal'
 import { StoryPhotoPanel, type PendingImage } from '@/components/admin/StoryPhotoPanel'
 import type { MilkdownEditorHandle } from '@/components/MilkdownEditor'
 import { saveStoryEditorDraftToDB, getStoryEditorDraftFromDB, clearStoryEditorDraftFromDB, type StoryEditorDraftData } from '@/lib/client-db'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 // Dynamically import MilkdownEditor to avoid SSR issues
 const MilkdownEditor = dynamic(
@@ -868,13 +869,15 @@ export function StoriesTab({ token, t, notify, editStoryId, editFromDraft, onDra
                 className="w-32"
               />
             </div>
-            <button
+            <AdminButton
               onClick={handleCreateStory}
-              className="flex items-center px-6 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all rounded-md"
+              adminVariant="primary"
+              size="lg"
+              className="flex items-center rounded-md"
             >
               <Plus className="w-4 h-4 mr-2" />
               {t('ui.create_story')}
-            </button>
+            </AdminButton>
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             <div className="grid grid-cols-1 gap-4">
@@ -930,12 +933,12 @@ export function StoriesTab({ token, t, notify, editStoryId, editFromDraft, onDra
                     </div>
                   </div>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
+                    <AdminButton
                       onClick={(e) => {
                         e.stopPropagation()
                         handleTogglePublish(story)
                       }}
-                      className="p-2 text-muted-foreground hover:text-primary transition-colors rounded-md hover:bg-muted"
+                      adminVariant="iconPrimary"
                       title={story.isPublished ? t('story.unpublish') : t('story.publish')}
                     >
                       {story.isPublished ? (
@@ -943,25 +946,25 @@ export function StoriesTab({ token, t, notify, editStoryId, editFromDraft, onDra
                       ) : (
                         <Eye className="w-4 h-4" />
                       )}
-                    </button>
-                    <button
+                    </AdminButton>
+                    <AdminButton
                       onClick={(e) => {
                         e.stopPropagation()
                         handleEditStory(story)
                       }}
-                      className="p-2 text-muted-foreground hover:text-primary transition-colors rounded-md hover:bg-muted"
+                      adminVariant="iconPrimary"
                     >
                       <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button
+                    </AdminButton>
+                    <AdminButton
                       onClick={(e) => {
                         e.stopPropagation()
                         setDeleteStoryId(story.id)
                       }}
-                      className="p-2 text-muted-foreground hover:text-destructive transition-colors rounded-md hover:bg-muted"
+                      adminVariant="iconDestructive"
                     >
                       <Trash2 className="w-4 h-4" />
-                    </button>
+                    </AdminButton>
                   </div>
                 </div>
               ))}
@@ -981,7 +984,7 @@ export function StoriesTab({ token, t, notify, editStoryId, editFromDraft, onDra
           {/* Header - Back button, Draft status, and Save button */}
           <div className="flex items-center justify-between border-b border-border pb-4 flex-shrink-0">
             <div className="flex items-center gap-4">
-              <button
+              <AdminButton
                 onClick={() => {
                   setStoryEditMode('list')
                   setCurrentStory(null)
@@ -994,10 +997,11 @@ export function StoriesTab({ token, t, notify, editStoryId, editFromDraft, onDra
                     router.replace('/admin/logs', { scroll: false })
                   }
                 }}
-                className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors"
+                adminVariant="link"
+                className="flex items-center gap-2 hover:no-underline"
               >
                 <ChevronLeft className="w-4 h-4" /> {t('admin.back_list')}
-              </button>
+              </AdminButton>
               {/* Draft status indicator */}
               {draftSaved && (
                 <span className="flex items-center gap-1 text-[10px] text-green-500">
@@ -1012,14 +1016,16 @@ export function StoriesTab({ token, t, notify, editStoryId, editFromDraft, onDra
                 </span>
               )}
             </div>
-            <button
+            <AdminButton
               onClick={handleSaveStory}
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-50 rounded-md"
+              adminVariant="primary"
+              size="lg"
+              className="flex items-center gap-2 rounded-md"
             >
               <Save className="w-4 h-4" />
               <span>{saving ? t('ui.saving') : t('admin.save')}</span>
-            </button>
+            </AdminButton>
           </div>
 
           {/* Main Content - Left/Right Layout */}
@@ -1063,15 +1069,16 @@ export function StoriesTab({ token, t, notify, editStoryId, editFromDraft, onDra
                   </label>
                   {/* Custom Date Toggle */}
                   <div className="flex items-center gap-2">
-                    <button
+                    <AdminButton
                       onClick={() => setUseCustomDate(!useCustomDate)}
-                      className={`relative w-10 h-5 rounded-full transition-colors ${useCustomDate ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+                      adminVariant="switch"
+                      data-state={useCustomDate ? 'on' : 'off'}
                       title={t('admin.custom_date')}
                     >
                       <span
                         className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${useCustomDate ? 'left-5' : 'left-0.5'}`}
                       />
-                    </button>
+                    </AdminButton>
                     <span className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
                       {t('admin.custom_date')}
                     </span>
@@ -1098,13 +1105,14 @@ export function StoriesTab({ token, t, notify, editStoryId, editFromDraft, onDra
                   </span>
                 </div>
                 {/* Right: Preview Button */}
-                <button
+                <AdminButton
                   onClick={() => setShowPreview(true)}
+                  adminVariant="unstyled"
                   className="flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-primary border border-primary/30 hover:bg-primary/10 rounded-md transition-colors"
                 >
                   <Eye className="w-3.5 h-3.5" />
                   {t('admin.preview') || '预览'}
-                </button>
+                </AdminButton>
               </div>
               
               {/* Content Area - WYSIWYG Editor */}
@@ -1188,3 +1196,4 @@ export function StoriesTab({ token, t, notify, editStoryId, editFromDraft, onDra
     </div>
   )
 }
+

@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from 'react'
 import { X, Upload, Loader2, Minimize2 } from 'lucide-react'
 import { compressImage, type CompressionMode } from '@/lib/image-compress'
 import { CustomSelect } from '@/components/ui/CustomSelect'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 interface MissingFileInfo {
   photoId: string
@@ -109,9 +110,9 @@ export function MissingFileUploadModal({
               {fileInfo.photoTitle}
             </p>
           </div>
-          <button onClick={handleClose} className="p-2 hover:bg-muted transition-colors">
+          <AdminButton onClick={handleClose} adminVariant="icon" className="p-2 hover:bg-muted">
             <X className="w-4 h-4" />
-          </button>
+          </AdminButton>
         </div>
 
         {/* Content */}
@@ -143,12 +144,13 @@ export function MissingFileUploadModal({
             {preview ? (
               <div className="relative w-full h-full p-4">
                 <img src={preview} alt="" className="w-full h-48 object-contain" />
-                <button
+                <AdminButton
                   onClick={e => { e.stopPropagation(); setFile(null); setPreview(null) }}
-                  className="absolute top-2 right-2 p-1 bg-background/80 hover:bg-destructive hover:text-white transition-colors"
+                  adminVariant="iconDestructive"
+                  className="absolute top-2 right-2 p-1 bg-background/80 hover:bg-destructive hover:text-white"
                 >
                   <X className="w-3 h-3" />
-                </button>
+                </AdminButton>
                 <p className="text-center text-xs text-muted-foreground mt-2">{file?.name}</p>
               </div>
             ) : (
@@ -202,16 +204,20 @@ export function MissingFileUploadModal({
 
         {/* Footer */}
         <div className="flex gap-3 px-6 py-4 border-t border-border">
-          <button
+          <AdminButton
             onClick={handleClose}
-            className="flex-1 py-3 border border-border text-sm font-medium hover:bg-muted transition-colors"
+            adminVariant="outline"
+            size="xl"
+            className="flex-1"
           >
             {t('common.cancel')}
-          </button>
-          <button
+          </AdminButton>
+          <AdminButton
             onClick={handleUpload}
             disabled={!file || uploading}
-            className="flex-1 py-3 bg-foreground text-background text-sm font-medium hover:bg-primary hover:text-primary-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            adminVariant="primary"
+            size="xl"
+            className="flex-1 flex items-center justify-center gap-2 bg-foreground text-background hover:bg-primary hover:text-primary-foreground"
           >
             {uploading ? (
               <>
@@ -224,7 +230,7 @@ export function MissingFileUploadModal({
                 {t('admin.start_upload')}
               </>
             )}
-          </button>
+          </AdminButton>
         </div>
       </div>
     </div>

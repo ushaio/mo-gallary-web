@@ -1,6 +1,7 @@
 'use client'
 
 import { LogOut, LucideIcon } from 'lucide-react'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 interface SidebarItem {
   id: string
@@ -46,18 +47,15 @@ export function AdminSidebar({
         </div>
         <nav className="flex-1 p-6 space-y-2">
           {items.map((item) => (
-            <button
+            <AdminButton
               key={item.id}
               onClick={() => onTabChange(item.id)}
-              className={`w-full flex items-center space-x-3 px-4 py-3 text-xs font-bold tracking-widest uppercase transition-all ${
-                activeTab === item.id
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
+              adminVariant="tab"
+              data-state={activeTab === item.id ? 'active' : 'inactive'}
             >
               <item.icon className="w-4 h-4" />
               <span>{item.label}</span>
-            </button>
+            </AdminButton>
           ))}
         </nav>
         <div className="p-6 border-t border-border">
@@ -74,15 +72,18 @@ export function AdminSidebar({
               </p>
             </div>
           </div>
-          <button
+          <AdminButton
             onClick={onLogout}
-            className="w-full flex items-center space-x-3 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-destructive hover:bg-destructive/10 transition-colors"
+            adminVariant="destructiveOutline"
+            size="lg"
+            className="w-full flex items-center space-x-3 text-xs font-bold uppercase tracking-widest"
           >
             <LogOut className="w-4 h-4" />
             <span>{t('nav.logout')}</span>
-          </button>
+          </AdminButton>
         </div>
       </div>
     </aside>
   )
 }
+

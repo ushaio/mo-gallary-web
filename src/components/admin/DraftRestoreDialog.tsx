@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { FileArchive, Clock, X } from 'lucide-react'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 interface DraftRestoreDialogProps {
   isOpen: boolean
@@ -52,12 +53,13 @@ export function DraftRestoreDialog({
                   {t('admin.draft_found')}
                 </h3>
               </div>
-              <button
+              <AdminButton
                 onClick={onCancel}
-                className="p-2 hover:bg-muted rounded-md transition-colors"
+                adminVariant="icon"
+                className="p-2 hover:bg-muted"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </AdminButton>
             </div>
 
             {/* Content */}
@@ -73,18 +75,21 @@ export function DraftRestoreDialog({
 
             {/* Footer */}
             <div className="flex items-center justify-end gap-3 p-6 border-t border-border bg-muted/20">
-              <button
+              <AdminButton
                 onClick={onDiscard}
-                className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                adminVariant="link"
+                className="px-4 py-2 text-muted-foreground hover:text-foreground"
               >
                 {t('admin.draft_discard')}
-              </button>
-              <button
+              </AdminButton>
+              <AdminButton
                 onClick={onRestore}
-                className="px-6 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all rounded-md"
+                adminVariant="primary"
+                size="md"
+                className="rounded-md"
               >
                 {t('admin.draft_restore')}
-              </button>
+              </AdminButton>
             </div>
           </motion.div>
         </motion.div>

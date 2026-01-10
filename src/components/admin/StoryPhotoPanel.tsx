@@ -12,6 +12,7 @@ import {
   MoreVertical,
 } from 'lucide-react'
 import { resolveAssetUrl, type StoryDto, type PhotoDto } from '@/lib/api'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 export interface PendingImage {
   id: string
@@ -112,9 +113,14 @@ export function StoryPhotoPanel({
           <span className="text-xs text-muted-foreground">({(currentStory?.photos?.length || 0) + pendingImages.length})</span>
           {pendingImages.length > 0 && <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-600 text-[10px] font-bold rounded">{pendingImages.length} 待上传</span>}
         </div>
-        <button onClick={onAddPhotos} className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10 rounded-md transition-colors">
+        <AdminButton
+          onClick={onAddPhotos}
+          adminVariant="ghost"
+          size="sm"
+          className="flex items-center gap-1 text-primary font-medium hover:bg-primary/10 rounded-md"
+        >
           <Plus className="w-3.5 h-3.5" /><span>{t('admin.add_photos')}</span>
-        </button>
+        </AdminButton>
       </div>
 
       {isUploading && (
@@ -132,9 +138,13 @@ export function StoryPhotoPanel({
       {!isUploading && pendingImages.some(p => p.status === 'failed') && (
         <div className="px-4 py-2 bg-destructive/10 border-b border-destructive/20 flex items-center justify-between">
           <span className="text-xs text-destructive">{pendingImages.filter(p => p.status === 'failed').length} 张上传失败</span>
-          <button onClick={onRetryFailedUploads} className="flex items-center gap-1 text-xs text-destructive hover:underline">
+          <AdminButton
+            onClick={onRetryFailedUploads}
+            adminVariant="link"
+            className="flex items-center gap-1 text-xs text-destructive"
+          >
             <RefreshCw className="w-3 h-3" />重试
-          </button>
+          </AdminButton>
         </div>
       )}
 
@@ -152,21 +162,36 @@ export function StoryPhotoPanel({
                       <div draggable onDragStart={(e) => onItemDragStart(e, photo.id, 'photo')} onDragEnd={onItemDragEnd} onDragOver={(e) => onItemDragOver(e, photo.id)} onDragLeave={onItemDragLeave} onDrop={(e) => onItemDrop(e, photo.id, 'photo')}
                         className={`relative group aspect-square rounded-lg overflow-hidden border-2 transition-all cursor-grab active:cursor-grabbing ${dragOverItemId === photo.id ? 'border-primary border-dashed scale-105 shadow-lg' : currentStory?.coverPhotoId === photo.id ? 'border-primary' : 'border-transparent hover:border-border'} ${draggedItemId === photo.id && draggedItemType === 'photo' ? 'opacity-50' : ''}`}>
                         {/* Three-dot menu button */}
-                        <button
+                        <AdminButton
                           onClick={(e) => {
                             e.stopPropagation()
                             onOpenMenuPhoto(openMenuPhotoId === photo.id ? null : photo.id)
                           }}
-                          className="absolute top-1 right-1 z-20 p-1 bg-black/40 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60"
+                          adminVariant="icon"
+                          className="absolute top-1 right-1 z-20 p-1 bg-black/40 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60 text-white"
                         >
-                          <MoreVertical className="w-3 h-3 text-white" />
-                        </button>
+                          <MoreVertical className="w-3 h-3" />
+                        </AdminButton>
                         <div className="absolute bottom-1 right-1 z-10 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center"><span className="text-[10px] font-bold text-white">{idx + 1}</span></div>
                         <img src={resolveAssetUrl(photo.thumbnailUrl || photo.url, cdnDomain)} alt={photo.title} className="w-full h-full object-cover pointer-events-none" />
                         {currentStory?.coverPhotoId === photo.id && !pendingCoverId && <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-primary text-primary-foreground text-[8px] font-bold uppercase rounded">{t('admin.cover')}</div>}
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                          {(currentStory?.coverPhotoId !== photo.id || pendingCoverId) && <button onClick={(e) => { e.stopPropagation(); onSetCover(photo.id) }} className="p-1.5 bg-white/20 hover:bg-white/40 text-white rounded text-[10px] font-medium">Cover</button>}
-                          <button onClick={(e) => { e.stopPropagation(); onRemovePhoto(photo.id) }} className="p-1.5 bg-white/20 hover:bg-destructive text-white rounded"><X className="w-3.5 h-3.5" /></button>
+                          {(currentStory?.coverPhotoId !== photo.id || pendingCoverId) && (
+                            <AdminButton
+                              onClick={(e) => { e.stopPropagation(); onSetCover(photo.id) }}
+                              adminVariant="ghost"
+                              className="p-1.5 bg-white/20 hover:bg-white/40 text-white rounded text-[10px] font-medium"
+                            >
+                              Cover
+                            </AdminButton>
+                          )}
+                          <AdminButton
+                            onClick={(e) => { e.stopPropagation(); onRemovePhoto(photo.id) }}
+                            adminVariant="ghost"
+                            className="p-1.5 bg-white/20 hover:bg-destructive text-white rounded"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </AdminButton>
                         </div>
                       </div>
                       {/* Dropdown menu - outside the overflow-hidden container */}
@@ -182,18 +207,19 @@ export function StoryPhotoPanel({
                           />
                           <div className="absolute top-8 right-0 bg-background border border-border rounded-md shadow-lg py-1 min-w-[160px] z-50">
                             {photo.takenAt ? (
-                              <button
+                              <AdminButton
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   onSetPhotoDate(photo.takenAt!)
                                   onOpenMenuPhoto(null)
                                   notify(t('admin.set_publish_time_success'), 'success')
                                 }}
+                                adminVariant="ghost"
                                 className="w-full px-3 py-2 text-left text-xs hover:bg-muted flex items-center gap-2"
                               >
                                 <Calendar className="w-3.5 h-3.5" />
                                 {t('admin.set_as_publish_time')}
-                              </button>
+                              </AdminButton>
                             ) : (
                               <div className="px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
                                 <Calendar className="w-3.5 h-3.5" />
@@ -215,15 +241,16 @@ export function StoryPhotoPanel({
                         className={`relative group aspect-square rounded-lg overflow-hidden border-2 transition-all ${pending.status === 'uploading' ? 'border-primary border-solid' : pending.status === 'failed' ? 'border-destructive border-dashed' : isPendingCover ? 'border-primary border-solid' : 'border-amber-500 border-dashed'} ${dragOverItemId === pending.id ? 'scale-105 shadow-lg' : ''} ${draggedItemId === pending.id && draggedItemType === 'pending' ? 'opacity-50' : ''} ${pending.status !== 'uploading' ? 'cursor-grab active:cursor-grabbing' : ''}`}>
                         {/* Three-dot menu button */}
                         {pending.status !== 'uploading' && (
-                          <button
+                          <AdminButton
                             onClick={(e) => {
                               e.stopPropagation()
                               onOpenMenuPending(openMenuPendingId === pending.id ? null : pending.id)
                             }}
-                            className="absolute top-1 right-1 z-20 p-1 bg-black/40 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60"
+                            adminVariant="icon"
+                            className="absolute top-1 right-1 z-20 p-1 bg-black/40 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60 text-white"
                           >
-                            <MoreVertical className="w-3 h-3 text-white" />
-                          </button>
+                            <MoreVertical className="w-3 h-3" />
+                          </AdminButton>
                         )}
                         <div className="absolute bottom-1 right-1 z-10 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center"><span className="text-[10px] font-bold text-white">{idx + 1}</span></div>
                         <img src={pending.previewUrl} alt="" className="w-full h-full object-cover pointer-events-none" />
@@ -237,8 +264,22 @@ export function StoryPhotoPanel({
                         {/* Hover overlay with action buttons */}
                         {pending.status !== 'uploading' && (
                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                            {!isPendingCover && <button onClick={(e) => { e.stopPropagation(); onSetPendingCover(pending.id) }} className="p-1.5 bg-white/20 hover:bg-white/40 text-white rounded text-[10px] font-medium">Cover</button>}
-                            <button onClick={(e) => { e.stopPropagation(); onRemovePendingImage(pending.id) }} className="p-1.5 bg-white/20 hover:bg-destructive text-white rounded"><X className="w-3.5 h-3.5" /></button>
+                            {!isPendingCover && (
+                              <AdminButton
+                                onClick={(e) => { e.stopPropagation(); onSetPendingCover(pending.id) }}
+                                adminVariant="ghost"
+                                className="p-1.5 bg-white/20 hover:bg-white/40 text-white rounded text-[10px] font-medium"
+                              >
+                                Cover
+                              </AdminButton>
+                            )}
+                            <AdminButton
+                              onClick={(e) => { e.stopPropagation(); onRemovePendingImage(pending.id) }}
+                              adminVariant="ghost"
+                              className="p-1.5 bg-white/20 hover:bg-destructive text-white rounded"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </AdminButton>
                           </div>
                         )}
                       </div>
@@ -255,18 +296,19 @@ export function StoryPhotoPanel({
                           />
                           <div className="absolute top-8 right-0 bg-background border border-border rounded-md shadow-lg py-1 min-w-[160px] z-50">
                             {pending.takenAt ? (
-                              <button
+                              <AdminButton
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   onSetPhotoDate(pending.takenAt!)
                                   onOpenMenuPending(null)
                                   notify(t('admin.set_publish_time_success'), 'success')
                                 }}
+                                adminVariant="ghost"
                                 className="w-full px-3 py-2 text-left text-xs hover:bg-muted flex items-center gap-2"
                               >
                                 <Calendar className="w-3.5 h-3.5" />
                                 {t('admin.set_as_publish_time')}
-                              </button>
+                              </AdminButton>
                             ) : (
                               <div className="px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
                                 <Calendar className="w-3.5 h-3.5" />
@@ -287,7 +329,9 @@ export function StoryPhotoPanel({
             <Upload className="w-12 h-12 mb-3 opacity-20" />
             <p className="text-xs text-center mb-1">拖拽图片到此处</p>
             <p className="text-[10px] text-center mb-3 opacity-60">或</p>
-            <button onClick={onAddPhotos} className="text-xs text-primary hover:underline">从图库选择</button>
+            <AdminButton onClick={onAddPhotos} adminVariant="link" className="text-xs text-primary">
+              从图库选择
+            </AdminButton>
           </div>
         )}
       </div>

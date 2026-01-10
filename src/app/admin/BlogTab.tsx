@@ -41,6 +41,7 @@ import {
 } from '@/lib/client-db'
 import { SimpleDeleteDialog } from '@/components/admin/SimpleDeleteDialog'
 import { DraftRestoreDialog } from '@/components/admin/DraftRestoreDialog'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 // Dynamically import MilkdownEditor to avoid SSR issues
 const MilkdownEditor = dynamic(
@@ -507,13 +508,15 @@ export function BlogTab({ photos, settings, t, notify, refreshKey }: BlogTabProp
                 className="w-32"
               />
             </div>
-            <button
+            <AdminButton
               onClick={handleCreateBlog}
-              className="flex items-center px-6 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all rounded-md"
+              adminVariant="primary"
+              size="lg"
+              className="flex items-center rounded-md"
             >
               <Plus className="w-4 h-4 mr-2" />
               {t('ui.create_blog')}
-            </button>
+            </AdminButton>
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             <div className="grid grid-cols-1 gap-4">
@@ -560,18 +563,18 @@ export function BlogTab({ photos, settings, t, notify, refreshKey }: BlogTabProp
                     </div>
                   </div>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
+                    <AdminButton
                       onClick={() => handleEditBlog(blog)}
-                      className="p-2 text-muted-foreground hover:text-primary transition-colors"
+                      adminVariant="iconPrimary"
                     >
                       <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button
+                    </AdminButton>
+                    <AdminButton
                       onClick={() => setDeleteBlogId(blog.id)}
-                      className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+                      adminVariant="iconDestructive"
                     >
                       <Trash2 className="w-4 h-4" />
-                    </button>
+                    </AdminButton>
                   </div>
                 </div>
               ))}
@@ -590,7 +593,7 @@ export function BlogTab({ photos, settings, t, notify, refreshKey }: BlogTabProp
         <div className="flex-1 flex flex-col gap-6 overflow-hidden">
           <div className="flex items-center justify-between border-b border-border pb-4 flex-shrink-0">
             <div className="flex items-center gap-4">
-              <button
+              <AdminButton
                 onClick={() => {
                   setEditMode('list')
                   setCurrentBlog(null)
@@ -598,10 +601,11 @@ export function BlogTab({ photos, settings, t, notify, refreshKey }: BlogTabProp
                   initialBlogRef.current = null
                   setIsDirty(false)
                 }}
-                className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors"
+                adminVariant="link"
+                className="flex items-center gap-2 hover:no-underline"
               >
                 <ChevronLeft className="w-4 h-4" /> {t('admin.back_list')}
-              </button>
+              </AdminButton>
               {/* Draft Status Indicator */}
               {draftSaved && (
                 <div className="flex items-center gap-1 text-[10px] text-green-500">
@@ -631,10 +635,12 @@ export function BlogTab({ photos, settings, t, notify, refreshKey }: BlogTabProp
                 />
                 <span className="font-bold uppercase tracking-widest">{t('admin.publish')}</span>
               </label>
-              <button
+              <AdminButton
                 onClick={handleSaveBlog}
                 disabled={saving}
-                className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-50"
+                adminVariant="primary"
+                size="lg"
+                className="flex items-center gap-2"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -642,7 +648,7 @@ export function BlogTab({ photos, settings, t, notify, refreshKey }: BlogTabProp
                   <Save className="w-4 h-4" />
                 )}
                 <span>{t('admin.save')}</span>
-              </button>
+              </AdminButton>
             </div>
           </div>
           <div className="flex-1 flex flex-col gap-4 overflow-hidden relative">
@@ -695,13 +701,14 @@ export function BlogTab({ photos, settings, t, notify, refreshKey }: BlogTabProp
                     placeholder={t('ui.markdown_placeholder')}
                   />
                 )}
-                <button
+                <AdminButton
                   onClick={() => setIsInsertingPhoto(true)}
+                  adminVariant="unstyled"
                   className="absolute bottom-6 right-6 p-4 bg-background border border-border hover:border-primary text-primary transition-all shadow-2xl z-10"
                   title={t('blog.insert_photo')}
                 >
                   <ImageIcon className="w-6 h-6" />
-                </button>
+                </AdminButton>
               </div>
             </div>
           </div>
@@ -716,12 +723,12 @@ export function BlogTab({ photos, settings, t, notify, refreshKey }: BlogTabProp
               <h3 className="font-serif text-2xl uppercase tracking-tight">
                 {t('blog.insert_photo')}
               </h3>
-              <button
+              <AdminButton
                 onClick={() => setIsInsertingPhoto(false)}
-                className="p-2 hover:bg-muted"
+                adminVariant="icon"
               >
                 <X className="w-6 h-6" />
-              </button>
+              </AdminButton>
             </div>
             <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
               <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
@@ -762,3 +769,4 @@ export function BlogTab({ photos, settings, t, notify, refreshKey }: BlogTabProp
     </div>
   )
 }
+

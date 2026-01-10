@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X, Upload, Settings, Loader2 } from 'lucide-react'
 import { getAdminAlbums, type AlbumDto } from '@/lib/api'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 export interface UploadSettings {
   maxSizeMB?: number
@@ -94,12 +95,13 @@ export function ImageUploadSettingsModal({
             <Settings className="w-5 h-5 text-primary" />
             <h3 className="font-bold">{t('admin.upload_settings') || '上传设置'}</h3>
           </div>
-          <button
+          <AdminButton
             onClick={onClose}
-            className="p-2 hover:bg-muted rounded-md transition-colors"
+            adminVariant="icon"
+            className="p-2 hover:bg-muted rounded-md"
           >
             <X className="w-4 h-4" />
-          </button>
+          </AdminButton>
         </div>
 
         <div className="p-6 space-y-5">
@@ -173,19 +175,22 @@ export function ImageUploadSettingsModal({
         </div>
 
         <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
-          <button
+          <AdminButton
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            adminVariant="link"
+            className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
           >
             {t('common.cancel') || '取消'}
-          </button>
-          <button
+          </AdminButton>
+          <AdminButton
             onClick={handleConfirm}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-md hover:opacity-90 transition-all"
+            adminVariant="primary"
+            size="md"
+            className="flex items-center gap-2 rounded-md text-sm"
           >
             <Upload className="w-4 h-4" />
             {t('admin.start_upload') || '开始上传'}
-          </button>
+          </AdminButton>
         </div>
       </div>
     </div>

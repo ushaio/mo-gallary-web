@@ -13,6 +13,7 @@ import {
   Upload,
 } from 'lucide-react'
 import { UploadTask, UploadTaskStatus } from '@/contexts/UploadQueueContext'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 interface UploadProgressPopupProps {
   tasks: UploadTask[]
@@ -157,29 +158,31 @@ export function UploadProgressPopup({
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <button
+          <AdminButton
             onClick={(e) => {
               e.stopPropagation()
               onToggleMinimize()
             }}
-            className="p-1.5 hover:bg-background rounded transition-colors"
+            adminVariant="icon"
+            className="p-1.5 hover:bg-background"
           >
             {isMinimized ? (
               <ChevronUp className="w-4 h-4" />
             ) : (
               <ChevronDown className="w-4 h-4" />
             )}
-          </button>
+          </AdminButton>
           {(allCompleted || (hasFailures && !isUploading)) && (
-            <button
+            <AdminButton
               onClick={(e) => {
                 e.stopPropagation()
                 onClose()
               }}
-              className="p-1.5 hover:bg-background rounded transition-colors"
+              adminVariant="icon"
+              className="p-1.5 hover:bg-background"
             >
               <X className="w-4 h-4" />
-            </button>
+            </AdminButton>
           )}
         </div>
       </div>
@@ -253,13 +256,14 @@ export function UploadProgressPopup({
               {/* Status / Actions */}
               <div className="flex-shrink-0 w-8 flex justify-center">
                 {task.status === 'failed' && hoveredTaskId === task.id ? (
-                  <button
+                  <AdminButton
                     onClick={() => onRetry(task.id)}
-                    className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors"
+                    adminVariant="iconPrimary"
+                    className="p-1.5 text-primary hover:bg-primary/10"
                     title={t('admin.retry')}
                   >
                     <RefreshCw className="w-4 h-4" />
-                  </button>
+                  </AdminButton>
                 ) : (
                   getStatusIcon(task.status, task.progress)
                 )}
@@ -272,17 +276,19 @@ export function UploadProgressPopup({
       {/* Footer Actions */}
       {!isMinimized && hasFailures && !isUploading && (
         <div className="px-4 py-3 border-t border-border bg-muted/20">
-          <button
+          <AdminButton
             onClick={() => {
               tasks
                 .filter((t) => t.status === 'failed')
                 .forEach((t) => onRetry(t.id))
             }}
-            className="w-full py-2 text-xs font-bold uppercase tracking-wider text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-2 border border-primary/30 hover:border-primary"
+            adminVariant="primarySoft"
+            size="md"
+            className="w-full flex items-center justify-center gap-2 border border-primary/30 hover:border-primary"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             {t('admin.retry_all_failed')} ({failedCount})
-          </button>
+          </AdminButton>
         </div>
       )}
 
@@ -298,3 +304,4 @@ export function UploadProgressPopup({
     </div>
   )
 }
+

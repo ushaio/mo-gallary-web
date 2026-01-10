@@ -23,6 +23,7 @@ import { useUploadQueue } from '@/contexts/UploadQueueContext'
 import { CustomSelect } from '@/components/ui/CustomSelect'
 import { CustomInput } from '@/components/ui/CustomInput'
 import { formatFileSize } from '@/lib/utils'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 interface UploadTabProps {
   token: string | null
@@ -114,19 +115,23 @@ function ConfirmModal({
         </div>
 
         <div className="flex gap-3">
-          <button
+          <AdminButton
             onClick={onClose}
-            className="flex-1 py-3 border border-border text-sm font-medium hover:bg-muted transition-colors"
+            adminVariant="outline"
+            size="lg"
+            className="flex-1 py-3 text-sm font-medium"
           >
             {t('common.cancel')}
-          </button>
-          <button
+          </AdminButton>
+          <AdminButton
             onClick={onConfirm}
-            className="flex-1 py-3 bg-foreground text-background text-sm font-medium hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center gap-2"
+            adminVariant="primary"
+            size="lg"
+            className="flex-1 py-3 bg-foreground text-background text-sm font-medium hover:bg-primary hover:text-primary-foreground flex items-center justify-center gap-2"
           >
             <CloudUpload className="w-4 h-4" />
             {t('admin.start_upload')}
-          </button>
+          </AdminButton>
         </div>
       </div>
     </div>
@@ -221,12 +226,14 @@ function DraggableFileItem({
         <p className="text-xs text-muted-foreground font-mono">{formatFileSize(item.file.size)}</p>
       </div>
 
-      <button
+      <AdminButton
         onClick={() => onRemove(item.id)}
-        className="p-2 text-muted-foreground/50 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+        adminVariant="iconDestructive"
+        size="sm"
+        className="p-2 text-muted-foreground/50 opacity-0 group-hover:opacity-100"
       >
         <X className="w-4 h-4" />
-      </button>
+      </AdminButton>
     </div>
   )
 }
@@ -445,9 +452,14 @@ export function UploadTab({
                   {uploadCategories.map(cat => (
                     <span key={cat} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-foreground/10 text-xs font-medium">
                       {cat}
-                      <button onClick={e => { e.stopPropagation(); setUploadCategories(prev => prev.filter(c => c !== cat)) }} className="hover:text-destructive">
+                      <AdminButton
+                        onClick={e => { e.stopPropagation(); setUploadCategories(prev => prev.filter(c => c !== cat)) }}
+                        adminVariant="icon"
+                        size="xs"
+                        className="p-0 hover:text-destructive"
+                      >
                         <X className="w-3 h-3" />
-                      </button>
+                      </AdminButton>
                     </span>
                   ))}
                   <input
@@ -470,22 +482,26 @@ export function UploadTab({
                 {isCategoryOpen && (
                   <div className="absolute z-20 w-full mt-1 bg-background border border-border shadow-xl max-h-40 overflow-y-auto">
                     {filteredCategories.length ? filteredCategories.map(cat => (
-                      <button
+                      <AdminButton
                         key={cat}
                         onClick={e => { e.stopPropagation(); setUploadCategories(prev => [...prev, cat]); setCategoryInput('') }}
-                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted flex items-center justify-between"
+                        adminVariant="ghost"
+                        size="md"
+                        className="w-full justify-between px-4 py-2.5 text-sm font-medium text-left"
                       >
                         {cat}
                         <Check className="w-3 h-3 opacity-0 group-hover:opacity-100" />
-                      </button>
+                      </AdminButton>
                     )) : categoryInput.trim() ? (
-                      <button
+                      <AdminButton
                         onClick={e => { e.stopPropagation(); setUploadCategories(prev => [...prev, categoryInput.trim()]); setCategoryInput('') }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-primary hover:bg-muted flex items-center gap-2"
+                        adminVariant="ghost"
+                        size="md"
+                        className="w-full px-4 py-2.5 text-sm font-medium text-left text-primary flex items-center gap-2"
                       >
                         <Plus className="w-3 h-3" />
                         Create &ldquo;{categoryInput}&rdquo;
-                      </button>
+                      </AdminButton>
                     ) : (
                       <div className="px-4 py-3 text-xs text-muted-foreground text-center">Start typing...</div>
                     )}
@@ -509,9 +525,14 @@ export function UploadTab({
                     return (
                       <span key={id} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-foreground/10 text-xs font-medium">
                         {album?.name}
-                        <button onClick={e => { e.stopPropagation(); setUploadAlbumIds(prev => prev.filter(i => i !== id)) }} className="hover:text-destructive">
+                        <AdminButton
+                          onClick={e => { e.stopPropagation(); setUploadAlbumIds(prev => prev.filter(i => i !== id)) }}
+                          adminVariant="icon"
+                          size="xs"
+                          className="p-0 hover:text-destructive"
+                        >
                           <X className="w-3 h-3" />
-                        </button>
+                        </AdminButton>
                       </span>
                     )
                   })}
@@ -528,14 +549,16 @@ export function UploadTab({
                 {isAlbumOpen && (
                   <div className="absolute z-20 w-full mt-1 bg-background border border-border shadow-xl max-h-40 overflow-y-auto">
                     {filteredAlbums.length ? filteredAlbums.map(album => (
-                      <button
+                      <AdminButton
                         key={album.id}
                         onClick={e => { e.stopPropagation(); setUploadAlbumIds(prev => [...prev, album.id]); setAlbumInput('') }}
-                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted"
+                        adminVariant="ghost"
+                        size="md"
+                        className="w-full px-4 py-2.5 text-sm font-medium text-left"
                       >
                         {album.name}
                         {!album.isPublished && <span className="ml-2 text-muted-foreground">({t('admin.draft')})</span>}
-                      </button>
+                      </AdminButton>
                     )) : (
                       <div className="px-4 py-3 text-xs text-muted-foreground text-center">
                         {loadingAlbums ? t('common.loading') : t('admin.no_albums_found')}
@@ -642,10 +665,12 @@ export function UploadTab({
               </div>
 
               {/* Upload Button */}
-              <button
+              <AdminButton
                 onClick={handleUploadClick}
                 disabled={compressing || !uploadFiles.length}
-                className="w-full py-4 mt-6 bg-foreground text-background text-sm font-medium tracking-wide hover:bg-primary hover:text-primary-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                adminVariant="primary"
+                size="lg"
+                className="w-full py-4 mt-6 bg-foreground text-background text-sm font-medium tracking-wide hover:bg-primary hover:text-primary-foreground disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {compressing ? (
                   <>
@@ -658,7 +683,7 @@ export function UploadTab({
                     {t('admin.start_upload')}
                   </>
                 )}
-              </button>
+              </AdminButton>
               {uploadError && <p className="text-xs text-destructive text-center mt-2">{uploadError}</p>}
             </div>
           </div>
@@ -689,21 +714,25 @@ export function UploadTab({
                       {selectedIds.size ? `${selectedIds.size} selected` : `${uploadFiles.length} files`}
                     </span>
                     {selectedIds.size > 0 && (
-                      <button
+                      <AdminButton
                         onClick={() => { setUploadFiles(prev => prev.filter(f => !selectedIds.has(f.id))); setSelectedIds(new Set()) }}
-                        className="p-1.5 text-destructive hover:bg-destructive/10 transition-colors"
+                        adminVariant="iconDestructive"
+                        size="xs"
+                        className="p-1.5"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </button>
+                      </AdminButton>
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    <button
+                    <AdminButton
                       onClick={() => setUploadFiles([])}
-                      className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                      adminVariant="link"
+                      size="xs"
+                      className="text-xs text-muted-foreground hover:text-destructive"
                     >
                       Clear all
-                    </button>
+                    </AdminButton>
                     <label className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary cursor-pointer transition-colors">
                       <Plus className="w-3.5 h-3.5" />
                       {t('admin.add_more')}
@@ -782,3 +811,4 @@ export function UploadTab({
     </>
   )
 }
+

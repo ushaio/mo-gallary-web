@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { getPhotos, getAlbums, resolveAssetUrl, type PhotoDto, type AlbumDto } from '@/lib/api'
 import { useSettings } from '@/contexts/SettingsContext'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 interface PhotoSelectorModalProps {
   isOpen: boolean
@@ -252,12 +253,13 @@ export function PhotoSelectorModal({
               </span>
             )}
           </div>
-          <button
+          <AdminButton
             onClick={handleClose}
-            className="p-2 hover:bg-muted rounded-md transition-colors"
+            adminVariant="icon"
+            className="p-2 hover:bg-muted rounded-md"
           >
             <X className="w-4 h-4" />
-          </button>
+          </AdminButton>
         </div>
 
         {/* Toolbar */}
@@ -276,12 +278,13 @@ export function PhotoSelectorModal({
                   className="w-full h-9 pl-9 pr-4 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
                 {search && (
-                  <button
+                  <AdminButton
                     onClick={() => setSearch('')}
+                    adminVariant="icon"
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
                     <X className="w-3.5 h-3.5" />
-                  </button>
+                  </AdminButton>
                 )}
               </div>
             </div>
@@ -289,9 +292,11 @@ export function PhotoSelectorModal({
             {/* Actions */}
             <div className="flex items-center gap-2">
               {/* Filter Toggle */}
-              <button
+              <AdminButton
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 px-3 py-2 text-xs font-medium border rounded-md transition-all ${
+                adminVariant="outlineMuted"
+                size="md"
+                className={`flex items-center gap-2 rounded-md ${
                   showFilters || activeFilterCount > 0
                     ? 'bg-primary/10 border-primary/30 text-primary'
                     : 'bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
@@ -304,13 +309,14 @@ export function PhotoSelectorModal({
                     {activeFilterCount}
                   </span>
                 )}
-              </button>
+              </AdminButton>
 
               {/* View Mode Toggle */}
               <div className="flex bg-background border border-border rounded-md overflow-hidden">
-                <button
+                <AdminButton
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 transition-colors ${
+                  adminVariant="icon"
+                  className={`p-2 ${
                     viewMode === 'grid'
                       ? 'bg-primary text-primary-foreground'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -318,10 +324,11 @@ export function PhotoSelectorModal({
                   title="Grid view"
                 >
                   <LayoutGrid className="w-4 h-4" />
-                </button>
-                <button
+                </AdminButton>
+                <AdminButton
                   onClick={() => setViewMode('list')}
-                  className={`p-2 transition-colors ${
+                  adminVariant="icon"
+                  className={`p-2 ${
                     viewMode === 'list'
                       ? 'bg-primary text-primary-foreground'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -329,17 +336,18 @@ export function PhotoSelectorModal({
                   title="List view"
                 >
                   <ListIcon className="w-4 h-4" />
-                </button>
+                </AdminButton>
               </div>
 
               {/* Refresh */}
-              <button
+              <AdminButton
                 onClick={handleRefresh}
-                className="p-2 bg-background border border-border rounded-md text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+                adminVariant="icon"
+                className="p-2 bg-background border border-border rounded-md text-muted-foreground hover:text-foreground hover:border-foreground/30"
                 title={t('common.refresh')}
               >
                 <RefreshCw className="w-4 h-4" />
-              </button>
+              </AdminButton>
 
               {/* Photo Count */}
               <span className="text-xs text-muted-foreground px-2">
@@ -457,13 +465,15 @@ export function PhotoSelectorModal({
                 {activeFilterCount > 0 && (
                   <>
                     <div className="h-5 w-px bg-border" />
-                    <button
+                    <AdminButton
                       onClick={clearAllFilters}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      adminVariant="ghost"
+                      size="sm"
+                      className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
                     >
                       <X className="w-3.5 h-3.5" />
                       <span>Clear all</span>
-                    </button>
+                    </AdminButton>
                   </>
                 )}
               </div>
@@ -477,42 +487,43 @@ export function PhotoSelectorModal({
               {categoryFilter !== 'all' && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-md">
                   {categoryFilter}
-                  <button onClick={() => setCategoryFilter('all')} className="hover:text-primary/70">
+                  <AdminButton onClick={() => setCategoryFilter('all')} adminVariant="icon" className="hover:text-primary/70">
                     <X className="w-3 h-3" />
-                  </button>
+                  </AdminButton>
                 </span>
               )}
               {albumFilter !== 'all' && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-md">
                   {albums.find(a => a.id === albumFilter)?.name || albumFilter}
-                  <button onClick={() => setAlbumFilter('all')} className="hover:text-primary/70">
+                  <AdminButton onClick={() => setAlbumFilter('all')} adminVariant="icon" className="hover:text-primary/70">
                     <X className="w-3 h-3" />
-                  </button>
+                  </AdminButton>
                 </span>
               )}
               {channelFilter !== 'all' && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-md">
                   {channelFilter}
-                  <button onClick={() => setChannelFilter('all')} className="hover:text-primary/70">
+                  <AdminButton onClick={() => setChannelFilter('all')} adminVariant="icon" className="hover:text-primary/70">
                     <X className="w-3 h-3" />
-                  </button>
+                  </AdminButton>
                 </span>
               )}
               {onlyFeatured && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-500/10 text-amber-600 text-xs rounded-md">
                   <Star className="w-3 h-3 fill-current" />
                   Featured
-                  <button onClick={() => setOnlyFeatured(false)} className="hover:text-amber-500/70">
+                  <AdminButton onClick={() => setOnlyFeatured(false)} adminVariant="icon" className="hover:text-amber-500/70">
                     <X className="w-3 h-3" />
-                  </button>
+                  </AdminButton>
                 </span>
               )}
-              <button
+              <AdminButton
                 onClick={clearAllFilters}
+                adminVariant="link"
                 className="text-xs text-muted-foreground hover:text-foreground underline"
               >
                 Clear all
-              </button>
+              </AdminButton>
             </div>
           )}
         </div>
@@ -615,12 +626,13 @@ export function PhotoSelectorModal({
               <ImageIcon className="w-12 h-12 mb-3 opacity-20" />
               <p className="text-sm">{t('admin.no_photos_available')}</p>
               {activeFilterCount > 0 && (
-                <button
+                <AdminButton
                   onClick={clearAllFilters}
-                  className="mt-2 text-xs text-primary hover:underline"
+                  adminVariant="link"
+                  className="mt-2 text-xs text-primary"
                 >
                   Clear filters to see all photos
-                </button>
+                </AdminButton>
               )}
             </div>
           )}
@@ -628,19 +640,22 @@ export function PhotoSelectorModal({
 
         {/* Modal Footer */}
         <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
-          <button
+          <AdminButton
             onClick={handleClose}
-            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            adminVariant="link"
+            className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
           >
             {t('common.cancel')}
-          </button>
-          <button
+          </AdminButton>
+          <AdminButton
             onClick={handleConfirm}
             disabled={selectedPhotoIds.length === 0}
-            className="px-4 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-md hover:opacity-90 disabled:opacity-50 transition-all"
+            adminVariant="primary"
+            size="md"
+            className="rounded-md text-sm"
           >
             {confirmText || t('admin.add')} {multiple && `(${selectedPhotoIds.length})`}
-          </button>
+          </AdminButton>
         </div>
       </div>
     </div>

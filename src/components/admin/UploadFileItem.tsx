@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { ImageIcon, Maximize2, Check, X, Loader2 } from 'lucide-react'
 import { formatFileSize } from '@/lib/utils'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 export const UploadFileItem = React.memo(function UploadFileItem({ 
   file, 
@@ -55,11 +56,25 @@ export const UploadFileItem = React.memo(function UploadFileItem({
     return (
       <div ref={containerRef} className={`relative aspect-square border border-border transition-all group overflow-hidden ${isCurrent ? 'ring-2 ring-primary' : ''} ${selected ? 'border-primary bg-primary/5' : 'bg-background'}`}>
         {previewUrl ? <img src={previewUrl} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-105 cursor-pointer" onClick={() => onPreview(id)} /> : <div className="w-full h-full flex items-center justify-center bg-muted"><ImageIcon className="w-6 h-6 text-muted-foreground/20" /></div>}
-        <button onClick={() => onPreview(id)} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2 bg-background/50 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity z-10"><Maximize2 className="w-4 h-4 text-foreground" /></button>
+        <AdminButton
+          onClick={() => onPreview(id)}
+          adminVariant="icon"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2 bg-background/50 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
+        >
+          <Maximize2 className="w-4 h-4 text-foreground" />
+        </AdminButton>
         <div className={`absolute top-2 left-2 z-20 transition-opacity ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}><input type="checkbox" checked={selected} onChange={() => onSelect(id)} disabled={uploading} className="w-4 h-4 accent-primary cursor-pointer border-border bg-background" /></div>
         {isUploaded && <div className="absolute inset-0 bg-primary/20 backdrop-blur-[1px] flex items-center justify-center z-20"><Check className="w-8 h-8 text-primary drop-shadow-md" /></div>}
         {isCurrent && <div className="absolute inset-0 bg-background/40 backdrop-blur-[1px] flex items-center justify-center z-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}
-        {!uploading && !isUploaded && <button onClick={() => onRemove(id)} className="absolute top-2 right-2 p-1.5 bg-background/80 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all z-20"><X className="w-3 h-3" /></button>}
+        {!uploading && !isUploaded && (
+          <AdminButton
+            onClick={() => onRemove(id)}
+            adminVariant="iconDestructive"
+            className="absolute top-2 right-2 p-1.5 bg-background/80 opacity-0 group-hover:opacity-100 transition-all z-20"
+          >
+            <X className="w-3 h-3" />
+          </AdminButton>
+        )}
         <div className="absolute bottom-0 left-0 w-full p-2 bg-background/90 text-[8px] font-mono truncate opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-tighter pointer-events-none">{formatFileSize(file.size)}</div>
       </div>
     )
@@ -74,8 +89,29 @@ export const UploadFileItem = React.memo(function UploadFileItem({
       </div>
       <div className="flex-1 min-w-0"><p className="text-xs font-bold uppercase tracking-wider truncate mb-0.5 text-foreground">{file.name}</p><p className="text-[10px] font-mono text-muted-foreground">{formatFileSize(file.size)}</p></div>
       <div className="flex items-center gap-3">
-        {isUploaded ? <div className="flex items-center gap-1 text-primary"><Check className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-widest hidden sm:inline">Done</span></div> : isCurrent ? <div className="flex items-center gap-2 text-primary"><Loader2 className="w-3 h-3 animate-spin" /><span className="text-[10px] font-bold uppercase tracking-widest hidden sm:inline animate-pulse">Processing</span></div> : uploading ? <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Waiting</span> : <button onClick={() => onRemove(id)} className="p-2 text-muted-foreground hover:text-destructive transition-colors"><X className="w-4 h-4" /></button>}
+        {isUploaded ? (
+          <div className="flex items-center gap-1 text-primary">
+            <Check className="w-4 h-4" />
+            <span className="text-[10px] font-bold uppercase tracking-widest hidden sm:inline">Done</span>
+          </div>
+        ) : isCurrent ? (
+          <div className="flex items-center gap-2 text-primary">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            <span className="text-[10px] font-bold uppercase tracking-widest hidden sm:inline animate-pulse">Processing</span>
+          </div>
+        ) : uploading ? (
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Waiting</span>
+        ) : (
+          <AdminButton
+            onClick={() => onRemove(id)}
+            adminVariant="iconDestructive"
+            className="p-2 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </AdminButton>
+        )}
       </div>
     </div>
   )
 })
+
