@@ -23,11 +23,39 @@ const montserrat = Montserrat({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteTitle = process.env.SITE_TITLE || 'MO GALLERY'
+  const siteTitle = process.env.SITE_TITLE || "MO GALLERY";
+  const siteDescription = "Capturing the unspoken moments of existence.";
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "http://localhost:3000").replace(/\/+$/, "");
+  const titleDefault = `${siteTitle} | 视界`;
+
   return {
-    title: `${siteTitle} | 视界`,
-    description: "Capturing the unspoken moments of existence.",
-  }
+    metadataBase: new URL(siteUrl),
+    title: {
+      default: titleDefault,
+      template: `%s | ${siteTitle}`,
+    },
+    description: siteDescription,
+    alternates: {
+      canonical: siteUrl,
+    },
+    openGraph: {
+      title: titleDefault,
+      description: siteDescription,
+      url: siteUrl,
+      siteName: siteTitle,
+      type: "website",
+      locale: "zh_CN",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: titleDefault,
+      description: siteDescription,
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  };
 }
 
 export default function RootLayout({
