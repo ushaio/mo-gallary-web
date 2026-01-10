@@ -85,6 +85,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         comments_storage: '',
         waline_server_url: '',
       })
+    } finally {
+      setIsLoading(false)
     }
   }
 
