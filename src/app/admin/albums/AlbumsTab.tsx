@@ -36,6 +36,7 @@ import {
 } from '@/lib/api'
 import { CustomInput } from '@/components/ui/CustomInput'
 import { AdminButton } from '@/components/admin/AdminButton'
+import { AdminLoading } from '@/components/admin/AdminLoading'
 
 type ViewMode = 'grid' | 'list'
 type FilterStatus = 'all' | 'published' | 'draft'
@@ -248,7 +249,7 @@ export function AlbumsTab({
   }, [photos, currentAlbum])
 
   if (loading) {
-    return <div className="flex-1 flex items-center justify-center text-muted-foreground text-xs font-mono uppercase">{t('common.loading')}</div>
+    return <AdminLoading text={t('common.loading')} />
   }
 
   // List View

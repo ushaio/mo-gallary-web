@@ -46,6 +46,7 @@ import { StoryPhotoPanel, type PendingImage } from '@/components/admin/StoryPhot
 import type { MilkdownEditorHandle } from '@/components/MilkdownEditor'
 import { saveStoryEditorDraftToDB, getStoryEditorDraftFromDB, clearStoryEditorDraftFromDB, type StoryEditorDraftData } from '@/lib/client-db'
 import { AdminButton } from '@/components/admin/AdminButton'
+import { AdminLoading } from '@/components/admin/AdminLoading'
 
 // Dynamically import MilkdownEditor to avoid SSR issues
 const MilkdownEditor = dynamic(
@@ -832,14 +833,7 @@ export function StoriesTab({ token, t, notify, editStoryId, editFromDraft, onDra
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
-        </div>
-      </div>
-    )
+    return <AdminLoading text={t('common.loading')} />
   }
 
   // Status filter options for stories

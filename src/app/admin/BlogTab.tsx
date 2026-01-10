@@ -42,6 +42,7 @@ import {
 import { SimpleDeleteDialog } from '@/components/admin/SimpleDeleteDialog'
 import { DraftRestoreDialog } from '@/components/admin/DraftRestoreDialog'
 import { AdminButton } from '@/components/admin/AdminButton'
+import { AdminLoading } from '@/components/admin/AdminLoading'
 
 // Dynamically import MilkdownEditor to avoid SSR issues
 const MilkdownEditor = dynamic(
@@ -475,11 +476,7 @@ export function BlogTab({ photos, settings, t, notify, refreshKey }: BlogTabProp
   const resolvedCdnDomain = settings?.cdn_domain?.trim() || undefined
 
   if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    )
+    return <AdminLoading text={t('common.loading')} />
   }
 
   // Status filter options for blogs

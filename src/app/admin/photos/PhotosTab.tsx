@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { PhotoDto, resolveAssetUrl, AlbumDto, getAlbums, AdminSettingsDto } from '@/lib/api'
 import { AdminButton } from '@/components/admin/AdminButton'
+import { AdminSelect } from '@/components/admin/AdminFormControls'
 
 type SortOption = 'upload-desc' | 'upload-asc' | 'taken-desc' | 'taken-asc'
 type ViewMode = 'grid' | 'list'
@@ -290,18 +291,12 @@ export function PhotosTab({
               {/* Sort */}
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground whitespace-nowrap">Sort:</span>
-                <div className="relative">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    className="appearance-none h-8 pl-3 pr-8 bg-background border border-border rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
-                  >
-                    {sortOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-                </div>
+                <AdminSelect
+                  value={sortBy}
+                  onChange={(v) => setSortBy(v as SortOption)}
+                  options={sortOptions.map(opt => ({ value: opt.value, label: opt.label }))}
+                  className="min-w-[140px]"
+                />
               </div>
 
               <div className="h-5 w-px bg-border hidden sm:block" />
@@ -309,67 +304,45 @@ export function PhotosTab({
               {/* Category Filter */}
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground whitespace-nowrap">{t('ui.category_filter')}:</span>
-                <div className="relative">
-                  <select
-                    value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
-                    className={`appearance-none h-8 pl-3 pr-8 border rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer ${
-                      categoryFilter !== 'all' 
-                        ? 'bg-primary/10 border-primary/30 text-primary' 
-                        : 'bg-background border-border'
-                    }`}
-                  >
-                    <option value="all">{t('gallery.all')}</option>
-                    {categories.filter(c => c !== 'all' && c !== '全部').map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-                </div>
+                <AdminSelect
+                  value={categoryFilter}
+                  onChange={setCategoryFilter}
+                  options={[
+                    { value: 'all', label: t('gallery.all') },
+                    ...categories.filter(c => c !== 'all' && c !== '全部').map(cat => ({ value: cat, label: cat }))
+                  ]}
+                  className="min-w-[120px]"
+                />
               </div>
 
               {/* Storage Filter */}
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground whitespace-nowrap">{t('ui.channel_filter')}:</span>
-                <div className="relative">
-                  <select
-                    value={channelFilter}
-                    onChange={(e) => setChannelFilter(e.target.value)}
-                    className={`appearance-none h-8 pl-3 pr-8 border rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer ${
-                      channelFilter !== 'all' 
-                        ? 'bg-primary/10 border-primary/30 text-primary' 
-                        : 'bg-background border-border'
-                    }`}
-                  >
-                    <option value="all">{t('gallery.all')}</option>
-                    <option value="local">Local</option>
-                    <option value="r2">Cloudflare R2</option>
-                    <option value="github">GitHub</option>
-                  </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-                </div>
+                <AdminSelect
+                  value={channelFilter}
+                  onChange={setChannelFilter}
+                  options={[
+                    { value: 'all', label: t('gallery.all') },
+                    { value: 'local', label: 'Local' },
+                    { value: 'r2', label: 'Cloudflare R2' },
+                    { value: 'github', label: 'GitHub' },
+                  ]}
+                  className="min-w-[130px]"
+                />
               </div>
 
               {/* Album Filter */}
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground whitespace-nowrap">{t('admin.album') || 'Album'}:</span>
-                <div className="relative">
-                  <select
-                    value={albumFilter}
-                    onChange={(e) => setAlbumFilter(e.target.value)}
-                    className={`appearance-none h-8 pl-3 pr-8 border rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer ${
-                      albumFilter !== 'all'
-                        ? 'bg-primary/10 border-primary/30 text-primary'
-                        : 'bg-background border-border'
-                    }`}
-                  >
-                    <option value="all">{t('gallery.all')}</option>
-                    {albums.map((album) => (
-                      <option key={album.id} value={album.id}>{album.name} ({album.photoCount})</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-                </div>
+                <AdminSelect
+                  value={albumFilter}
+                  onChange={setAlbumFilter}
+                  options={[
+                    { value: 'all', label: t('gallery.all') },
+                    ...albums.map(album => ({ value: album.id, label: `${album.name} (${album.photoCount})` }))
+                  ]}
+                  className="min-w-[140px]"
+                />
               </div>
 
               {/* Featured Toggle */}

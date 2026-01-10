@@ -31,6 +31,7 @@ import {
 } from '@/lib/api'
 import { AdminButton } from '@/components/admin/AdminButton'
 import { AdminInput, AdminSelect } from '@/components/admin/AdminFormControls'
+import { AdminLoading } from '@/components/admin/AdminLoading'
 
 interface SettingsTabProps {
   token: string | null
@@ -190,11 +191,7 @@ export function SettingsTab({
   }, [settingsTab, token, page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading || !settings) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-muted-foreground text-xs font-mono uppercase">
-        {t('common.loading')}
-      </div>
-    )
+    return <AdminLoading text={t('common.loading')} />
   }
 
   return (

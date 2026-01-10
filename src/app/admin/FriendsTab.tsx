@@ -28,6 +28,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { AdminButton } from '@/components/admin/AdminButton'
+import { AdminLoading } from '@/components/admin/AdminLoading'
 
 interface FriendsTabProps {
   t: (key: string) => string
@@ -273,11 +274,7 @@ export function FriendsTab({ t, notify }: FriendsTabProps) {
   }
 
   if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    )
+    return <AdminLoading text={t('common.loading')} />
   }
 
   return (
