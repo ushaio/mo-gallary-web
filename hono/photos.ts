@@ -266,14 +266,15 @@ photos.post('/admin/photos', async (c) => {
   try {
     const formData = await c.req.formData()
     const file = formData.get('file') as File
-    const title = formData.get('title') as string
+    const titleRaw = formData.get('title') as string
+    const title = titleRaw?.trim() || 'Untitled'
     const category = formData.get('category') as string
     const storageProvider = formData.get('storage_provider') as string
     const storagePath = formData.get('storage_path') as string
     const fileHash = formData.get('file_hash') as string | null
 
-    if (!file || !title) {
-      return c.json({ error: 'File and title are required' }, 400)
+    if (!file) {
+      return c.json({ error: 'File is required' }, 400)
     }
 
     // Check for duplicate if fileHash is provided
