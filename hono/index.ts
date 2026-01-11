@@ -10,6 +10,7 @@ import blogs from './blogs'
 import albums from './albums'
 import friends from './friends'
 import storage from './storage'
+import equipment from './equipment'
 import { walineHandler } from './waline'
 
 const route = new Hono()
@@ -41,6 +42,7 @@ route.route('/', blogs)
 route.route('/', albums)
 route.route('/', friends)
 route.route('/', storage)
+route.route('/', equipment)
 route.route('/settings', settings)
 route.route('/admin/settings', settings)
 

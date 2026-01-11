@@ -537,6 +537,9 @@ export const dictionaries = {
       storage_provider_github: 'GitHub',
       delete_all: '全部删除',
       confirm_delete_all_drafts: '确定要删除所有草稿吗？此操作不可撤销。',
+      camera: '相机',
+      focal_length: '焦段',
+      lens: '镜头',
     }
   },
   en: {
@@ -1074,6 +1077,9 @@ export const dictionaries = {
       storage_provider_github: 'GitHub',
       delete_all: 'Delete All',
       confirm_delete_all_drafts: 'Are you sure you want to delete all drafts? This action cannot be undone.',
+      camera: 'Camera',
+      focal_length: 'Focal Length',
+      lens: 'Lens',
     }
   }
 }

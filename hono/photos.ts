@@ -4,6 +4,7 @@ import { db } from '~/server/lib/db'
 import { authMiddleware, AuthVariables } from './middleware/auth'
 import { extractExifData } from '~/server/lib/exif'
 import { extractDominantColors } from '~/server/lib/colors'
+import { normalizeMake, extractLensMakeFromModel } from '~/server/lib/equipment'
 import { StorageProviderFactory, StorageConfig, StorageError } from '~/server/lib/storage'
 import sharp from 'sharp'
 import path from 'path'
@@ -77,7 +78,7 @@ photos.get('/photos', async (c) => {
     if (allStr === 'true') {
       const photosList = await db.photo.findMany({
         where,
-        include: { categories: true },
+        include: { categories: true, camera: true, lens: true },
         orderBy: { createdAt: 'desc' },
       })
 
@@ -103,7 +104,7 @@ photos.get('/photos', async (c) => {
       db.photo.count({ where }),
       db.photo.findMany({
         where,
-        include: { categories: true },
+        include: { categories: true, camera: true, lens: true },
         skip,
         take: pageSize,
         orderBy: { createdAt: 'desc' },
@@ -137,7 +138,7 @@ photos.get('/photos/featured', async (c) => {
   try {
     const photosList = await db.photo.findMany({
       where: { isFeatured: true },
-      include: { categories: true },
+      include: { categories: true, camera: true, lens: true },
       take: 6,
       orderBy: { createdAt: 'desc' },
     })
@@ -262,6 +263,47 @@ photos.post('/admin/photos', async (c) => {
     // Extract dominant colors from the image
     const dominantColors = await extractDominantColors(buffer)
 
+    // Find or create camera record
+    let cameraId: string | null = null
+    if (exifData.cameraMake && exifData.cameraModel) {
+      const normalizedMake = normalizeMake(exifData.cameraMake) || exifData.cameraMake
+      const camera = await db.camera.upsert({
+        where: {
+          make_model: {
+            make: normalizedMake,
+            model: exifData.cameraModel,
+          },
+        },
+        update: {},
+        create: {
+          make: normalizedMake,
+          model: exifData.cameraModel,
+        },
+      })
+      cameraId = camera.id
+    }
+
+    // Find or create lens record
+    let lensId: string | null = null
+    if (exifData.lens) {
+      // Try to extract lens make from model if not available
+      const lensMake = normalizeMake(extractLensMakeFromModel(exifData.lens))
+      const lens = await db.lens.upsert({
+        where: {
+          make_model: {
+            make: lensMake || '',
+            model: exifData.lens,
+          },
+        },
+        update: {},
+        create: {
+          make: lensMake,
+          model: exifData.lens,
+        },
+      })
+      lensId = lens.id
+    }
+
     // Create photo record
     const photo = await db.photo.create({
       data: {
@@ -275,10 +317,13 @@ photos.post('/admin/photos', async (c) => {
         size: buffer.length,
         isFeatured: false,
         dominantColors: dominantColors.length > 0 ? JSON.stringify(dominantColors) : null,
-        // EXIF data
+        // Equipment relations
+        cameraId,
+        lensId,
+        // EXIF data (raw)
         cameraMake: exifData.cameraMake,
         cameraModel: exifData.cameraModel,
-        lens: exifData.lens,
+        lensModel: exifData.lens,
         focalLength: exifData.focalLength,
         aperture: exifData.aperture,
         shutterSpeed: exifData.shutterSpeed,
@@ -296,7 +341,7 @@ photos.post('/admin/photos', async (c) => {
           })),
         },
       },
-      include: { categories: true },
+      include: { categories: true, camera: true, lens: true },
     })
 
     return c.json({
@@ -486,7 +531,7 @@ photos.patch('/admin/photos/:id', async (c) => {
     const photo = await db.photo.update({
       where: { id },
       data: updateData,
-      include: { categories: true }
+      include: { categories: true, camera: true, lens: true }
     })
 
     return c.json({
@@ -665,7 +710,7 @@ photos.post('/admin/photos/:id/reanalyze-colors', async (c) => {
       data: {
         dominantColors: dominantColors.length > 0 ? JSON.stringify(dominantColors) : null,
       },
-      include: { categories: true },
+      include: { categories: true, camera: true, lens: true },
     })
 
     return c.json({
@@ -763,7 +808,7 @@ photos.post('/admin/photos/:id/reupload', async (c) => {
       if (exifData) {
         updateData.cameraMake = exifData.cameraMake
         updateData.cameraModel = exifData.cameraModel
-        updateData.lens = exifData.lens
+        updateData.lensModel = exifData.lens
         updateData.focalLength = exifData.focalLength
         updateData.aperture = exifData.aperture
         updateData.shutterSpeed = exifData.shutterSpeed
@@ -774,6 +819,43 @@ photos.post('/admin/photos/:id/reupload', async (c) => {
         updateData.orientation = exifData.orientation
         updateData.software = exifData.software
         updateData.exifRaw = exifData.exifRaw
+
+        // Update equipment relations
+        if (exifData.cameraMake && exifData.cameraModel) {
+          const normalizedMake = normalizeMake(exifData.cameraMake) || exifData.cameraMake
+          const camera = await db.camera.upsert({
+            where: {
+              make_model: {
+                make: normalizedMake,
+                model: exifData.cameraModel,
+              },
+            },
+            update: {},
+            create: {
+              make: normalizedMake,
+              model: exifData.cameraModel,
+            },
+          })
+          updateData.cameraId = camera.id
+        }
+
+        if (exifData.lens) {
+          const lensMake = normalizeMake(extractLensMakeFromModel(exifData.lens))
+          const lens = await db.lens.upsert({
+            where: {
+              make_model: {
+                make: lensMake || '',
+                model: exifData.lens,
+              },
+            },
+            update: {},
+            create: {
+              make: lensMake,
+              model: exifData.lens,
+            },
+          })
+          updateData.lensId = lens.id
+        }
       }
     }
     if (uploadThumb && uploadResult?.thumbnailUrl) {
@@ -785,7 +867,7 @@ photos.post('/admin/photos/:id/reupload', async (c) => {
     const updated = await db.photo.update({
       where: { id },
       data: updateData,
-      include: { categories: true },
+      include: { categories: true, camera: true, lens: true },
     })
 
     return c.json({
@@ -840,7 +922,7 @@ photos.post('/admin/photos/:id/generate-thumbnail', async (c) => {
     const updated = await db.photo.update({
       where: { id },
       data: { thumbnailUrl: uploadResult.url },
-      include: { categories: true },
+      include: { categories: true, camera: true, lens: true },
     })
 
     return c.json({

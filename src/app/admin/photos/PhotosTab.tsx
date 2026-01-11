@@ -11,9 +11,8 @@ import {
   Star,
   Search,
   SlidersHorizontal,
-  ChevronDown,
 } from 'lucide-react'
-import { PhotoDto, resolveAssetUrl, AlbumDto, getAlbums, AdminSettingsDto } from '@/lib/api'
+import { PhotoDto, resolveAssetUrl, AlbumDto, getAlbums, AdminSettingsDto, CameraDto, LensDto, getCameras, getLenses } from '@/lib/api'
 import { AdminButton } from '@/components/admin/AdminButton'
 import { AdminSelect } from '@/components/admin/AdminFormControls'
 
@@ -59,25 +58,51 @@ export function PhotosTab({
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [channelFilter, setChannelFilter] = useState('all')
   const [albumFilter, setAlbumFilter] = useState('all')
+  const [cameraFilter, setCameraFilter] = useState('all')
+  const [lensFilter, setLensFilter] = useState('all')
   const [onlyFeatured, setOnlyFeatured] = useState(false)
   const [sortBy, setSortBy] = useState<SortOption>('upload-desc')
   const [showFilters, setShowFilters] = useState(false)
   const [albums, setAlbums] = useState<AlbumDto[]>([])
+  const [cameras, setCameras] = useState<CameraDto[]>([])
+  const [lenses, setLenses] = useState<LensDto[]>([])
 
   const resolvedCdnDomain = settings?.cdn_domain?.trim() || undefined
 
-  // Load albums on mount
+  // Load albums, cameras, and lenses on mount
   useEffect(() => {
-    async function loadAlbums() {
+    async function loadFilterData() {
       try {
-        const data = await getAlbums()
-        setAlbums(data)
+        const [albumsData, camerasData, lensesData] = await Promise.all([
+          getAlbums(),
+          getCameras(),
+          getLenses()
+        ])
+        setAlbums(albumsData)
+        setCameras(camerasData)
+        setLenses(lensesData)
       } catch (err) {
-        console.error('Failed to load albums:', err)
+        console.error('Failed to load filter data:', err)
       }
     }
-    loadAlbums()
+    loadFilterData()
   }, [])
+
+  // Camera options from API
+  const cameraOptions = useMemo(() => {
+    return cameras.map(c => ({
+      value: c.id,
+      label: `${c.displayName} (${c.photoCount})`
+    }))
+  }, [cameras])
+
+  // Lens options from API
+  const lensOptions = useMemo(() => {
+    return lenses.map(l => ({
+      value: l.id,
+      label: `${l.displayName} (${l.photoCount})`
+    }))
+  }, [lenses])
 
   // Count active filters
   const activeFilterCount = useMemo(() => {
@@ -85,9 +110,11 @@ export function PhotosTab({
     if (categoryFilter !== 'all') count++
     if (channelFilter !== 'all') count++
     if (albumFilter !== 'all') count++
+    if (cameraFilter !== 'all') count++
+    if (lensFilter !== 'all') count++
     if (onlyFeatured) count++
     return count
-  }, [categoryFilter, channelFilter, albumFilter, onlyFeatured])
+  }, [categoryFilter, channelFilter, albumFilter, cameraFilter, lensFilter, onlyFeatured])
 
   // Get album photo IDs for filtering
   const albumPhotoIds = useMemo(() => {
@@ -112,9 +139,19 @@ export function PhotosTab({
       const matchesAlbum =
         albumPhotoIds === null || albumPhotoIds.has(p.id)
 
+      const matchesCamera = (() => {
+        if (cameraFilter === 'all') return true
+        return p.cameraId === cameraFilter
+      })()
+
+      const matchesLens = (() => {
+        if (lensFilter === 'all') return true
+        return p.lensId === lensFilter
+      })()
+
       const matchesFeatured = !onlyFeatured || p.isFeatured
 
-      return matchesSearch && matchesCategory && matchesChannel && matchesAlbum && matchesFeatured
+      return matchesSearch && matchesCategory && matchesChannel && matchesAlbum && matchesCamera && matchesLens && matchesFeatured
     })
 
     // Apply sorting
@@ -138,12 +175,14 @@ export function PhotosTab({
           return 0
       }
     })
-  }, [photos, search, categoryFilter, channelFilter, albumPhotoIds, onlyFeatured, sortBy])
+  }, [photos, search, categoryFilter, channelFilter, albumPhotoIds, cameraFilter, lensFilter, onlyFeatured, sortBy])
 
   const clearAllFilters = () => {
     setCategoryFilter('all')
     setChannelFilter('all')
     setAlbumFilter('all')
+    setCameraFilter('all')
+    setLensFilter('all')
     setOnlyFeatured(false)
     setSearch('')
   }
@@ -345,6 +384,38 @@ export function PhotosTab({
                 />
               </div>
 
+              {/* Camera Filter */}
+              {cameraOptions.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">{t('admin.camera') || 'Camera'}:</span>
+                  <AdminSelect
+                    value={cameraFilter}
+                    onChange={setCameraFilter}
+                    options={[
+                      { value: 'all', label: t('gallery.all') },
+                      ...cameraOptions
+                    ]}
+                    className="min-w-[160px]"
+                  />
+                </div>
+              )}
+
+              {/* Lens Filter */}
+              {lensOptions.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">{t('admin.lens') || 'Lens'}:</span>
+                  <AdminSelect
+                    value={lensFilter}
+                    onChange={setLensFilter}
+                    options={[
+                      { value: 'all', label: t('gallery.all') },
+                      ...lensOptions
+                    ]}
+                    className="min-w-[160px]"
+                  />
+                </div>
+              )}
+
               {/* Featured Toggle */}
               <label className={`flex items-center gap-2 px-3 py-1.5 border rounded-md cursor-pointer transition-colors ${
                 onlyFeatured 
@@ -415,6 +486,32 @@ export function PhotosTab({
                 {albums.find(a => a.id === albumFilter)?.name || albumFilter}
                 <AdminButton
                   onClick={() => setAlbumFilter('all')}
+                  adminVariant="icon"
+                  size="xs"
+                  className="p-0 hover:text-primary/70"
+                >
+                  <X className="w-3 h-3" />
+                </AdminButton>
+              </span>
+            )}
+            {cameraFilter !== 'all' && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-md">
+                {cameraOptions.find(c => c.value === cameraFilter)?.label || cameraFilter}
+                <AdminButton
+                  onClick={() => setCameraFilter('all')}
+                  adminVariant="icon"
+                  size="xs"
+                  className="p-0 hover:text-primary/70"
+                >
+                  <X className="w-3 h-3" />
+                </AdminButton>
+              </span>
+            )}
+            {lensFilter !== 'all' && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-md">
+                {lensOptions.find(l => l.value === lensFilter)?.label || lensFilter}
+                <AdminButton
+                  onClick={() => setLensFilter('all')}
                   adminVariant="icon"
                   size="xs"
                   className="p-0 hover:text-primary/70"

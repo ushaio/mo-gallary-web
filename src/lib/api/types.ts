@@ -1,3 +1,19 @@
+export interface CameraDto {
+  id: string
+  make: string
+  model: string
+  displayName: string
+  photoCount: number
+}
+
+export interface LensDto {
+  id: string
+  make: string | null
+  model: string
+  displayName: string
+  photoCount: number
+}
+
 export interface PhotoDto {
   id: string
   title: string
@@ -12,9 +28,15 @@ export interface PhotoDto {
   storageProvider?: string
   storageKey?: string
   dominantColors?: string[]
+  // Equipment relations
+  cameraId?: string
+  lensId?: string
+  camera?: CameraDto | null
+  lens?: LensDto | null
+  // EXIF raw data
   cameraMake?: string
   cameraModel?: string
-  lens?: string
+  lensModel?: string
   focalLength?: string
   aperture?: string
   shutterSpeed?: string

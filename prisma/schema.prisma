@@ -31,6 +31,30 @@ model User {
   @@index([oauthProvider])
 }
 
+model Camera {
+  id        String   @id @default(uuid())
+  make      String   // 品牌，如 "Canon", "Sony", "Nikon"（已标准化）
+  model     String   // 型号，如 "EOS R5", "A7M4"
+  createdAt DateTime @default(now())
+
+  photos Photo[]
+
+  @@unique([make, model])
+  @@index([make])
+}
+
+model Lens {
+  id        String   @id @default(uuid())
+  make      String?  // 品牌，如 "Canon", "Sony", "Sigma"（已标准化）
+  model     String   // 型号，如 "RF 50mm F1.2L USM"
+  createdAt DateTime @default(now())
+
+  photos Photo[]
+
+  @@unique([make, model])
+  @@index([make])
+}
+
 model Photo {
   id              String   @id @default(uuid())
   title           String
@@ -45,10 +69,16 @@ model Photo {
   dominantColors  String?  // JSON array of hex colors, e.g. ["#ff0000", "#00ff00"]
   createdAt       DateTime @default(now())
 
-  // EXIF Information
+  // Equipment relations
+  cameraId String?
+  lensId   String?
+  camera   Camera? @relation(fields: [cameraId], references: [id])
+  lens     Lens?   @relation(fields: [lensId], references: [id])
+
+  // EXIF Information (raw data from image)
   cameraMake   String?
   cameraModel  String?
-  lens         String?
+  lensModel    String?  // 原始镜头信息
   focalLength  String?
   aperture     String?
   shutterSpeed String?
@@ -64,6 +94,9 @@ model Photo {
   stories    Story[]    @relation("PhotoStories")
   comments   Comment[]
   albums     Album[]    @relation("AlbumPhotos")
+
+  @@index([cameraId])
+  @@index([lensId])
 }
 
 model Album {
