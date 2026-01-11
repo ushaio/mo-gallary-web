@@ -12,14 +12,10 @@ const equipment = new Hono<{ Variables: AuthVariables }>()
 equipment.get('/cameras', async (c) => {
   try {
     const cameras = await db.camera.findMany({
-      orderBy: [
-        { make: 'asc' },
-        { model: 'asc' },
-      ],
+      orderBy: [{ name: 'asc' }],
       select: {
         id: true,
-        make: true,
-        model: true,
+        name: true,
         _count: {
           select: { photos: true },
         },
@@ -28,9 +24,8 @@ equipment.get('/cameras', async (c) => {
 
     const data = cameras.map((camera) => ({
       id: camera.id,
-      make: camera.make,
-      model: camera.model,
-      displayName: `${camera.make} ${camera.model}`,
+      name: camera.name,
+      displayName: camera.name,
       photoCount: camera._count.photos,
     }))
 
@@ -51,14 +46,10 @@ equipment.get('/cameras', async (c) => {
 equipment.get('/lenses', async (c) => {
   try {
     const lenses = await db.lens.findMany({
-      orderBy: [
-        { make: 'asc' },
-        { model: 'asc' },
-      ],
+      orderBy: [{ name: 'asc' }],
       select: {
         id: true,
-        make: true,
-        model: true,
+        name: true,
         _count: {
           select: { photos: true },
         },
@@ -67,9 +58,8 @@ equipment.get('/lenses', async (c) => {
 
     const data = lenses.map((lens) => ({
       id: lens.id,
-      make: lens.make,
-      model: lens.model,
-      displayName: lens.make ? `${lens.make} ${lens.model}` : lens.model,
+      name: lens.name,
+      displayName: lens.name,
       photoCount: lens._count.photos,
     }))
 
@@ -109,7 +99,9 @@ equipment.get('/admin/cameras/:id', async (c) => {
     return c.json({
       success: true,
       data: {
-        ...camera,
+        id: camera.id,
+        name: camera.name,
+        displayName: camera.name,
         photoCount: camera._count.photos,
       },
     })
@@ -142,7 +134,9 @@ equipment.get('/admin/lenses/:id', async (c) => {
     return c.json({
       success: true,
       data: {
-        ...lens,
+        id: lens.id,
+        name: lens.name,
+        displayName: lens.name,
         photoCount: lens._count.photos,
       },
     })

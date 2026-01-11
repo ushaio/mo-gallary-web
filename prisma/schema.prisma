@@ -32,27 +32,19 @@ model User {
 }
 
 model Camera {
-  id        String   @id @default(uuid())
-  make      String   // 品牌，如 "Canon", "Sony", "Nikon"（已标准化）
-  model     String   // 型号，如 "EOS R5", "A7M4"
+  id        String   @id // 规范化品牌键，如 "sony"
+  name      String   // 标准化显示名，如 "Sony"
   createdAt DateTime @default(now())
 
   photos Photo[]
-
-  @@unique([make, model])
-  @@index([make])
 }
 
 model Lens {
-  id        String   @id @default(uuid())
-  make      String?  // 品牌，如 "Canon", "Sony", "Sigma"（已标准化）
-  model     String   // 型号，如 "RF 50mm F1.2L USM"
+  id        String   @id // 规范化品牌键，如 "canon"
+  name      String   // 标准化显示名，如 "Canon"
   createdAt DateTime @default(now())
 
   photos Photo[]
-
-  @@unique([make, model])
-  @@index([make])
 }
 
 model Photo {

@@ -114,30 +114,42 @@ const BRAND_MAP: Record<string, string> = {
 }
 
 /**
- * 标准化品牌名称
+ * 标准化品牌名称（用于展示）
  * @param make 原始品牌名称
  * @returns 标准化后的品牌名称
  */
 export function normalizeMake(make: string | null | undefined): string | null {
   if (!make) return null
-  
+
   const trimmed = make.trim()
   if (!trimmed) return null
-  
+
   // 先查找映射表
   if (BRAND_MAP[trimmed]) {
     return BRAND_MAP[trimmed]
   }
-  
+
   // 如果没有找到映射，尝试首字母大写
   const normalized = trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase()
-  
+
   // 再次检查映射表（处理大小写变化后的情况）
   if (BRAND_MAP[normalized]) {
     return BRAND_MAP[normalized]
   }
-  
+
   return normalized
+}
+
+/**
+ * 生成品牌键（用于表主键）
+ * @param make 标准化品牌名称
+ * @returns 规范化品牌键，如 "sony"
+ */
+export function makeBrandKey(make: string | null | undefined): string | null {
+  if (!make) return null
+  const normalized = make.trim().toLowerCase()
+  if (!normalized) return null
+  return normalized.replace(/[^a-z0-9]+/g, '')
 }
 
 /**

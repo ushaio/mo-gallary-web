@@ -4,7 +4,7 @@ import { db } from '~/server/lib/db'
 import { authMiddleware, AuthVariables } from './middleware/auth'
 import { extractExifData } from '~/server/lib/exif'
 import { extractDominantColors } from '~/server/lib/colors'
-import { normalizeMake, extractLensMakeFromModel } from '~/server/lib/equipment'
+import { normalizeMake, extractLensMakeFromModel, makeBrandKey } from '~/server/lib/equipment'
 import { StorageProviderFactory, StorageConfig, StorageError } from '~/server/lib/storage'
 import sharp from 'sharp'
 import path from 'path'
@@ -263,45 +263,40 @@ photos.post('/admin/photos', async (c) => {
     // Extract dominant colors from the image
     const dominantColors = await extractDominantColors(buffer)
 
-    // Find or create camera record
+    // Find or create camera record (brand-based)
     let cameraId: string | null = null
-    if (exifData.cameraMake && exifData.cameraModel) {
+    if (exifData.cameraMake) {
       const normalizedMake = normalizeMake(exifData.cameraMake) || exifData.cameraMake
-      const camera = await db.camera.upsert({
-        where: {
-          make_model: {
-            make: normalizedMake,
-            model: exifData.cameraModel,
+      const brandKey = makeBrandKey(normalizedMake)
+      if (brandKey) {
+        const camera = await db.camera.upsert({
+          where: { id: brandKey },
+          update: { name: normalizedMake },
+          create: {
+            id: brandKey,
+            name: normalizedMake,
           },
-        },
-        update: {},
-        create: {
-          make: normalizedMake,
-          model: exifData.cameraModel,
-        },
-      })
-      cameraId = camera.id
+        })
+        cameraId = camera.id
+      }
     }
 
-    // Find or create lens record
+    // Find or create lens record (brand-based)
     let lensId: string | null = null
     if (exifData.lens) {
-      // Try to extract lens make from model if not available
       const lensMake = normalizeMake(extractLensMakeFromModel(exifData.lens))
-      const lens = await db.lens.upsert({
-        where: {
-          make_model: {
-            make: lensMake || '',
-            model: exifData.lens,
+      const brandKey = makeBrandKey(lensMake)
+      if (brandKey && lensMake) {
+        const lens = await db.lens.upsert({
+          where: { id: brandKey },
+          update: { name: lensMake },
+          create: {
+            id: brandKey,
+            name: lensMake,
           },
-        },
-        update: {},
-        create: {
-          make: lensMake,
-          model: exifData.lens,
-        },
-      })
-      lensId = lens.id
+        })
+        lensId = lens.id
+      }
     }
 
     // Create photo record
@@ -821,40 +816,36 @@ photos.post('/admin/photos/:id/reupload', async (c) => {
         updateData.exifRaw = exifData.exifRaw
 
         // Update equipment relations
-        if (exifData.cameraMake && exifData.cameraModel) {
+        if (exifData.cameraMake) {
           const normalizedMake = normalizeMake(exifData.cameraMake) || exifData.cameraMake
-          const camera = await db.camera.upsert({
-            where: {
-              make_model: {
-                make: normalizedMake,
-                model: exifData.cameraModel,
+          const brandKey = makeBrandKey(normalizedMake)
+          if (brandKey) {
+            const camera = await db.camera.upsert({
+              where: { id: brandKey },
+              update: { name: normalizedMake },
+              create: {
+                id: brandKey,
+                name: normalizedMake,
               },
-            },
-            update: {},
-            create: {
-              make: normalizedMake,
-              model: exifData.cameraModel,
-            },
-          })
-          updateData.cameraId = camera.id
+            })
+            updateData.cameraId = camera.id
+          }
         }
 
         if (exifData.lens) {
           const lensMake = normalizeMake(extractLensMakeFromModel(exifData.lens))
-          const lens = await db.lens.upsert({
-            where: {
-              make_model: {
-                make: lensMake || '',
-                model: exifData.lens,
+          const brandKey = makeBrandKey(lensMake)
+          if (brandKey && lensMake) {
+            const lens = await db.lens.upsert({
+              where: { id: brandKey },
+              update: { name: lensMake },
+              create: {
+                id: brandKey,
+                name: lensMake,
               },
-            },
-            update: {},
-            create: {
-              make: lensMake,
-              model: exifData.lens,
-            },
-          })
-          updateData.lensId = lens.id
+            })
+            updateData.lensId = lens.id
+          }
         }
       }
     }

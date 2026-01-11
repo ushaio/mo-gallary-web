@@ -1,15 +1,13 @@
 export interface CameraDto {
   id: string
-  make: string
-  model: string
+  name: string
   displayName: string
   photoCount: number
 }
 
 export interface LensDto {
   id: string
-  make: string | null
-  model: string
+  name: string
   displayName: string
   photoCount: number
 }
